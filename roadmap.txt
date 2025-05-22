@@ -1,0 +1,70 @@
+ Weekly Roadmap
+✅ Week 1: Project Setup & UI Design
+ Finalize tech stack
+
+ Set up GitHub repo, folders, boilerplate
+
+ Build static pages: Home, About, Contact
+
+ Work on responsive layout (mobile/tablet/desktop)
+
+ Create UI/UX wireframes (Figma or pen-paper)
+
+✅ Week 2: Registration Forms + Login System
+ Create student & tutor registration forms (frontend)
+
+ Build login with role-based access (student/tutor/admin)
+
+ Connect to backend (Express + MongoDB/PostgreSQL)
+
+ Hash passwords and basic validation
+
+✅ Week 3: Dashboards
+ Student Dashboard: Schedule, Materials, Attendance
+
+ Tutor Dashboard: Classes, Attendance marking
+
+ Admin Dashboard: Overview, approvals, reports
+
+✅ Week 4: Attendance + Fee Management
+ Attendance marking & tracking (student/tutor/admin)
+
+ Fee payment (mock for now), auto reminders, receipts
+
+ Store fee records and export options (CSV/Print)
+
+✅ Week 5: Study Materials + Timetable
+ Upload/download materials (PDF, Images)
+
+ Organize by class/subject
+
+ Admin sets timetable, visible on dashboards
+
+ Email/alert for class reminders
+
+✅ Week 6: Notifications + Testimonials
+ Build mock SMS/Email notification system
+
+ WhatsApp integration (Twilio or mock setup)
+
+ Add testimonial submission and display
+
+ Results showcase page
+
+✅ Week 7: Blog + SEO + Contact
+ Blog section with markdown or CMS-style posts
+
+ SEO: Meta tags, sitemap, keywords
+
+ Google Maps integration + contact form
+
+✅ Week 8: Security + Final Touches
+ OTP login (mocked), SSL setup (if deployed)
+
+ Secure data handling (sanitization, validation)
+
+ Responsive testing on all devices
+
+ Deploy to Vercel/Netlify + backend on Render/Railway
+
+ Final testing, bug fixing, performance check
