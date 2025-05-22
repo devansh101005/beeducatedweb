@@ -1,0 +1,202 @@
+/* App.css - HomePage styles migrated from index.html */
+body {
+  background: linear-gradient(120deg, #e0eafc 0%, #cfdef3 100%);
+  font-family: 'Roboto', Arial, sans-serif;
+  margin: 0;
+  padding: 0;
+  min-height: 100vh;
+}
+.container {
+  max-width: 950px;
+  margin: 0 auto;
+  padding: 48px 20px 32px 20px;
+  text-align: center;
+  background: rgba(255,255,255,0.95);
+  border-radius: 18px;
+  box-shadow: 0 8px 32px rgba(44, 62, 80, 0.12);
+  margin-top: 48px;
+}
+.logo {
+  width: 110px;
+  margin-bottom: 18px;
+  filter: drop-shadow(0 2px 8px #b2bec3);
+}
+h1 {
+  font-family: 'Montserrat', Arial, sans-serif;
+  font-size: 2.8rem;
+  color: #1a2980;
+  margin-bottom: 8px;
+  letter-spacing: 1px;
+}
+.tagline {
+  font-size: 1.25rem;
+  color: #26a69a;
+  margin-bottom: 22px;
+  font-weight: 500;
+  font-family: 'Montserrat', Arial, sans-serif;
+}
+.intro {
+  font-size: 1.1rem;
+  color: #444;
+  margin-bottom: 30px;
+}
+.cta-buttons {
+  margin: 32px 0 28px 0;
+}
+.cta-buttons button {
+  background: linear-gradient(90deg, #1a2980 0%, #26d0ce 100%);
+  color: #fff;
+  border: none;
+  border-radius: 30px;
+  padding: 14px 36px;
+  font-size: 1.08rem;
+  margin: 0 14px;
+  cursor: pointer;
+  font-family: 'Montserrat', Arial, sans-serif;
+  font-weight: 600;
+  box-shadow: 0 2px 8px rgba(26,41,128,0.08);
+  transition: background 0.2s, transform 0.2s;
+}
+.cta-buttons button:hover {
+  background: linear-gradient(90deg, #26d0ce 0%, #1a2980 100%);
+  transform: translateY(-2px) scale(1.04);
+}
+.highlights {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 24px;
+  margin: 36px 0 18px 0;
+}
+.highlight {
+  background: linear-gradient(120deg, #f8fafc 0%, #e9f7fd 100%);
+  border-radius: 12px;
+  box-shadow: 0 2px 12px rgba(44, 62, 80, 0.07);
+  padding: 28px 18px 22px 18px;
+  min-width: 210px;
+  flex: 1 1 210px;
+  max-width: 260px;
+  font-size: 1.05rem;
+  color: #222;
+  transition: box-shadow 0.2s, transform 0.2s;
+}
+.highlight strong {
+  color: #1a2980;
+  font-family: 'Montserrat', Arial, sans-serif;
+  font-size: 1.13rem;
+  letter-spacing: 0.5px;
+}
+.highlight:hover {
+  box-shadow: 0 6px 24px rgba(26,41,128,0.13);
+  transform: translateY(-3px) scale(1.03);
+}
+.testimonials {
+  margin: 48px 0 24px 0;
+}
+.testimonial {
+  background: linear-gradient(120deg, #e0eafc 0%, #cfdef3 100%);
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(44, 62, 80, 0.07);
+  padding: 20px 18px 16px 18px;
+  margin: 12px auto;
+  max-width: 520px;
+  font-style: italic;
+  color: #333;
+  font-size: 1.08rem;
+  position: relative;
+}
+.testimonial:before {
+  content: '“';
+  font-size: 2.2rem;
+  color: #26a69a;
+  position: absolute;
+  left: 18px;
+  top: 8px;
+}
+.testimonial:after {
+  content: '”';
+  font-size: 2.2rem;
+  color: #26a69a;
+  position: absolute;
+  right: 18px;
+  bottom: 8px;
+}
+.testimonial b {
+  display: block;
+  margin-top: 10px;
+  color: #1a2980;
+  font-style: normal;
+  font-size: 1rem;
+}
+.contact-info {
+  margin: 48px 0 0 0;
+  color: #333;
+  font-size: 1.05rem;
+  background: #f8fafc;
+  border-radius: 8px;
+  padding: 18px 0 10px 0;
+  box-shadow: 0 1px 4px rgba(44, 62, 80, 0.04);
+}
+.contact-info a {
+  color: #1a2980;
+  text-decoration: none;
+  font-weight: 500;
+}
+.contact-info a:hover {
+  text-decoration: underline;
+}
+.dashboard {
+  max-width: 700px;
+  margin: 40px auto 0 auto;
+  background: #fff;
+  border-radius: 14px;
+  box-shadow: 0 4px 18px rgba(44, 62, 80, 0.10);
+  padding: 36px 24px 28px 24px;
+  text-align: left;
+  font-family: 'Roboto', Arial, sans-serif;
+}
+.dashboard h2 {
+  color: #1a2980;
+  font-family: 'Montserrat', Arial, sans-serif;
+  font-size: 2rem;
+  margin-bottom: 18px;
+}
+.dashboard ul {
+  list-style: none;
+  padding: 0;
+}
+.dashboard li {
+  background: #f8fafc;
+  margin-bottom: 14px;
+  padding: 14px 18px;
+  border-radius: 8px;
+  font-size: 1.08rem;
+  color: #222;
+  box-shadow: 0 1px 4px rgba(44, 62, 80, 0.04);
+  transition: background 0.2s;
+}
+.dashboard li:hover {
+  background: #e0eafc;
+}
+@media (max-width: 900px) {
+  .container {
+    margin-top: 18px;
+    padding: 24px 4vw 18px 4vw;
+  }
+  .highlights {
+    gap: 12px;
+  }
+}
+@media (max-width: 700px) {
+  .highlights {
+    flex-direction: column;
+    gap: 10px;
+  }
+  .container {
+    margin-top: 0;
+    padding: 10px 2vw 10px 2vw;
+  }
+  h1 {
+    font-size: 2rem;
+  }
+}
