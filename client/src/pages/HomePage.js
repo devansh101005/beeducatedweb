@@ -47,6 +47,39 @@ const HomePage = () => (
       Email: <a href="mailto:info@beeducated.com">info@beeducated.com</a><br />
       Address: 123, Main Road, Your City, India
     </div>
+    <div className="features">
+      <h2>Why Choose Us?</h2>
+      <div className="feature-list">
+        <div className="feature-item">
+          <span role="img" aria-label="certificate">🎓</span>
+          <div>
+            <b>Certified Tutors</b>
+            <p>All our tutors are certified and undergo regular training.</p>
+          </div>
+        </div>
+        <div className="feature-item">
+          <span role="img" aria-label="support">💬</span>
+          <div>
+            <b>24/7 Support</b>
+            <p>Get help anytime with our dedicated support team.</p>
+          </div>
+        </div>
+        <div className="feature-item">
+          <span role="img" aria-label="progress">📈</span>
+          <div>
+            <b>Progress Tracking</b>
+            <p>Parents and students can track learning progress and attendance online.</p>
+          </div>
+        </div>
+        <div className="feature-item">
+          <span role="img" aria-label="community">🤝</span>
+          <div>
+            <b>Community Events</b>
+            <p>Participate in webinars, workshops, and competitions for holistic growth.</p>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 );
 
