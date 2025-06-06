@@ -1,0 +1,22 @@
+node_modules/
+# Keep environment variables out of version control
+.env
+
+/generated/prisma
+
+
+# Vite/React
+client/node_modules/
+client/dist/
+client/.env
+
+# Prisma
+server/prisma/dev.db
+server/prisma/dev.db-journal
+
+# Logs
+*.log
+
+# OS
+.DS_Store
+Thumbs.db

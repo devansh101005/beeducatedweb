@@ -1,0 +1,6 @@
+# Create .gitignore in your project root
+echo "node_modules/
+.env
+*.log
+dist/
+build/" > .gitignore
