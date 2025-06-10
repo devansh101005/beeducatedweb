@@ -1,0 +1,74 @@
+.about-wrapper {
+  font-family: sans-serif;
+  color: #333;
+  padding: 0;
+  margin: 0;
+}
+
+.about-hero {
+  background: linear-gradient(to right, #6a11cb, #2575fc);
+  color: white;
+  padding: 3rem 2rem;
+  text-align: center;
+}
+
+.about-hero h1 {
+  font-size: 2.5rem;
+}
+
+.about-hero p {
+  margin-top: 0.5rem;
+  font-size: 1.2rem;
+}
+
+.about-section {
+  padding: 2rem;
+  max-width: 900px;
+  margin: auto;
+  line-height: 1.6;
+}
+
+.highlight {
+  background-color: #f0f8ff;
+  margin-top: 1rem;
+  border-left: 5px solid #007bff;
+  padding-left: 1.5rem;
+}
+
+.founder {
+  background: #fffbe6;
+  border-left: 5px solid #f4c430;
+  padding-left: 1.5rem;
+}
+
+.team-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2rem;
+  justify-content: center;
+  margin-top: 1.5rem;
+}
+
+.team-member {
+  background: #f9f9f9;
+  padding: 1rem;
+  border-radius: 10px;
+  text-align: center;
+  width: 180px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.team-member img {
+  border-radius: 50%;
+  width: 80px;
+  height: 80px;
+  object-fit: cover;
+}
+
+.about-footer {
+  text-align: center;
+  background: #333;
+  color: white;
+  padding: 1rem;
+  margin-top: 2rem;
+}
