@@ -1,4 +1,5 @@
 import express from "express";
+import { getAllApplications } from "../controllers/adminController.js";
 import { verifyToken } from "../middleware/authMiddleware.js";
 import prisma from "../config/db.js";
 
@@ -19,5 +20,7 @@ router.get("/users", verifyToken, async (req, res) => {
     res.status(500).json({ error: "Server error" });
   }
 });
+
+router.get("/applications", verifyToken, getAllApplications);
 
 export default router;

@@ -91,6 +91,9 @@ import StudentDashboard from "./pages/StudentDashboard";
 import TutorDashboard from "./pages/TutorDashboard";
 import AdminDashboard from "./pages/AdminDashboard";
 import StudentProfile from "./pages/StudentProfile";
+import StudentApplyForm from "./pages/StudentApplyForm";
+import TutorApplyForm from "./pages/TutorApplyForm";
+import AdminApplications from "./pages/AdminApplications";
 
 import ProtectedRoute from "./components/ProtectedRoute";
 import RoleProtectedRoute from "./components/RoleProtectedRoute";
@@ -164,6 +167,16 @@ function App() {
               </RoleProtectedRoute>
             }
           />
+          <Route path="/apply/student" element={<StudentApplyForm />} />
+<Route path="/apply/tutor" element={<TutorApplyForm />} />
+<Route
+path="/admin/applications"
+element={
+<RoleProtectedRoute allowedRoles={["ADMIN"]}>
+<AdminApplications />
+</RoleProtectedRoute>
+}
+/>
 
         </Routes>
       </main>

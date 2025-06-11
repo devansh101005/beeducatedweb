@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import "./AdminDashboard.css";
 
 function AdminDashboard() {
   const { token, logout } = useAuth();
@@ -15,7 +17,6 @@ function AdminDashboard() {
           },
         });
         if (!res.ok) throw new Error("Failed to fetch user info");
-
         const data = await res.json();
         setUserInfo(data);
       } catch (err) {
@@ -29,13 +30,16 @@ function AdminDashboard() {
   if (!userInfo) return <p>Loading...</p>;
 
   return (
-    <div style={{ padding: "2rem", textAlign: "center" }}>
-      <h1>🛠️ Admin Dashboard</h1>
+    <div className="admin-dashboard">
+      <h1>Admin Dashboard</h1>
       <p>Welcome, <strong>{userInfo.email}</strong></p>
-      <h2>🛠️ Welcome, {userInfo.name} (Admin)</h2>
-
       <p>Your Role: <strong>{userInfo.role}</strong></p>
-      <button onClick={logout} style={{ marginTop: "1rem" }}>Logout</button>
+      <Link to="/admin/applications" className="application-link">
+        View Submitted Applications
+      </Link>
+      <button onClick={logout} className="logout-button">
+        Logout
+      </button>
     </div>
   );
 }

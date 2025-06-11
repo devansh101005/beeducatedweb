@@ -1,0 +1,34 @@
+.admin-dashboard {
+  padding: 2rem;
+  text-align: center;
+}
+
+.admin-dashboard h1 {
+  font-size: 2rem;
+  margin-bottom: 0.5rem;
+}
+
+.admin-dashboard .application-link {
+  display: inline-block;
+  margin-top: 1rem;
+  padding: 10px 20px;
+  background-color: #007bff;
+  color: white;
+  text-decoration: none;
+  border-radius: 5px;
+  font-weight: bold;
+}
+
+.admin-dashboard .application-link:hover {
+  background-color: #0056b3;
+}
+
+.logout-button {
+  margin-top: 1rem;
+  padding: 8px 16px;
+  border: none;
+  background-color: red;
+  color: white;
+  border-radius: 4px;
+  cursor: pointer;
+}

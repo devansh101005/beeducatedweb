@@ -39,3 +39,31 @@ enum Role {
   ADMIN
 }
 
+
+model StudentApplication {
+  id          Int      @id @default(autoincrement())
+  name        String
+  email       String
+  phone       String
+  address     String
+  gradeLevel  String
+  resume      String?
+  marksheets  String[]  // Array of file paths
+  idcards     String[]  // Array of file paths
+  createdAt   DateTime  @default(now())
+}
+
+model TutorApplication {
+  id               Int      @id @default(autoincrement())
+  name             String
+  email            String
+  phone            String
+  qualification    String
+  subjectExpertise String
+  experienceYears  Int
+  resume           String?
+  idcards          String[]  // Array of file paths
+  createdAt        DateTime  @default(now())
+}
+
+

@@ -201,7 +201,7 @@ function Home() {
                       <br />
                       India
                     </p>
-                    <a href="https://maps.google.com" target="_blank" rel="noopener noreferrer" className="maps-link">
+                    <a href="https://maps.app.goo.gl/ukWj2xa2bHVWekvy8" target="_blank" rel="noopener noreferrer" className="maps-link">
                       📍 View on Google Maps
                     </a>
                   </div>
