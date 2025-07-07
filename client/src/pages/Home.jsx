@@ -2,6 +2,7 @@
 
 
 import "./Home.css"
+import logo from "../assets/logo.png";
 import { Link } from "react-router-dom"
 import { useState } from "react"
 
@@ -48,7 +49,7 @@ function Home() {
             <div className="logo-section">
               <Link to="/" className="logo-link">
                 <div className="logo-container">
-                  <img src="/src/assests/logo.png" alt="Be Educated Logo" className="logo-image" />
+                  <img src={logo} alt="Be Educated Logo" className="logo-image" />
                   <div className="logo-content">
                     <span className="logo-text">Be Educated</span>
                     <span className="logo-tagline">Achieve Beyond Limits</span>

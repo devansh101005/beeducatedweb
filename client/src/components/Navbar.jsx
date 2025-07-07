@@ -192,7 +192,7 @@
 
 // export default Navbar;
 
-
+import logo from "../assets/logo.png";
 import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import "./Navbar.css";
