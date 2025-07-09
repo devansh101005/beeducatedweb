@@ -170,6 +170,10 @@ body {
     padding: 1rem;
   }
 
+  .home-wrapper {
+    padding-top: 80px; /* matches fixed navbar height */
+  }
+
   .nav-links.active {
     display: flex;
   }
