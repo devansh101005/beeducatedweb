@@ -169,6 +169,9 @@ body {
     border: 1px solid #e5e7eb;
     padding: 1rem;
   }
+  .testimonials-heading-wrapper{
+    margin-top: 200px;
+  }
 
   .home-wrapper {
     padding-top: 80px; /* matches fixed navbar height */
@@ -273,6 +276,7 @@ body {
 .testimonials {
   padding: 3rem 0;
   background-color: #ffffff;
+  margin-top: 800px;
 }
 
 .testimonials-grid {

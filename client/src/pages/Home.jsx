@@ -547,7 +547,7 @@ function Home() {
       {/* Testimonials Section */}
       <section className="testimonials">
         <div className="container">
-          <div className="testimonials-heading-wrapper" style={{ textAlign: "center", margin: "4rem 0 2rem" }}>
+          <div className="testimonials-heading-wrapper" style={{ textAlign: "center", margin: "17rem 0 2rem" }}>
             <h2 style={{ fontSize: "2.5rem", fontWeight: 700, color: "#1f2937", fontFamily: "Poppins, sans-serif" }}>
               What Our Students & Parents Say
             </h2>
