@@ -99,6 +99,8 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import RoleProtectedRoute from "./components/RoleProtectedRoute";
 import Unauthorized from "./pages/Unauthorized";
 import Navbar from "./components/Navbar";
+import UploadForm from "./pages/UploadForm";
+import StudyMaterials from './pages/StudyMaterials';
 
 function App() {
   return (
@@ -113,6 +115,8 @@ function App() {
           <Route path="/signup" element={<SignupForm />} />
           <Route path="/login" element={<LoginForm />} />
           <Route path="/unauthorized" element={<Unauthorized />} />
+          <Route path="/upload" element={<UploadForm />} />
+          <Route path="/materials" element={<StudyMaterials />} />
 
           {/* Student Routes */}
           <Route

@@ -66,4 +66,14 @@ model TutorApplication {
   createdAt        DateTime  @default(now())
 }
 
+model StudyMaterial {
+  id         String   @id @default(uuid())
+  title      String
+  url        String
+  category   String   // e.g., JEE, NEET, NDA
+  classLevel String   // e.g., Class-12, Nursery
+  createdAt  DateTime @default(now())
+}
+
+
 

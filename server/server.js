@@ -11,19 +11,27 @@ import authRoutes from './routes/authRoutes.js';
 import protectedRoutes from './routes/protectedRoutes.js';
 import studentRoutes from './routes/StudentRoutes.js';
 //import tutorRoutes from "./routes/tutorRoutes.js";
+import materialRoutes from './routes/materialRoutes.js';
+import resourceRoutes from './routes/resourceRoutes.js';
 
 dotenv.config();
 
 const app = express();
 
 // Middleware
-app.use(cors({ origin: 'http://localhost:5173' }));
+
+app.use(cors({ 
+  origin: 'http://localhost:5173',
+  credentials: true,
+ }));
 app.use(express.json());
 
 app.use("/uploads", express.static("uploads"));
 
 console.log("Mounting /api/tutors");
 app.use("/api/tutors", tutorRoutes);
+app.use('/api/materials', materialRoutes);
+app.use("/api/resources", resourceRoutes);
 
 
 // Log all requests

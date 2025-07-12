@@ -67,15 +67,32 @@ body {
   margin-right: 0.5rem;
 }
 
-.logo-content .logo-text {
+.logo-content  {
   font-size: 1.2rem;
   font-weight: 700;
 }
 
-.logo-content .logo-tagline {
+.logo-content  {
   font-size: 0.75rem;
   color: #6b7280;
 }
+
+.logo-text {
+  font-family: var(--font-heading);
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--primary-blue);
+}
+
+.logo-tagline {
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  font-weight: 400;
+  color: var(--gray-500);
+  margin-top: -2px;
+  line-height: 1;
+}
+
 
 /* Navigation Links */
 .nav-links {
