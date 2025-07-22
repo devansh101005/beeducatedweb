@@ -5,6 +5,7 @@ import "./Home.css"
 import logo from "../assets/logo.png";
 import { Link } from "react-router-dom"
 import { useState } from "react"
+import {FaFacebook,FaInstagram,FaWhatsapp,FaLinkedin} from 'react-icons/fa';
 
 function Home() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -300,13 +301,13 @@ function Home() {
           <h3>Connect With Us</h3>
           <div className="social-links">
             <a href="#" className="social-link facebook" aria-label="Facebook">
-              <span>📘</span>
+              <FaFacebook/>
             </a>
             <a href="#" className="social-link instagram" aria-label="Instagram">
-              <span>📷</span>
+              <FaInstagram/>
             </a>
-            <a href="#" className="social-link whatsapp" aria-label="WhatsApp">
-              <span>💬</span>
+            <a href="#" className="social-link Linkedin" aria-label="Linkedin">
+              <FaLinkedin/>
             </a>
           </div>
         </div>
