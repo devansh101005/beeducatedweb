@@ -262,7 +262,7 @@ function Home() {
                       <br />
                       Saturday: 9:00 AM - 6:00 PM
                       <br />
-                      Sunday: Closed
+                      Sunday: 9:00 AM - 5:00 PM
                     </p>
                   </div>
                 </div>
@@ -300,13 +300,13 @@ function Home() {
         <div className="container">
           <h3>Connect With Us</h3>
           <div className="social-links">
-            <a href="#" className="social-link facebook" aria-label="Facebook">
-              <FaFacebook/>
-            </a>
-            <a href="#" className="social-link instagram" aria-label="Instagram">
+            <a href="https://www.instagram.com/officialbe.educated/?igsh=MXJpOXV0eXliOHV6Mw%3D%3D#" className="social-link instagram" aria-label="Instagram">
               <FaInstagram/>
             </a>
-            <a href="#" className="social-link Linkedin" aria-label="Linkedin">
+            <a href="https://www.facebook.com/share/14FMyCY2J8D/" className="social-link Facebook" aria-label="Facebook">
+              <FaFacebook/>
+            </a>
+            <a href="https://www.linkedin.com/company/be-educated-official/" className="social-link Linkedin" aria-label="Linkedin">
               <FaLinkedin/>
             </a>
           </div>
