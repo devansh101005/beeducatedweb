@@ -212,6 +212,7 @@ import AdminDashboard from "./pages/AdminDashboard";
 import StudentProfile from "./pages/StudentProfile";
 import StudentApplyForm from "./pages/StudentApplyForm";
 import TutorApplyForm from "./pages/TutorApplyForm";
+import UploadForm from "@/pages/UploadForm.jsx";
 import AdminApplications from "./pages/AdminApplications";
 import StudentOtpLoginForm from "./pages/StudentOtpLoginForm";
 import PhoneLogin from "./pages/PhoneLogin";
@@ -223,7 +224,7 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import RoleProtectedRoute from "./components/RoleProtectedRoute";
 import Unauthorized from "./pages/Unauthorized";
 import Navbar from "./components/Navbar";
-import UploadForm from "@/pages/UploadForm.jsx";
+
 import StudyMaterials from "./pages/StudyMaterials";
 
 function App() {
