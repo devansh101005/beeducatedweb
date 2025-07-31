@@ -123,6 +123,15 @@ function Home() {
                 <span className="highlight-text">Parent Satisfaction</span>
               </div>
             </div>
+
+            {/* Student Portal Button */}
+            <div className="student-portal-section">
+              <h3>🎓 Access Your Learning Resources</h3>
+              <p>Students can access study materials, assignments, and resources through our secure portal.</p>
+              <Link to="/student-portal" className="student-portal-btn">
+                🚀 Student Portal
+              </Link>
+            </div>
           </div>
         </div>
       </section>
@@ -370,7 +379,7 @@ function Home() {
               <h4>Support</h4>
               <ul>
                 <li>
-                  <a href="#">Student Portal</a>
+                  <Link to="/student-portal">Student Portal</Link>
                 </li>
                 <li>
                   <a href="#">Parent Login</a>

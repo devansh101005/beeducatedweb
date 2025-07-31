@@ -39,6 +39,17 @@ enum Role {
   ADMIN
 }
 
+model Student {
+  id          String   @id @default(uuid())
+  studentId   String   @unique  // Student ID (e.g., "2024CS001")
+  name        String
+  email       String?  @unique
+  phone       String?
+  dateOfBirth DateTime // For birthday authentication
+  gradeLevel  String   // e.g., "Class 12", "B.Tech 2nd Year"
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
 
 model StudentApplication {
   id          Int      @id @default(autoincrement())
@@ -75,5 +86,12 @@ model StudyMaterial {
   createdAt  DateTime @default(now())
 }
 
+
+model OfflineStudent {
+  id        String   @id
+  phone     String   @unique
+  otp       String?
+  createdAt DateTime @default(now())
+}
 
 

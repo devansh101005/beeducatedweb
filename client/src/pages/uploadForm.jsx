@@ -2,7 +2,7 @@ import { useState } from "react";
 import axios from "axios";
 
 function UploadForm() {
-  const [form, setForm] = useState({ title: '', category: '', classLevel: '' });
+  const [form, setForm] = useState({ title: '', classLevel: '' });
   const [file, setFile] = useState(null);
   const [message, setMessage] = useState('');
 
@@ -17,12 +17,14 @@ function UploadForm() {
     const formData = new FormData();
     formData.append("file", file);
     formData.append("title", form.title);
-    formData.append("category", form.category);
     formData.append("classLevel", form.classLevel);
 
     try {
       const res = await axios.post(`${import.meta.env.VITE_API_BASE_URL}/api/resources/upload`, formData);
       setMessage(`✅ Uploaded: ${res.data.material.url}`);
+      // Reset form after successful upload
+      setForm({ title: '', classLevel: '' });
+      setFile(null);
     } catch (err) {
       console.error(err);
       setMessage("❌ Upload failed");
@@ -33,21 +35,41 @@ function UploadForm() {
     <div style={{ padding: '2rem' }}>
       <h2>Upload Study Material</h2>
       <form onSubmit={handleSubmit} encType="multipart/form-data">
-        <input name="title" placeholder="Title" onChange={handleChange} required />
-        <select name="classLevel" onChange={handleChange} required>
+        <input 
+          name="title" 
+          placeholder="Title" 
+          value={form.title}
+          onChange={handleChange} 
+          required 
+        />
+        <select 
+          name="classLevel" 
+          value={form.classLevel}
+          onChange={handleChange} 
+          required
+        >
           <option value="">Select Class</option>
           <option value="Nursery">Nursery</option>
+          <option value="LKG">LKG</option>
+          <option value="UKG">UKG</option>
           <option value="Class-1">Class 1</option>
-          {/* Add up to Class-12 */}
+          <option value="Class-2">Class 2</option>
+          <option value="Class-3">Class 3</option>
+          <option value="Class-4">Class 4</option>
+          <option value="Class-5">Class 5</option>
+          <option value="Class-6">Class 6</option>
+          <option value="Class-7">Class 7</option>
+          <option value="Class-8">Class 8</option>
+          <option value="Class-9">Class 9</option>
+          <option value="Class-10">Class 10</option>
+          <option value="Class-11">Class 11</option>
           <option value="Class-12">Class 12</option>
         </select>
-        <select name="category" onChange={handleChange} required>
-          <option value="">Select Category</option>
-          <option value="JEE">JEE</option>
-          <option value="NEET">NEET</option>
-          <option value="NDA">NDA</option>
-        </select>
-        <input type="file" onChange={(e) => setFile(e.target.files[0])} required />
+        <input 
+          type="file" 
+          onChange={(e) => setFile(e.target.files[0])} 
+          required 
+        />
         <button type="submit">Upload</button>
       </form>
       {message && <p>{message}</p>}

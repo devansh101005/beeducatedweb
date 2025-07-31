@@ -17,6 +17,13 @@ function StudyMaterials() {
     fetchMaterials();
   }, []);
 
+  const formatCategory = (category) => {
+    if (category === "General") {
+      return "Study Material";
+    }
+    return category;
+  };
+
   return (
     <div className="materials-page">
       <h2>📚 Study Materials</h2>
@@ -27,7 +34,7 @@ function StudyMaterials() {
           {materials.map((mat) => (
             <li key={mat.id}>
               <h4>{mat.title}</h4>
-              <p>Class: {mat.classLevel} | Category: {mat.category}</p>
+              <p>Class: {mat.classLevel} | Type: {formatCategory(mat.category)}</p>
               <a href={mat.url} target="_blank" rel="noopener noreferrer">📥 Download</a>
             </li>
           ))}

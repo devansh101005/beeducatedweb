@@ -1,0 +1,40 @@
+.otp-login-container {
+    max-width: 400px;
+    margin: 2rem auto;
+    padding: 2rem;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    background: #f9f9f9;
+  }
+  
+  .otp-login-container h2 {
+    text-align: center;
+    margin-bottom: 1rem;
+  }
+  
+  .otp-login-container label {
+    display: block;
+    margin-top: 1rem;
+  }
+  
+  .otp-login-container input {
+    width: 100%;
+    padding: 0.5rem;
+    margin-top: 0.25rem;
+    box-sizing: border-box;
+  }
+  
+  .otp-login-container button {
+    margin-top: 1rem;
+    padding: 0.5rem 1rem;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+  
+  .msg {
+    margin-top: 1rem;
+    text-align: center;
+  }

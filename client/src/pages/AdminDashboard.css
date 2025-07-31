@@ -1,34 +1,324 @@
 .admin-dashboard {
-  padding: 2rem;
-  text-align: center;
+  padding: 1rem;
+  max-width: 1400px;
+  margin: 0 auto;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
 }
 
-.admin-dashboard h1 {
-  font-size: 2rem;
+.dashboard-header {
+  text-align: center;
+  padding: 1.5rem;
+  background: white;
+  border-radius: 15px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  flex-shrink: 0;
+}
+
+.dashboard-header h1 {
+  font-size: clamp(1.5rem, 4vw, 2.5rem);
+  margin-bottom: 0.5rem;
+  color: #333;
+  font-weight: 700;
+}
+
+.welcome-text {
+  font-size: clamp(1rem, 2.5vw, 1.2rem);
+  color: #666;
   margin-bottom: 0.5rem;
 }
 
-.admin-dashboard .application-link {
-  display: inline-block;
-  margin-top: 1rem;
-  padding: 10px 20px;
-  background-color: #007bff;
+.role-text {
+  font-size: clamp(0.9rem, 2vw, 1rem);
+  color: #888;
+  margin-bottom: 0;
+}
+
+.role-badge {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+/* Stats Grid - Flexbox Layout */
+.stats-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.stat-card {
+  background: white;
+  padding: 1.5rem;
+  border-radius: 15px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  display: flex;
+  align-items: center;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  flex: 1;
+  min-width: 200px;
+  max-width: 300px;
+}
+
+.stat-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
+}
+
+.stat-icon {
+  font-size: clamp(2rem, 5vw, 3rem);
+  margin-right: 1rem;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  flex-shrink: 0;
+}
+
+.stat-content h3 {
+  font-size: clamp(1.5rem, 4vw, 2.5rem);
+  margin: 0 0 0.5rem 0;
+  color: #333;
+  font-weight: 700;
+}
+
+.stat-content p {
+  margin: 0;
+  color: #666;
+  font-size: clamp(0.9rem, 2vw, 1rem);
+  font-weight: 500;
+}
+
+/* Admin Sections - Flexbox Layout */
+.admin-sections {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  flex: 1;
+}
+
+.section-group {
+  background: white;
+  padding: 1.5rem;
+  border-radius: 15px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  flex: 1;
+}
+
+.section-group h2 {
+  font-size: clamp(1.2rem, 3vw, 1.5rem);
+  margin-bottom: 1rem;
+  color: #333;
+  font-weight: 600;
+  border-bottom: 2px solid #f0f0f0;
+  padding-bottom: 0.5rem;
+}
+
+.action-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.action-card {
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  padding: 1.5rem;
+  border-radius: 12px;
   text-decoration: none;
-  border-radius: 5px;
-  font-weight: bold;
-}
-
-.admin-dashboard .application-link:hover {
-  background-color: #0056b3;
-}
-
-.logout-button {
-  margin-top: 1rem;
-  padding: 8px 16px;
-  border: none;
-  background-color: red;
-  color: white;
-  border-radius: 4px;
+  color: inherit;
+  border: 2px solid transparent;
+  transition: all 0.3s ease;
   cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  flex: 1;
+  min-width: 200px;
+  max-width: 300px;
+}
+
+.action-card:hover {
+  transform: translateY(-3px);
+  border-color: #667eea;
+  box-shadow: 0 8px 25px rgba(102, 126, 234, 0.2);
+  text-decoration: none;
+  color: inherit;
+}
+
+.action-icon {
+  font-size: clamp(2rem, 5vw, 3rem);
+  margin-bottom: 1rem;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  flex-shrink: 0;
+}
+
+.action-card h3 {
+  font-size: clamp(1.1rem, 2.5vw, 1.3rem);
+  margin: 0 0 0.5rem 0;
+  color: #333;
+  font-weight: 600;
+}
+
+.action-card p {
+  margin: 0;
+  color: #666;
+  font-size: clamp(0.85rem, 2vw, 0.95rem);
+  line-height: 1.4;
+}
+
+.logout-card {
+  background: linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%);
+  color: white;
+  border: none;
+}
+
+.logout-card:hover {
+  background: linear-gradient(135deg, #ff5252 0%, #d32f2f 100%);
+  border-color: #ff5252;
+}
+
+.logout-card .action-icon {
+  background: white;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.logout-card h3,
+.logout-card p {
+  color: white;
+}
+
+/* Loading and Error States */
+.loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 200px;
+  font-size: 1.2rem;
+  color: #666;
+}
+
+.error-message {
+  background: #f8d7da;
+  color: #721c24;
+  padding: 1rem;
+  border-radius: 8px;
+  text-align: center;
+  margin: 1rem;
+  border: 1px solid #f5c6cb;
+}
+
+/* Mobile-First Responsive Design */
+@media (max-width: 768px) {
+  .admin-dashboard {
+    padding: 0.5rem;
+    gap: 1rem;
+  }
+  
+  .dashboard-header {
+    padding: 1rem;
+  }
+  
+  .stats-grid {
+    flex-direction: column;
+  }
+  
+  .stat-card {
+    max-width: none;
+    min-width: auto;
+  }
+  
+  .action-grid {
+    flex-direction: column;
+  }
+  
+  .action-card {
+    max-width: none;
+    min-width: auto;
+  }
+  
+  .section-group {
+    padding: 1rem;
+  }
+}
+
+@media (min-width: 769px) and (max-width: 1024px) {
+  .stats-grid {
+    flex-wrap: wrap;
+  }
+  
+  .stat-card {
+    flex: 1 1 calc(50% - 0.5rem);
+    max-width: calc(50% - 0.5rem);
+  }
+  
+  .action-grid {
+    flex-wrap: wrap;
+  }
+  
+  .action-card {
+    flex: 1 1 calc(50% - 0.5rem);
+    max-width: calc(50% - 0.5rem);
+  }
+}
+
+@media (min-width: 1025px) {
+  .stats-grid {
+    flex-wrap: nowrap;
+  }
+  
+  .action-grid {
+    flex-wrap: nowrap;
+  }
+}
+
+/* Landscape Mobile */
+@media (max-width: 768px) and (orientation: landscape) {
+  .admin-dashboard {
+    padding: 0.5rem;
+  }
+  
+  .stats-grid {
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+  
+  .stat-card {
+    flex: 1 1 calc(50% - 0.5rem);
+    max-width: calc(50% - 0.5rem);
+  }
+  
+  .action-grid {
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+  
+  .action-card {
+    flex: 1 1 calc(50% - 0.5rem);
+    max-width: calc(50% - 0.5rem);
+  }
+}
+
+/* Touch Device Optimizations */
+@media (hover: none) and (pointer: coarse) {
+  .stat-card:hover,
+  .action-card:hover {
+    transform: none;
+  }
+  
+  .action-card:active {
+    transform: scale(0.98);
+  }
 }

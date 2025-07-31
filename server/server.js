@@ -13,6 +13,8 @@ import studentRoutes from './routes/StudentRoutes.js';
 //import tutorRoutes from "./routes/tutorRoutes.js";
 import materialRoutes from './routes/materialRoutes.js';
 import resourceRoutes from './routes/resourceRoutes.js';
+import offlineAuthRoutes from "./routes/offlineAuthRoutes.js";
+import studentAuthRoutes from "./routes/studentAuthRoutes.js";
 
 dotenv.config();
 
@@ -21,10 +23,11 @@ const app = express();
 // Middleware
 
 app.use(cors({ 
-  origin: 'http://localhost:5173',
+  origin: ['http://localhost:5173', 'http://localhost:5174', 'http://localhost:3000'],
   credentials: true,
  }));
 app.use(express.json());
+app.use("/api/offline-auth", offlineAuthRoutes);
 
 app.use("/uploads", express.static("uploads"));
 
@@ -46,6 +49,9 @@ app.use("/api/auth", authRoutes);
 
 console.log("Mounting /api/student");
 app.use("/api/student", studentRoutes);
+
+console.log("Mounting /api/student-auth");
+app.use("/api/student-auth", studentAuthRoutes);
 
 console.log("Mounting /api (protected)");
 app.use("/api", protectedRoutes);
