@@ -223,7 +223,7 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import RoleProtectedRoute from "./components/RoleProtectedRoute";
 import Unauthorized from "./pages/Unauthorized";
 import Navbar from "./components/Navbar";
-import UploadForm from "@/pages/UploadForm";
+import UploadForm from "@/pages/UploadForm.jsx";
 import StudyMaterials from "./pages/StudyMaterials";
 
 function App() {
