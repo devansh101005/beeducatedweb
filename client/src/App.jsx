@@ -212,7 +212,7 @@ import AdminDashboard from "./pages/AdminDashboard";
 import StudentProfile from "./pages/StudentProfile";
 import StudentApplyForm from "./pages/StudentApplyForm";
 import TutorApplyForm from "./pages/TutorApplyForm";
-import UploadForm from "./pages/UploadForm";
+import UploadForm from "./pages/uploadForm";
 import AdminApplications from "./pages/AdminApplications";
 import StudentOtpLoginForm from "./pages/StudentOtpLoginForm";
 import PhoneLogin from "./pages/PhoneLogin";
