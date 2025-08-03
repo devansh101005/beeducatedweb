@@ -81,6 +81,7 @@ function LoginForm() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
 
     try {
       const res = await fetch(`${API_BASE}/api/auth/login`, {
