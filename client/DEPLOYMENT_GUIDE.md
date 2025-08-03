@@ -2,7 +2,7 @@
 
 ## The CORS Issue Solution
 
-The error you're seeing happens because your frontend is trying to call `https://www.beeducated.co.in/api/*` which gets redirected instead of properly proxied to your backend.
+The error you're seeing happens because the environment variable is being set incorrectly, causing URLs like `https://beeducated.co.in/%22%22/api/auth/login`.
 
 ## Quick Fix
 
@@ -10,30 +10,40 @@ The error you're seeing happens because your frontend is trying to call `https:/
 
 1. Go to your Vercel dashboard
 2. Navigate to your project → Settings → Environment Variables
-3. Set `VITE_API_BASE_URL` to an **empty string**: `""`
-   - This makes your app use relative URLs like `/api/auth/login`
-   - Vercel rewrites will then proxy these to your Render backend
+3. **IMPORTANT**: Delete the `VITE_API_BASE_URL` environment variable entirely
+   - Don't set it to an empty string with quotes
+   - Just delete it completely or leave it undefined
+4. This will make the app use relative URLs in production
 
 ### Step 2: Redeploy
 
-1. After updating the environment variable, redeploy your app
+1. After deleting/clearing the environment variable, redeploy your app
 2. Or trigger a new deployment by pushing any small change
 
 ## How it works
 
-- **Development**: `VITE_API_BASE_URL=""` → Falls back to `http://localhost:5000`
-- **Production**: `VITE_API_BASE_URL=""` → Uses relative URLs like `/api/auth/login`
+- **Development**: No `VITE_API_BASE_URL` → Uses `http://localhost:5000`
+- **Production**: No `VITE_API_BASE_URL` → Uses relative URLs like `/api/auth/login`
 - **Vercel rewrites**: `/api/*` → `https://beeducatedweb-backend.onrender.com/api/*`
 
-## Alternative: Direct Backend Calls
+## The Problem You Had
 
-If you prefer to call the backend directly (not recommended):
-- Set `VITE_API_BASE_URL=https://beeducatedweb-backend.onrender.com`
-- Make sure your backend CORS allows your frontend domain
+The environment variable was set to `""` (with quotes), which became `%22%22` in the URL. The new code handles this properly by:
+
+1. Detecting quoted empty strings
+2. Using relative URLs in production (Vercel)
+3. Using localhost in development
 
 ## Testing
 
 After deployment, check:
-1. Network tab should show calls to `/api/auth/login` (relative)
+1. Network tab should show calls to `/api/auth/login` (relative URLs)
 2. No more CORS errors
-3. Login/signup should work properly
+3. No more `%22%22` in URLs
+4. Login/signup should work properly
+
+## Alternative: Direct Backend Calls
+
+If you prefer to call the backend directly:
+- Set `VITE_API_BASE_URL=https://beeducatedweb-backend.onrender.com`
+- But the proxy approach is recommended for better security and performance

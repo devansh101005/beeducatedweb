@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { getApiUrl } from "../utils/api";
 import "./SignupForm.css";
 
 function SignupForm() {
@@ -17,8 +18,7 @@ function SignupForm() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000";
-      const res = await fetch(`${API_BASE}/api/auth/register`, {
+      const res = await fetch(getApiUrl("/api/auth/register"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData)
