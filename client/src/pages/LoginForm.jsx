@@ -73,7 +73,7 @@ function LoginForm() {
   const [formData, setFormData] = useState({ email: "", password: "" });
   const [message, setMessage] = useState("");
 
-  const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000"||"http://localhost:5174";
+  const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000";
 
   const handleChange = (e) => {
     setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
@@ -88,6 +88,12 @@ function LoginForm() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData)
       });
+
+      // Check if response is JSON before parsing
+      const contentType = res.headers.get("content-type");
+      if (!contentType || !contentType.includes("application/json")) {
+        throw new Error(`Server returned non-JSON response (${res.status}): ${res.statusText}`);
+      }
 
       const data = await res.json();
 
@@ -105,8 +111,8 @@ function LoginForm() {
         setMessage(data.error || "❌ Invalid credentials");
       }
     } catch (err) {
-      console.error(err);
-      setMessage("❌ Server error");
+      console.error("Login error:", err);
+      setMessage(`❌ ${err.message || "Server error"}`);
     }
   };
 

@@ -10,6 +10,8 @@ function SignupForm() {
   });
   const [message, setMessage] = useState("");
 
+  const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000";
+
   const handleChange = (e) => {
     setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
   };
@@ -17,11 +19,18 @@ function SignupForm() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const res = await fetch("http://localhost:5000/api/auth/register"||"/api/auth/register",   {
+      const res = await fetch(`${API_BASE}/api/auth/register`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData)
       });
+
+      // Check if response is JSON before parsing
+      const contentType = res.headers.get("content-type");
+      if (!contentType || !contentType.includes("application/json")) {
+        throw new Error(`Server returned non-JSON response (${res.status}): ${res.statusText}`);
+      }
+
       const data = await res.json();
       if (res.ok) {
         setMessage("✅ Registered successfully. You can now log in.");
@@ -30,8 +39,8 @@ function SignupForm() {
         setMessage(data.error || "❌ Something went wrong");
       }
     } catch (err) {
-      console.error(err);
-      setMessage("❌ Server error");
+      console.error("Registration error:", err);
+      setMessage(`❌ ${err.message || "Server error"}`);
     }
   };
 
