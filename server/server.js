@@ -334,7 +334,7 @@ const allowedOrigins = [
   'http://localhost:5173',
   'http://localhost:5174',
   'http://localhost:3000'
-].filter(Boolean); // Remove undefined values
+].filter(Boolean); 
 
 app.use(cors({
   origin: (origin, callback) => {
@@ -345,7 +345,7 @@ app.use(cors({
     }
   },
   credentials: true,
-  origin: ["https://www.beeducated.co.in", "https://beeducated.vercel.app"],
+  origin: ["https://www.beeducated.co.in", "https://beeducated.vercel.app","https://beeducated.co.in"],
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
