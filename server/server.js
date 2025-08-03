@@ -345,6 +345,7 @@ app.use(cors({
     }
   },
   credentials: true,
+  origin: ["https://www.beeducated.co.in", "https://beeducated.vercel.app"],
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
