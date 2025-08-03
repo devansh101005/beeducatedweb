@@ -27,6 +27,7 @@ function StudentLogin() {
         ? { studentId, dateOfBirth }
         : { studentId, name, email, phone, dateOfBirth, gradeLevel };
 
+        
       const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}${endpoint}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
