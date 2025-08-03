@@ -4,9 +4,11 @@ import { useAuth } from '../context/AuthContext';
 
 function AdminApplications() {
   const { token } = useAuth();
-  const [students, setStudents] = useState([]);
-  const [tutors, setTutors] = useState([]);
+  const [applications, setApplications] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+
+  const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000";
 
   useEffect(() => {
     const fetchApps = async () => {
@@ -16,18 +18,22 @@ function AdminApplications() {
             Authorization: `Bearer ${token}`,
           },
         });
-        setStudents(res.data.students || []);
-        setTutors(res.data.tutors || []);
+        setApplications(res.data); // Assuming res.data contains both students and tutors
+        setLoading(false);
       } catch (err) {
         console.error(err);
         setError("❌ Failed to load applications (unauthorized or server error).");
+        setLoading(false);
       }
     };
     fetchApps();
   }, [token]);
 
   if (error) return <p>{error}</p>;
-  if (!students || !tutors) return <p>Loading...</p>;
+  if (loading) return <p>Loading...</p>;
+
+  const students = applications.students || [];
+  const tutors = applications.tutors || [];
 
   return (
     <div style={{ padding: '2rem' }}>
@@ -36,40 +42,42 @@ function AdminApplications() {
         {students.map((s) => (
           <li key={s.id}>
             <strong>{s.name}</strong> | {s.email}<br />
-            Resume: {s.resume ? (
-              <a
-                href={`http://localhost:5000/${s.resume}`}
+            <div>
+              <strong>Resume:</strong>{" "}
+              <a 
+                href={`${API_BASE}/${s.resume}`}
                 target="_blank"
                 rel="noopener noreferrer"
+                className="resume-link"
               >
-                View
+                View Resume
               </a>
-            ) : "N/A"}<br />
-            Marksheets:
-            {Array.isArray(s.marksheets) && s.marksheets.map((m, i) => (
+            </div>
+            <div>
+              <strong>Marksheets:</strong>{" "}
+              {s.marksheets?.map((m, index) => (
+                <a
+                  key={index}
+                  href={`${API_BASE}/${m}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="marksheet-link"
+                >
+                  Marksheet {index + 1}
+                </a>
+              ))}
+            </div>
+            <div>
+              <strong>ID Proof:</strong>{" "}
               <a
-                key={i}
-                href={`http://localhost:5000/${m}`}
+                href={`${API_BASE}/${s.idcards?.[0]}`} // Assuming the first ID card is the primary one
                 target="_blank"
                 rel="noopener noreferrer"
-                style={{ marginRight: "5px" }}
+                className="id-proof-link"
               >
-                [{i + 1}]
+                View ID Proof
               </a>
-            ))}
-            <br />
-            ID Cards:
-            {Array.isArray(s.idcards) && s.idcards.map((id, i) => (
-              <a
-                key={i}
-                href={`http://localhost:5000/${id}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                style={{ marginRight: "5px" }}
-              >
-                [{i + 1}]
-              </a>
-            ))}
+            </div>
             <br /><br />
           </li>
         ))}
@@ -79,27 +87,28 @@ function AdminApplications() {
         {tutors.map((t) => (
           <li key={t.id}>
             <strong>{t.name}</strong> | {t.email}<br />
-            Resume: {t.resume ? (
-              <a
-                href={`http://localhost:5000/${t.resume}`}
+            <div>
+              <strong>Resume:</strong>{" "}
+              <a 
+                href={`${API_BASE}/${t.resume}`}
                 target="_blank"
                 rel="noopener noreferrer"
+                className="resume-link"
               >
-                View
+                View Resume
               </a>
-            ) : "N/A"}<br />
-            ID Cards:
-            {Array.isArray(t.idcards) && t.idcards.map((id, i) => (
+            </div>
+            <div>
+              <strong>ID Proof:</strong>{" "}
               <a
-                key={i}
-                href={`http://localhost:5000/${id}`}
+                href={`${API_BASE}/${t.idcards?.[0]}`} // Assuming the first ID card is the primary one
                 target="_blank"
                 rel="noopener noreferrer"
-                style={{ marginRight: "5px" }}
+                className="id-proof-link"
               >
-                [{i + 1}]
+                View ID Proof
               </a>
-            ))}
+            </div>
             <br /><br />
           </li>
         ))}
