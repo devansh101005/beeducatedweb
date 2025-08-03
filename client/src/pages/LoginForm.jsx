@@ -73,7 +73,7 @@ function LoginForm() {
   const [formData, setFormData] = useState({ email: "", password: "" });
   const [message, setMessage] = useState("");
 
-  const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000";
+  const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000"||"http://localhost:5174";
 
   const handleChange = (e) => {
     setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));

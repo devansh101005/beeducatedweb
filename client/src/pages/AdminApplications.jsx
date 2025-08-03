@@ -4,8 +4,9 @@ import { useAuth } from '../context/AuthContext';
 
 function AdminApplications() {
   const { token } = useAuth();
-  const [students, setStudents] = useState([]);
-  const [tutors, setTutors] = useState([]);
+  //const [students, setStudents] = useState([]);
+  //const [tutors, setTutors] = useState([]);
+  
   const [error, setError] = useState("");
 
   useEffect(() => {
