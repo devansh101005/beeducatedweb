@@ -316,6 +316,22 @@ dotenv.config();
 const app = express();
 const prisma = new PrismaClient();
 
+
+
+app.get('/check-db', async (req, res) => {
+  try {
+    const result = await prisma.$queryRaw`SELECT 1`; // simple query
+    res.status(200).json({ message: '✅ Database connected successfully!' });
+  } catch (error) {
+    console.error('❌ Database connection failed:', error);
+    res.status(500).json({ error: 'Database connection failed', details: error.message });
+  }
+});
+
+
+
+
+
 // Connect to database with error handling
 async function connectDB() {
   try {
@@ -327,6 +343,9 @@ async function connectDB() {
   }
 }
 connectDB();
+
+
+
 
 // const { Pool } = require('pg');
 // const pool = new Pool({
