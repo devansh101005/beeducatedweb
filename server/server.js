@@ -328,6 +328,12 @@ async function connectDB() {
 }
 connectDB();
 
+// const { Pool } = require('pg');
+// const pool = new Pool({
+//   connectionString: process.env.DATABASE_URL,
+//   ssl: { rejectUnauthorized: false } // Required for hosted PostgreSQL
+// });
+
 // CORS configuration
 const allowedOrigins = [
   process.env.FRONTEND_URL,
@@ -346,7 +352,7 @@ app.use(cors({
     }
   },
   credentials: true,
-  origin: ["https://www.beeducated.co.in", "https://beeducated.vercel.app","https://beeducated.co.in"],
+  origin: ["https://beeducated.co.in","https://www.beeducated.co.in", "https://beeducated.vercel.app"],
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
@@ -403,7 +409,7 @@ app.use((err, req, res, next) => {
 });
 
 // Start server
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 5000||3000;
 app.listen(PORT, () => {
   console.log(`✅ Server running on port ${PORT}`);
 });
