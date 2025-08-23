@@ -53,6 +53,8 @@ export const registerUser = async (req, res) => {
 
 // LOGIN
 export const loginUser = async (req, res) => {
+  console.log("🔥 Login function called!");
+  console.log("Request body:", req.body);
   const { email, password } = req.body;
 
   try {

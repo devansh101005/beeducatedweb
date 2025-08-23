@@ -87,6 +87,7 @@ import prisma from "../config/prismaClient.js"; // Restored Prisma import
 import jwt from "jsonwebtoken";
 
 const router = express.Router();
+console.log("AuthRoutes is called");
 
 // Email/Password Auth Routes
 router.post("/register", registerUser);
