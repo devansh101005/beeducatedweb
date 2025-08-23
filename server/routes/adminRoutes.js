@@ -1,5 +1,5 @@
 import express from "express";
-import { getAllApplications } from "../controllers/adminController.js";
+import { getAllApplications, addStudent, getAllStudents, deleteStudent } from "../controllers/adminController.js";
 import { verifyToken } from "../middleware/authMiddleware.js";
 import prisma from "../config/db.js";
 
@@ -22,5 +22,10 @@ router.get("/users", verifyToken, async (req, res) => {
 });
 
 router.get("/applications", verifyToken, getAllApplications);
+
+// Student management routes
+router.post("/students", verifyToken, addStudent);
+router.get("/students", verifyToken, getAllStudents);
+router.delete("/students/:id", verifyToken, deleteStudent);
 
 export default router;

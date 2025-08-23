@@ -192,7 +192,7 @@
 
 // export default Navbar;
 
-
+import logo from "../assets/logo.png";
 import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import "./Navbar.css";
@@ -207,7 +207,7 @@ function Navbar() {
           <Link to="/" className="navbar-logo">
             <div className="logo-container">
               <div className="logo-placeholder">
-                📚
+              <img src={logo} alt="Be Educated Logo" className="logo-image" />
               </div>
               <span className="logo-text">Be Educated</span>
             </div>

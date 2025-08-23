@@ -17,7 +17,11 @@ function SignupForm() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
+<<<<<<< HEAD
       const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/auth/register`, {
+=======
+      const res = await fetch("http://localhost:5000/api/auth/register"||"/api/auth/register",   {
+>>>>>>> 196b468a8429bc799182f15ae75c9f5e1b1a37aa
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData)
