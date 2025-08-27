@@ -238,9 +238,9 @@ function Home() {
                   <div className="contact-text">
                     <h4>Phone Numbers</h4>
                     <p>
-                      +91 7390988035
+                      +91 9721145364
                       <br />
-                      +91 9519783560
+                      +91 8601575896
                       <br />
                     </p>
                   </div>

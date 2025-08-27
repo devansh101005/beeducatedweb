@@ -60,7 +60,7 @@ function About() {
         <div className="team-grid">
           <div className="team-member">
             {/* <img src="https://via.placeholder.com/100" alt="Team member" /> */}
-            <h4>Pranav Singh</h4>
+            <h4></h4>
             <p>Manager</p>
           </div>
           <div className="team-member">
