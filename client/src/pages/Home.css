@@ -548,6 +548,7 @@ body {
   overflow-x: hidden;
   width: 100vw;
   padding-top: 0;
+  margin-top: 100rem;
   background: var(--gray-50) !important;
 }
 
@@ -784,7 +785,7 @@ body {
 
 @media (max-width: 480px) {
   .container {
-    padding: 0 15px;
+    padding: 15px;
   }
 
   .institute-name {
@@ -1120,7 +1121,7 @@ body {
 
 /* Ensure testimonials section is not hidden under navbar, but reduce top padding for better balance */
 .testimonials {
-  padding-top: 200px;
+  padding-top: 20px;
 }
 
 /* Student Portal Section */

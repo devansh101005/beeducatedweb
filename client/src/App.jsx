@@ -224,6 +224,7 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import RoleProtectedRoute from "./components/RoleProtectedRoute";
 import Unauthorized from "./pages/Unauthorized";
 import Navbar from "./components/Navbar";
+import Courses from "./pages/Courses";
 
 import StudyMaterials from "./pages/StudyMaterials";
 
@@ -236,6 +237,7 @@ function App() {
           {/* Public Pages */}
           <Route path="/" element={<Home />} />
           <Route path="/about" element={<About />} />
+          <Route path="/courses" element={<Courses />} />
           <Route path="/signup" element={<SignupForm />} />
           <Route path="/login" element={<LoginForm />} />
           <Route path="/unauthorized" element={<Unauthorized />} />
