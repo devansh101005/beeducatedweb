@@ -82,7 +82,7 @@ import {
   loginUser 
 } from "../controllers/authController.js";
 import { verifyToken } from "../middleware/authMiddleware.js";
-import admin from "../firebaseAdmin.js";
+//import admin from "../firebaseAdmin.js";
 import prisma from "../config/prismaClient.js"; // Restored Prisma import
 import jwt from "jsonwebtoken";
 

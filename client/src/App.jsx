@@ -228,6 +228,12 @@ import Courses from "./pages/Courses";
 
 import StudyMaterials from "./pages/StudyMaterials";
 
+// Fix the import paths - all exam components should be in pages/exam/
+import ExamCreator from "./pages/exam/ExamCreator";
+import TakeExam from "./pages/exam/TakeExam";
+import AvailableExams from "./pages/exam/AvailableExams";
+import ExamResults from "./pages/exam/ExamResults";
+
 function App() {
   return (
     <BrowserRouter>
@@ -319,6 +325,42 @@ function App() {
                 <AdminApplications />
               </RoleProtectedRoute>
             }
+          />
+
+          <Route 
+            path="/create-exam" 
+            element={
+              <RoleProtectedRoute allowedRoles={["ADMIN", "TUTOR"]}>
+                <ExamCreator />
+              </RoleProtectedRoute>
+            } 
+          />
+
+          <Route 
+            path="/available-exams" 
+            element={
+              <RoleProtectedRoute allowedRoles={["STUDENT"]}>
+                <AvailableExams />
+              </RoleProtectedRoute>
+            } 
+          />
+
+          <Route 
+            path="/take-exam/:examId" 
+            element={
+              <RoleProtectedRoute allowedRoles={["STUDENT"]}>
+                <TakeExam />
+              </RoleProtectedRoute>
+            } 
+          />
+
+          <Route 
+            path="/exam-results/:examId" 
+            element={
+              <RoleProtectedRoute allowedRoles={["STUDENT"]}>
+                <ExamResults />
+              </RoleProtectedRoute>
+            } 
           />
         </Routes>
       </main>

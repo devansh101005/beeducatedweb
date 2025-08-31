@@ -13,6 +13,7 @@ import offlineAuthRoutes from './routes/offlineAuthRoutes.js';
 import studentAuthRoutes from './routes/studentAuthRoutes.js';
 import applicationRoutes from './routes/applications.js';
 import adminRoutes from './routes/adminRoutes.js';
+import examRoutes from './routes/examRoutes.js';
 
 dotenv.config();
 
@@ -126,6 +127,7 @@ app.use('/api/admin', adminRoutes);
 
 console.log('Mounting /api/apply');
 app.use('/api/apply', applicationRoutes);
+app.use('/api/exams', examRoutes);
 
 // Error handling middleware
 app.use((err, req, res, next) => {
