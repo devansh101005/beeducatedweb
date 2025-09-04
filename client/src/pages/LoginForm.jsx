@@ -5,7 +5,7 @@ function LoginForm() {
   const [formData, setFormData] = useState({ email: "", password: "" });
   const [message, setMessage] = useState("");
 
-  const API_BASE = import.meta.env.VITE_API_BASE_URL ;
+  const API_BASE = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:5000";
   
 
   const handleChange = (e) => {
@@ -17,6 +17,7 @@ function LoginForm() {
 
 
     try {
+     // const VITE_API_BASE_URL= "http://localhost:5000";
       const res = await fetch(`${API_BASE}/api/auth/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },

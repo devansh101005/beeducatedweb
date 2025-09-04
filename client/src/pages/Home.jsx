@@ -4,15 +4,40 @@
 import "./Home.css"
 import logo from "../assets/logo.png";
 import { Link } from "react-router-dom"
-import { useState } from "react"
+import { useState,useEffect } from "react"
 import {FaFacebook,FaInstagram,FaWhatsapp,FaLinkedin} from 'react-icons/fa';
+import AnnouncementModal from "../components/AnnouncementModal";
 
 function Home() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+    const [announcement, setAnnouncement] = useState(null);
+    const [showAnnouncement, setShowAnnouncement] = useState(false);
 
   const toggleMobileMenu = () => {
     setIsMobileMenuOpen(!isMobileMenuOpen);
   };
+
+  
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/announcements/latest`);
+        const data = await res.json();
+        if (!cancelled && data?.success && data.announcement?.message) {
+          const seenId = localStorage.getItem("seenAnnouncementId");
+          if (String(seenId) !== String(data.announcement.id)) {
+            setAnnouncement(data.announcement);
+            setShowAnnouncement(true);
+          }
+        }
+      } catch (e) {
+        console.error("Failed to load announcement:", e);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, []);
 
   const testimonials = [
     {
@@ -43,6 +68,21 @@ function Home() {
 
   return (
     <div className="home-wrapper">
+
+
+      {showAnnouncement && (
+        <AnnouncementModal
+          message={announcement?.message}
+          onClose={() => {
+            if (announcement?.id) {
+              localStorage.setItem("seenAnnouncementId", String(announcement.id));
+            }
+            setShowAnnouncement(false);
+          }}
+        />
+      )}
+      
+
       {/* Navigation */}
       <nav className="navbar">
         <div className="container">

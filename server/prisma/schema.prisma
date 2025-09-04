@@ -155,3 +155,11 @@ model ExamAttempt {
   @@index([studentId])
   @@index([status])
 }
+
+model Announcement {
+  id        Int      @id @default(autoincrement())
+  message   String
+  isActive  Boolean  @default(true)  // Only active announcements are shown
+  createdAt DateTime @default(now())
+}
+

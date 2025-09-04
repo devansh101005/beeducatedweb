@@ -1,13 +1,54 @@
 import prisma from '../config/prismaClient.js';
 
+// export const createExam = async (req, res) => {
+//   try {
+//     const exam = await prisma.exam.create({
+//       data: { 
+//         ...req.body, 
+//         createdBy: req.user.id // This should now be a string (User.id)
+//       }
+//     });
+//     res.json({ id: exam.id, message: 'Exam created successfully' });
+//   } catch (err) {
+//     res.status(500).json({ error: err.message });
+//   }
+// };
 export const createExam = async (req, res) => {
   try {
-    const exam = await prisma.exam.create({
-      data: { 
-        ...req.body, 
-        createdBy: req.user.id // This should now be a string (User.id)
-      }
-    });
+    const {
+      title,
+      description,
+      subject,
+      classLevel,
+      duration,
+      startTime,
+      endTime,
+      totalMarks,
+      negativeMarking,
+      randomizeQuestions,
+      randomizeOptions
+    } = req.body;
+
+    const data = {
+      title,
+      description,
+      subject,
+      classLevel,
+      duration: duration != null ? Number(duration) : undefined,
+      startTime: startTime ? new Date(startTime) : null,
+      endTime: endTime ? new Date(endTime) : null,
+      totalMarks: totalMarks != null ? Number(totalMarks) : undefined,
+      negativeMarking: negativeMarking != null ? parseFloat(negativeMarking) : undefined,
+      randomizeQuestions: Boolean(randomizeQuestions),
+      randomizeOptions: Boolean(randomizeOptions),
+      createdBy: req.user.id
+    };
+
+    if (Number.isNaN(data.duration)) return res.status(400).json({ error: 'duration must be a number' });
+    if (Number.isNaN(data.totalMarks)) return res.status(400).json({ error: 'totalMarks must be a number' });
+    if (Number.isNaN(data.negativeMarking)) return res.status(400).json({ error: 'negativeMarking must be a number' });
+
+    const exam = await prisma.exam.create({ data });
     res.json({ id: exam.id, message: 'Exam created successfully' });
   } catch (err) {
     res.status(500).json({ error: err.message });

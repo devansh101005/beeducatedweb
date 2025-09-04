@@ -14,6 +14,7 @@ import studentAuthRoutes from './routes/studentAuthRoutes.js';
 import applicationRoutes from './routes/applications.js';
 import adminRoutes from './routes/adminRoutes.js';
 import examRoutes from './routes/examRoutes.js';
+import announcementRoutes from './routes/announcementRoutes.js';
 
 dotenv.config();
 
@@ -58,30 +59,67 @@ connectDB();
 // });
 
 // CORS configuration
-const allowedOrigins = [
-  process.env.FRONTEND_URL,
-  'http://localhost:5173',
-  'http://localhost:5174',
-  'http://localhost:3000',
-   'http://localhost:5000',
-   "https://beeducated.co.in",
-  "https://www.beeducated.co.in", 
-  "https://beeducated.vercel.app"
-].filter(Boolean); 
+
+
+// const allowedOrigins = [
+//   process.env.FRONTEND_URL,
+//   'http://localhost:5173',
+//   'http://localhost:5174',
+//   'http://localhost:3000',
+//    'http://localhost:5000',
+//    'http://127.0.0.1.5173',
+//    'http://127.0.0.1:3000',
+//    "https://beeducated.co.in",
+//   "https://www.beeducated.co.in", 
+//   "https://beeducated.vercel.app"
+// ].filter(Boolean); 
+
+// app.use(cors({
+//   origin: (origin, callback) => {
+//     if (!origin || allowedOrigins.includes(origin)) {
+//       callback(null, origin);
+//     } else {
+//       callback(new Error('Not allowed by CORS'));
+//     }
+//   },
+//   credentials: true,
+//   origin: ["https://beeducated.co.in","https://www.beeducated.co.in", "https://beeducated.vercel.app"],
+//   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+//   allowedHeaders: ['Content-Type', 'Authorization']
+// }));
+
+
 
 app.use(cors({
   origin: (origin, callback) => {
-    if (!origin || allowedOrigins.includes(origin)) {
-      callback(null, origin);
-    } else {
-      callback(new Error('Not allowed by CORS'));
+    const allow = [
+      process.env.FRONTEND_URL,
+      'http://localhost:5173',
+      'http://localhost:5174',
+      'http://localhost:3000',
+      'http://127.0.0.1:5173',
+      'http://127.0.0.1:3000',
+      'https://beeducated.co.in',
+      'https://www.beeducated.co.in',
+      'https://beeducated.vercel.app'
+    ].filter(Boolean);
+
+    if (!origin || allow.includes(origin)) {
+      return callback(null, true);
     }
+    return callback(new Error('Not allowed by CORS'));
   },
   credentials: true,
-  origin: ["https://beeducated.co.in","https://www.beeducated.co.in", "https://beeducated.vercel.app"],
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
+
+
+
+
+
+
+
 
 app.use(express.json());
 app.use('/uploads', express.static('uploads'));
@@ -128,6 +166,8 @@ app.use('/api/admin', adminRoutes);
 console.log('Mounting /api/apply');
 app.use('/api/apply', applicationRoutes);
 app.use('/api/exams', examRoutes);
+app.use('/api/announcements', announcementRoutes);
+//console.log(announcementRoutes);
 
 // Error handling middleware
 app.use((err, req, res, next) => {
