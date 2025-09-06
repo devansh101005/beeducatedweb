@@ -16,7 +16,9 @@ import adminRoutes from './routes/adminRoutes.js';
 import examRoutes from './routes/examRoutes.js';
 import announcementRoutes from './routes/announcementRoutes.js';
 
-dotenv.config();
+//dotenv.config();
+// server/server.js
+dotenv.config({ path: './server/.env' });
 
 const app = express();
 const prisma = new PrismaClient();
