@@ -6,6 +6,9 @@ const Courses = () => {
   const [activeTab, setActiveTab] = useState('school');
 
   const schoolCourses = [
+    { id: 1, name: 'Class Nursery', subjects: ['English', 'Math', 'EVS','Hindi'], color: '#FF6B6B' },
+    { id: 1, name: 'Class UKG', subjects: ['English', 'Math', 'EVS'], color: '#FF6B6B' },
+    { id: 1, name: 'Class LKG', subjects: ['English', 'Math', 'EVS'], color: '#FF6B6B' },
     { id: 1, name: 'Class 1', subjects: ['English', 'Math', 'EVS'], color: '#FF6B6B' },
     { id: 2, name: 'Class 2', subjects: ['English', 'Math', 'EVS'], color: '#4ECDC4' },
     { id: 3, name: 'Class 3', subjects: ['English', 'Math', 'EVS'], color: '#45B7D1' },
