@@ -126,7 +126,8 @@ function Home() {
       <section className="logo-tagline-section">
         <div className="container">
           <div className="logo-showcase">
-            <span className="main-logo-icon">🎓</span>
+            {/* <span className="main-logo-icon">🎓</span> */}
+            <img src={logo} alt="Be Educated Logo" className="logo-image" />
             <h1 className="institute-name">Be Educated</h1>
             <p className="tagline">Building Bright Minds Since 2025</p>
           </div>
