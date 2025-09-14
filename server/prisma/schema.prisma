@@ -28,20 +28,12 @@ enum Role {
 
 model Student {
   id          String   @id @default(uuid())
-<<<<<<< HEAD
   studentId   String   @unique  // Student ID (e.g., "2024CS001")
-=======
-  studentId   String   @unique // Student ID (e.g., "2024CS001")
->>>>>>> 0024a302c45d6fb370ba0cdc628e2af56645f53c
   name        String
   email       String?  @unique
   phone       String?
   dateOfBirth DateTime // For birthday authentication
-<<<<<<< HEAD
   gradeLevel  String   // e.g., "Class 12", "B.Tech 2nd Year"
-=======
-  gradeLevel  String // e.g., "Class 12", "B.Tech 2nd Year"
->>>>>>> 0024a302c45d6fb370ba0cdc628e2af56645f53c
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 }
@@ -88,7 +80,7 @@ model OfflineStudent {
   createdAt DateTime @default(now())
 }
 
-<<<<<<< HEAD
+
 model OfflineStudent {
   id        String   @id
   phone     String   @unique
@@ -96,7 +88,7 @@ model OfflineStudent {
   createdAt DateTime @default(now())
 }
 
-=======
+
 model Exam {
   id                 Int       @id @default(autoincrement())
   title              String
@@ -113,11 +105,9 @@ model Exam {
   createdBy          String
   createdAt          DateTime  @default(now())
   updatedAt          DateTime  @updatedAt
-
   questions Question[]
   attempts  ExamAttempt[]
   creator   User       @relation(fields: [createdBy], references: [id]) 
-
   @@index([createdBy])
   @@index([startTime])
   @@index([endTime])
@@ -179,5 +169,5 @@ model Announcement {
   isActive  Boolean  @default(true)  // Only active announcements are shown
   createdAt DateTime @default(now())
 }
->>>>>>> 0024a302c45d6fb370ba0cdc628e2af56645f53c
+
 

@@ -94,11 +94,8 @@ router.post("/upload", upload.single("file"), async (req, res) => {
     const material = await prisma.studyMaterial.create({
       data: {
         title,
-<<<<<<< HEAD
         category: category || "General", // Default to "General" if no category provided
-=======
-        category: category || "General",
->>>>>>> 0024a302c45d6fb370ba0cdc628e2af56645f53c
+
         classLevel,
         url,
       },

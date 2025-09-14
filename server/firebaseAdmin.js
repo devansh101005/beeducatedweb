@@ -1,15 +1,15 @@
-<<<<<<< HEAD
-import { initializeApp, cert } from 'firebase-admin/app';
-import { readFileSync } from 'fs';
 
-const serviceAccount = JSON.parse(readFileSync(new URL('./serviceAccountKey.json', import.meta.url)));
+// import { initializeApp, cert } from 'firebase-admin/app';
+// import { readFileSync } from 'fs';
 
-const admin = initializeApp({
-  credential: cert(serviceAccount)
-});
+// const serviceAccount = JSON.parse(readFileSync(new URL('./serviceAccountKey.json', import.meta.url)));
 
-export default admin;
-=======
+// const admin = initializeApp({
+//   credential: cert(serviceAccount)
+// });
+
+// export default admin;
+
 // // import { initializeApp, cert } from 'firebase-admin/app';
 // // import { readFileSync } from 'fs';
 
@@ -64,4 +64,4 @@ export default admin;
 //   storageBucket: process.env.FIREBASE_STORAGE_BUCKET
 // });
 // export default admin; // ESM default export
->>>>>>> 0024a302c45d6fb370ba0cdc628e2af56645f53c
+
