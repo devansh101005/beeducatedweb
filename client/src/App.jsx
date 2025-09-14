@@ -212,6 +212,7 @@ import AdminDashboard from "./pages/AdminDashboard";
 import StudentProfile from "./pages/StudentProfile";
 import StudentApplyForm from "./pages/StudentApplyForm";
 import TutorApplyForm from "./pages/TutorApplyForm";
+import UploadForm from "./pages/uploadForm";
 import AdminApplications from "./pages/AdminApplications";
 import StudentOtpLoginForm from "./pages/StudentOtpLoginForm";
 import PhoneLogin from "./pages/PhoneLogin";
@@ -223,8 +224,20 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import RoleProtectedRoute from "./components/RoleProtectedRoute";
 import Unauthorized from "./pages/Unauthorized";
 import Navbar from "./components/Navbar";
+<<<<<<< HEAD
 import UploadForm from "/src/pages/UploadForm.jsx";
 import StudyMaterials from "./pages/StudyMaterials";
+=======
+import Courses from "./pages/Courses";
+
+import StudyMaterials from "./pages/StudyMaterials";
+
+// Fix the import paths - all exam components should be in pages/exam/
+import ExamCreator from "./pages/exam/ExamCreator";
+import TakeExam from "./pages/exam/TakeExam";
+import AvailableExams from "./pages/exam/AvailableExams";
+import ExamResults from "./pages/exam/ExamResults";
+>>>>>>> 0024a302c45d6fb370ba0cdc628e2af56645f53c
 
 function App() {
   return (
@@ -235,6 +248,7 @@ function App() {
           {/* Public Pages */}
           <Route path="/" element={<Home />} />
           <Route path="/about" element={<About />} />
+          <Route path="/courses" element={<Courses />} />
           <Route path="/signup" element={<SignupForm />} />
           <Route path="/login" element={<LoginForm />} />
           <Route path="/unauthorized" element={<Unauthorized />} />
@@ -289,6 +303,7 @@ function App() {
                 <AdminDashboard />
               </RoleProtectedRoute>
             }
+
           />
           <Route
             path="/admin/users"
@@ -316,6 +331,45 @@ function App() {
               </RoleProtectedRoute>
             }
           />
+<<<<<<< HEAD
+=======
+
+          <Route 
+            path="/create-exam" 
+            element={
+              <RoleProtectedRoute allowedRoles={["ADMIN", "TUTOR"]}>
+                <ExamCreator />
+              </RoleProtectedRoute>
+            } 
+          />
+
+          <Route 
+            path="/available-exams" 
+            element={
+              <RoleProtectedRoute allowedRoles={["STUDENT"]}>
+                <AvailableExams />
+              </RoleProtectedRoute>
+            } 
+          />
+
+          <Route 
+            path="/take-exam/:examId" 
+            element={
+              <RoleProtectedRoute allowedRoles={["STUDENT"]}>
+                <TakeExam />
+              </RoleProtectedRoute>
+            } 
+          />
+
+          <Route 
+            path="/exam-results/:examId" 
+            element={
+              <RoleProtectedRoute allowedRoles={["STUDENT"]}>
+                <ExamResults />
+              </RoleProtectedRoute>
+            } 
+          />
+>>>>>>> 0024a302c45d6fb370ba0cdc628e2af56645f53c
         </Routes>
       </main>
     </BrowserRouter>

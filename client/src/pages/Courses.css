@@ -1,0 +1,359 @@
+
+/* 
+.courses-container {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: 2rem 0;
+  position: relative;
+  z-index: 1;
+} */
+
+#root{
+    margin-top: 84rem;
+    
+}
+
+.courses-container {
+    min-height: 100vh;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    /* Changed: Removed top padding, kept bottom padding */
+    padding-top: 0;
+    padding-bottom: 2rem; 
+    position: relative;
+    z-index: 1;
+    width:100vw;
+  }
+
+.courses-header {
+  text-align: center;
+  color: white;
+  margin-bottom: 3rem;
+  position: relative;
+  z-index: 2;
+}
+
+.courses-header h1 {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+  text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+}
+
+.courses-header p {
+  font-size: 1.2rem;
+  opacity: 0.9;
+}
+
+.courses-tabs {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  margin-bottom: 3rem;
+  padding: 0 2rem;
+  position: relative;
+  z-index: 2;
+}
+
+.tab-button {
+  padding: 1rem 2rem;
+  border: none;
+  border-radius: 50px;
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  font-size: 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(10px);
+  border: 2px solid rgba(255, 255, 255, 0.3);
+}
+
+.tab-button:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+}
+
+.tab-button.active {
+  background: white;
+  color: #667eea;
+  box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+}
+
+.courses-content {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 2rem;
+  position: relative;
+  z-index: 2;
+}
+
+.school-courses,
+.competition-courses {
+  width: 100%;
+  display: block;
+  position: relative;
+  z-index: 2;
+}
+
+.courses-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 2rem;
+  margin-bottom: 2rem;
+  width: 100%;
+  position: relative;
+  z-index: 2;
+}
+
+.course-card {
+  background: white;
+  border-radius: 20px;
+  padding: 2rem;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+  transition: all 0.3s ease;
+  border-top: 5px solid;
+  position: relative;
+  overflow: visible;
+  min-height: 300px;
+  display: flex;
+  flex-direction: column;
+  opacity: 1;
+  visibility: visible;
+  z-index: 3;
+}
+
+.course-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 5px;
+  background: linear-gradient(90deg, var(--border-color), var(--border-color-light));
+}
+
+.course-card:hover {
+  transform: translateY(-10px);
+  box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+}
+
+.school-card {
+  --border-color: #667eea;
+  --border-color-light: #764ba2;
+}
+
+.competition-card {
+  --border-color: #e74c3c;
+  --border-color-light: #c0392b;
+}
+
+.course-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  position: relative;
+  z-index: 4;
+}
+
+.course-header h3 {
+  font-size: 1.5rem;
+  color: #333;
+  margin: 0;
+}
+
+.course-number {
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  color: white;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-size: 1.2rem;
+}
+
+.course-icon {
+  font-size: 2.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.course-description {
+  color: #666;
+  margin-bottom: 1.5rem;
+  font-style: italic;
+}
+
+.course-subjects {
+  flex: 1;
+  position: relative;
+  z-index: 4;
+}
+
+.course-subjects h4 {
+  color: #333;
+  margin-bottom: 0.5rem;
+  font-size: 1.1rem;
+}
+
+.course-subjects ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.course-subjects li {
+  padding: 0.3rem 0;
+  color: #555;
+  position: relative;
+  padding-left: 1.5rem;
+}
+
+.course-subjects li::before {
+  content: '✓';
+  position: absolute;
+  left: 0;
+  color: #667eea;
+  font-weight: bold;
+}
+
+.course-actions {
+  display: flex;
+  gap: 1rem;
+  margin-top: auto;
+  padding-top: 1rem;
+  position: relative;
+  z-index: 4;
+}
+
+.view-btn, .enroll-btn {
+  flex: 1;
+  padding: 0.8rem 1rem;
+  border: none;
+  border-radius: 10px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.view-btn {
+  background: #f8f9fa;
+  color: #667eea;
+  border: 2px solid #667eea;
+}
+
+.view-btn:hover {
+  background: #667eea;
+  color: white;
+}
+
+.enroll-btn {
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  color: white;
+}
+
+.enroll-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+  .courses-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.5rem;
+  }
+  
+  .course-card {
+    padding: 1.5rem;
+    min-height: 280px;
+  }
+}
+
+@media (max-width: 768px) {
+  .courses-header h1 {
+    font-size: 2rem;
+  }
+  
+  .courses-tabs {
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  
+  .tab-button {
+    width: 100%;
+    max-width: 300px;
+    padding: 0.8rem 1.5rem;
+    font-size: 1rem;
+  }
+  
+  .courses-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+  
+  .course-card {
+    padding: 1.5rem;
+    min-height: auto;
+  }
+  
+  .course-actions {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  
+  .view-btn, .enroll-btn {
+    padding: 0.7rem 1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .courses-container {
+    padding: 1rem 0;
+  }
+  
+  .courses-content {
+    padding: 0 1rem;
+  }
+  
+  .courses-header h1 {
+    font-size: 1.8rem;
+  }
+  
+  .courses-header p {
+    font-size: 1rem;
+  }
+  
+  .course-card {
+    padding: 1rem;
+  }
+  
+  .course-header h3 {
+    font-size: 1.3rem;
+  }
+  
+  .course-number {
+    width: 35px;
+    height: 35px;
+    font-size: 1rem;
+  }
+}
+
+/* Simple animation without delays */
+.course-card {
+  animation: fadeIn 0.5s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

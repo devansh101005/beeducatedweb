@@ -5,10 +5,16 @@
   "main": "server.js",
   "type": "module",
   "dependencies": {
+<<<<<<< HEAD
     "@aws-sdk/client-s3": "^3.857.0",
     "@prisma/client": "^6.9.0",
     "accepts": "^2.0.0",
     "aws-sdk": "^2.1692.0",
+=======
+    "@aws-sdk/client-s3": "^3.859.0",
+    "@prisma/client": "^6.9.0",
+    "accepts": "^2.0.0",
+>>>>>>> 0024a302c45d6fb370ba0cdc628e2af56645f53c
     "bcryptjs": "^3.0.2",
     "body-parser": "^2.2.0",
     "cookie": "^0.7.2",

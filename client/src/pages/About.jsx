@@ -1,4 +1,6 @@
 import "./About.css";
+import Rishabh from "../assets/Rishabh.png";
+import Saurabh from "../assets/Saurabh.png";
 import { FaLinkedin, FaGithub } from "react-icons/fa";
 
 function About() {
@@ -60,11 +62,11 @@ function About() {
         <div className="team-grid">
           <div className="team-member">
             {/* <img src="https://via.placeholder.com/100" alt="Team member" /> */}
-            <h4>Pranav Singh</h4>
+            <h4></h4>
             <p>Manager</p>
           </div>
           <div className="team-member">
-            <img src="https://via.placeholder.com/100" alt="Team member" />
+            <img src={Saurabh} alt="Team member" />
             <h4>Saurabh Pandey</h4>
             <p>Academic Director</p>
           </div>

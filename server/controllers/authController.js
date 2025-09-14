@@ -53,13 +53,17 @@ export const registerUser = async (req, res) => {
 
 // LOGIN
 export const loginUser = async (req, res) => {
+  console.log("🔥 Login function called!");
+  console.log("Request body:", req.body);
   const { email, password } = req.body;
 
   try {
     const user = await prisma.user.findUnique({ where: { email } });
+    console.log("🔍 Found user:", user);
     if (!user) return res.status(401).json({ error: "Invalid credentials" });
 
     const isMatch = await bcrypt.compare(password, user.password);
+    console.log("🔍 Password match:", isMatch);
     if (!isMatch) return res.status(401).json({ error: "Invalid credentials" });
 
     const token = jwt.sign(
@@ -67,9 +71,12 @@ export const loginUser = async (req, res) => {
       JWT_SECRET,
       { expiresIn: "7d" }
     );
+    console.log("🔍 Token generated:", token);
 
     res.json({ token, user: { id: user.id, email: user.email, role: user.role } });
   } catch (err) {
+    console.error("❌ Server error:", err);
     res.status(500).json({ error: "Server error" });
   }
 };
+
