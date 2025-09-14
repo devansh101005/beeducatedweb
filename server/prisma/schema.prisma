@@ -73,12 +73,6 @@ model StudyMaterial {
   createdAt  DateTime @default(now())
 }
 
-model OfflineStudent {
-  id        String   @id
-  phone     String   @unique
-  otp       String?
-  createdAt DateTime @default(now())
-}
 
 
 model OfflineStudent {
