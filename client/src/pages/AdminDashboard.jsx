@@ -160,6 +160,9 @@ function AdminDashboard() {
               <h3>View Materials</h3>
               <p>Browse and manage study materials</p>
             </Link>
+            <Link to="/create-exam" className="action-button">
+          Create New Exam
+        </Link>
           </div>
         </div>
 
