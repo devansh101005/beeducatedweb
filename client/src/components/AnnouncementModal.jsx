@@ -1,5 +1,5 @@
 import React from "react";
-import "./AnnouncementModal.css"; // adjust path if different
+import "./AnnouncementModal.css";
 
 const AnnouncementModal = ({ message, onClose }) => {
   if (!message) return null;
