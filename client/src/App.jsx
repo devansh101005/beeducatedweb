@@ -224,11 +224,11 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import RoleProtectedRoute from "./components/RoleProtectedRoute";
 import Unauthorized from "./pages/Unauthorized";
 import Navbar from "./components/Navbar";
-import UploadForm from "/src/pages/UploadForm.jsx";
+//import UploadForm from "/src/pages/UploadForm.jsx";
 import StudyMaterials from "./pages/StudyMaterials";
 import Courses from "./pages/Courses";
 
-import StudyMaterials from "./pages/StudyMaterials";
+//import StudyMaterials from "./pages/StudyMaterials";
 import ExamCreator from "./pages/exam/ExamCreator";
 import TakeExam from "./pages/exam/TakeExam";
 import AvailableExams from "./pages/exam/AvailableExams";
