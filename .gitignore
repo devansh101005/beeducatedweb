@@ -1,2 +1,5 @@
 server/serviceAccountKey.json
 *.json
+
+node_modules/
+
