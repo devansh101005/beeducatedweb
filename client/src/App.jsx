@@ -224,20 +224,15 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import RoleProtectedRoute from "./components/RoleProtectedRoute";
 import Unauthorized from "./pages/Unauthorized";
 import Navbar from "./components/Navbar";
-<<<<<<< HEAD
 import UploadForm from "/src/pages/UploadForm.jsx";
 import StudyMaterials from "./pages/StudyMaterials";
-=======
 import Courses from "./pages/Courses";
 
 import StudyMaterials from "./pages/StudyMaterials";
-
-// Fix the import paths - all exam components should be in pages/exam/
 import ExamCreator from "./pages/exam/ExamCreator";
 import TakeExam from "./pages/exam/TakeExam";
 import AvailableExams from "./pages/exam/AvailableExams";
 import ExamResults from "./pages/exam/ExamResults";
->>>>>>> 0024a302c45d6fb370ba0cdc628e2af56645f53c
 
 function App() {
   return (
@@ -331,8 +326,7 @@ function App() {
               </RoleProtectedRoute>
             }
           />
-<<<<<<< HEAD
-=======
+
 
           <Route 
             path="/create-exam" 
@@ -369,7 +363,6 @@ function App() {
               </RoleProtectedRoute>
             } 
           />
->>>>>>> 0024a302c45d6fb370ba0cdc628e2af56645f53c
         </Routes>
       </main>
     </BrowserRouter>
