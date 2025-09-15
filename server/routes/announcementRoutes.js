@@ -1,19 +1,7 @@
-// //const express = require('express');
-// import express from "express";
-// const router = express.Router();
-
-// const { getLatestAnnouncement } = require('../controllers/announcementController');
-
-// router.get('/latest', getLatestAnnouncement);
-
-// export default router;
-
 import express from "express";
 
 const router = express.Router();
 
-// Example: In-memory dummy announcement.
-// Later, you can replace with DB logic (Prisma or whatever you use).
 let latestAnnouncement = {
   id: 1,
   message: "Welcome to Be Educated! New batches start next week 🎉",

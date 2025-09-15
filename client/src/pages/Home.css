@@ -1,508 +1,3 @@
-
-
-
-
-/* 
-
-
-html, body, {
-  height: 100%;
-  width: 100%;
-  overflow-x: hidden;
-}
-
-.home-wrapper {
-  width: 100vw;
-  min-height: 100vh;
-  overflow-x: hidden;
-  background: var(--gray-50) ;
-}
-
-
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
-
-body {
-  font-family: "Poppins", sans-serif;
-  background-color: #f9fafb;
-  color: #1f2937;
-  line-height: 1.6;
-}
-
- NAVBAR 
-.navbar {
-  background-color: #ffffff;
-  border-bottom: 1px solid #e5e7eb;
-  padding: 1rem 0;
-  position: sticky;
-  top: 0;
-  z-index: 100;
-}
-
-.container {
-  width: 100%;
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 0 1rem;
-  box-sizing: border-box;
-}
-
-.nav-content {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.logo-container {
-  display: flex;
-  align-items: center;
-}
-
-.logo-image {
-  width: 40px;
-  height: 40px;
-  margin-right: 0.5rem;
-}
-
-.logo-content  {
-  font-size: 1.2rem;
-  font-weight: 700;
-}
-
-.logo-content  {
-  font-size: 0.75rem;
-  color: #6b7280;
-}
-
-.logo-text {
-  font-family: var(--font-heading);
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: var(--primary-blue);
-}
-
-.logo-tagline {
-  font-family: var(--font-body);
-  font-size: 0.75rem;
-  font-weight: 400;
-  color: var(--gray-500);
-  margin-top: -2px;
-  line-height: 1;
-}
-
-
-
-.nav-links {
-  display: flex;
-  gap: 1rem;
-}
-
-.nav-link {
-  text-decoration: none;
-  color: #1f2937;
-  font-weight: 500;
-  transition: color 0.3s;
-}
-
-.nav-link:hover {
-  color: #2563eb;
-}
-
-.btn-nav {
-  background-color: #2563eb;
-  color: white;
-  padding: 0.5rem 1rem;
-  border-radius: 6px;
-  text-decoration: none;
-  font-weight: 600;
-  transition: background-color 0.3s;
-}
-
-.btn-nav:hover {
-  background-color: #1d4ed8;
-}
-
-
-.mobile-menu-toggle {
-  display: none;
-  background: none;
-  border: none;
-  cursor: pointer;
-}
-
-.hamburger {
-  width: 25px;
-  height: 3px;
-  background-color: #333;
-  display: block;
-  position: relative;
-}
-
-.hamburger::before,
-.hamburger::after {
-  content: "";
-  position: absolute;
-  width: 25px;
-  height: 3px;
-  background-color: #333;
-  transition: all 0.3s;
-}
-
-.hamburger::before {
-  top: -8px;
-}
-
-.hamburger::after {
-  top: 8px;
-}
-
-.hamburger.open {
-  background-color: transparent;
-}
-
-.hamburger.open::before {
-  transform: rotate(45deg);
-  top: 0;
-}
-
-.hamburger.open::after {
-  transform: rotate(-45deg);
-  top: 0;
-}
-
-
-@media (max-width: 768px) {
-  .nav-links {
-    display: none;
-    flex-direction: column;
-    background: #ffffff;
-    position: absolute;
-    top: 70px;
-    right: 5%;
-    width: 90%;
-    border: 1px solid #e5e7eb;
-    padding: 1rem;
-  }
-  .testimonials-heading-wrapper{
-    margin-top: 200px;
-  }
-
-  .home-wrapper {
-    padding-top: 80px; 
-  }
-
-  .nav-links.active {
-    display: flex;
-  }
-
-  .mobile-menu-toggle {
-    display: block;
-  }
-}
-
-
-.logo-tagline-section {
-  background-color: #e0f2fe;
-  text-align: center;
-  padding: 3rem 0;
-  padding-top: 160px;
-}
-
-.logo-showcase .main-logo-icon {
-  font-size: 3rem;
-}
-
-.institute-name {
-  font-size: 2.5rem;
-  font-weight: 700;
-  margin-top: 0.5rem;
-}
-
-.tagline {
-  font-size: 1.2rem;
-  color: #4b5563;
-}
-
-.short-intro {
-  padding: 3rem 0;
-}
-
-.intro-content h2 {
-  font-size: 2rem;
-  margin-bottom: 1rem;
-}
-
-.intro-highlights {
-  display: flex;
-  gap: 2rem;
-  margin-top: 2rem;
-  flex-wrap: wrap;
-}
-
-.highlight {
-  background-color: #f3f4f6;
-  padding: 1rem 2rem;
-  border-radius: 8px;
-  flex: 1;
-  text-align: center;
-}
-
-.highlight-number {
-  font-size: 2rem;
-  font-weight: bold;
-  color: #2563eb;
-}
-
-.highlight-text {
-  font-size: 1rem;
-  color: #374151;
-}
-
-
-.highlights {
-  padding: 3rem 0;
-  background-color: #f1f5f9;
-}
-
-.highlights-grid {
-  display: flex;
-  gap: 1.5rem;
-  flex-wrap: wrap;
-}
-
-.highlight-card {
-  flex: 1;
-  min-width: 280px;
-  background-color: white;
-  border-radius: 8px;
-  padding: 1.5rem;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
-  text-align: center;
-}
-
-.highlight-icon {
-  font-size: 2rem;
-  margin-bottom: 1rem;
-}
-
-
-.testimonials {
-  padding: 3rem 0;
-  background-color: #ffffff;
-  margin-top: 800px;
-}
-
-.testimonials-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 2rem;
-}
-
-.testimonial-card {
-  background: #f9fafb;
-  padding: 1.5rem;
-  border-radius: 8px;
-  border-left: 4px solid #2563eb;
-}
-
-.quote-mark {
-  font-size: 2rem;
-  color: #2563eb;
-}
-
-.student-avatar {
-  background-color: #2563eb;
-  color: white;
-  width: 40px;
-  height: 40px;
-  display: grid;
-  place-items: center;
-  font-weight: bold;
-  border-radius: 50%;
-  margin-right: 0.75rem;
-}
-
-.testimonial-footer {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-top: 1rem;
-}
-
-.student-info {
-  display: flex;
-  align-items: center;
-}
-
-.student-details h4 {
-  margin: 0;
-  font-size: 1rem;
-}
-
-.rating span {
-  color: gold;
-}
-
-
-.contact-section {
-  padding: 3rem 0;
-  background-color: #e0f2fe;
-}
-
-.contact-grid {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 2rem;
-}
-
-.contact-info,
-.additional-info {
-  flex: 1;
-  min-width: 300px;
-}
-
-.contact-item {
-  display: flex;
-  gap: 1rem;
-  margin-bottom: 1.5rem;
-}
-
-.contact-icon {
-  font-size: 1.5rem;
-}
-
-.contact-text h4 {
-  margin-bottom: 0.25rem;
-}
-
-
-.info-card {
-  background: #ffffff;
-  padding: 1rem;
-  border-radius: 8px;
-  margin-bottom: 1rem;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
-}
-
-.info-icon {
-  font-size: 1.5rem;
-  display: inline-block;
-  margin-bottom: 0.5rem;
-}
-
-
-.social-section {
-  background-color: #f1f5f9;
-  padding: 2rem 0;
-  text-align: center;
-}
-
-.social-links {
-  display: flex;
-  justify-content: center;
-  gap: 1rem;
-  margin-top: 1rem;
-}
-
-.social-link {
-  font-size: 1.5rem;
-  text-decoration: none;
-}
-
-
-.footer {
-  background-color: #111827;
-  color: #d1d5db;
-  padding: 3rem 0 1rem;
-}
-
-.footer-content {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 2rem;
-}
-
-.footer-section {
-  flex: 1;
-  min-width: 220px;
-}
-
-.footer-section h4 {
-  margin-bottom: 1rem;
-  color: #f3f4f6;
-}
-
-.footer-section ul {
-  list-style: none;
-  padding-left: 0;
-}
-
-.footer-section ul li {
-  margin-bottom: 0.5rem;
-}
-
-.footer-section ul li a {
-  color: #d1d5db;
-  text-decoration: none;
-}
-
-.footer-section ul li a:hover {
-  color: #60a5fa;
-}
-
-.footer-logo .logo-image {
-  width: 30px;
-  height: 30px;
-  margin-right: 0.5rem;
-}
-
-.footer-bottom {
-  text-align: center;
-  margin-top: 2rem;
-  border-top: 1px solid #374151;
-  padding-top: 1rem;
-  font-size: 0.875rem;
-}
-
-
-@media (max-width: 500px) {
-  .intro-content h2,
-  .institute-name,
-  .section-header h2 {
-    font-size: 1.5rem;
-  }
-} */
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 /* Import Google Fonts */
 @import url("https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&family=Open+Sans:wght@300;400;500;600;700&display=swap");
 
@@ -1114,6 +609,12 @@ body {
   }
 }
 
+@media(max-width:786px){
+  .home-wrapper {
+    margin-top: 4350px;
+  }
+}
+
 /* Ensure all sections have correct backgrounds */
 .contact-section, .additional-info, .testimonials, .short-intro, .highlights {
   background: var(--gray-50);
@@ -1122,6 +623,85 @@ body {
 /* Ensure testimonials section is not hidden under navbar, but reduce top padding for better balance */
 .testimonials {
   padding-top: 20px;
+  margin-top: 25px;
+}
+
+/* Student Portal Section */
+.student-portal-section {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: 2rem;
+  border-radius: 15px;
+  text-align: center;
+  margin-top: 2rem;
+  color: white;
+  box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
+}
+
+.student-portal-section h3 {
+  font-size: 1.8rem;
+  margin-bottom: 0.5rem;
+  font-weight: 700;
+}
+
+.student-portal-section p {
+  font-size: 1.1rem;
+  margin-bottom: 1.5rem;
+  opacity: 0.9;
+}
+
+.student-portal-btn {
+  display: inline-block;
+  background: white;
+  color: #667eea;
+  padding: 15px 30px;
+  border-radius: 50px;
+  text-decoration: none;
+  font-weight: 700;
+  font-size: 1.1rem;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+.student-portal-btn:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+  text-decoration: none;
+  color: #667eea;
+}
+
+@media (max-width: 768px) {
+  .student-portal-section {
+    padding: 1.5rem;
+    margin-top: 1.5rem;
+  }
+  
+  .student-portal-section h3 {
+    font-size: 1.5rem;
+  }
+  
+  .student-portal-section p {
+    font-size: 1rem;
+  }
+  
+  .student-portal-btn {
+    padding: 12px 25px;
+    font-size: 1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .student-portal-section {
+    padding: 1rem;
+  }
+  
+  .student-portal-section h3 {
+    font-size: 1.3rem;
+  }
+  
+  .student-portal-btn {
+    padding: 10px 20px;
+    font-size: 0.9rem;
+  }
 }
 
 /* Student Portal Section */

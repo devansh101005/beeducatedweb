@@ -38,10 +38,10 @@ function About() {
           <div className="founder-member">
             <strong>Devansh Pandey</strong> — a passionate developer and educator who envisioned a platform where education is not a privilege, but a right. Devansh combined his love for coding and community impact to launch Be Educated.
             <div className="founder-links">
-              <a href="https://www.linkedin.com/in/devanshpandey01/" target="_blank" rel="noopener noreferrer" aria-label="Devansh Pandey LinkedIn">
+              <a href="https://www.linkedin.com/in/devansh-pandey-a71667218/" target="_blank" rel="noopener noreferrer" aria-label="Devansh Pandey LinkedIn">
                 <FaLinkedin size={22} />
               </a>
-              <a href="https://github.com/devanshpandey01" target="_blank" rel="noopener noreferrer" aria-label="Devansh Pandey GitHub">
+              <a href="https://github.com/devansh101005" target="_blank" rel="noopener noreferrer" aria-label="Devansh Pandey GitHub">
                 <FaGithub size={22} />
               </a>
             </div>
@@ -49,7 +49,7 @@ function About() {
           <div className="founder-member">
             <strong>Rishabh Pandey</strong> —the visionary founder of Be Educated, is a passionate educator dedicated to transforming the way students learn. With a deep connection to his roots in Lalganj Ajhara, Pratapgarh, he started this journey to ensure that every child, regardless of their background, gets access to quality education.
             <div className="founder-links">
-              <a href="https://www.linkedin.com/in/rishabh-pandey-h/" target="_blank" rel="noopener noreferrer" aria-label="Rishabh Pandey LinkedIn">
+              <a href="https://www.linkedin.com/in/rishabh-pandey-6209542ba/" target="_blank" rel="noopener noreferrer" aria-label="Rishabh Pandey LinkedIn">
                 <FaLinkedin size={22} />
               </a>
             </div>
