@@ -4,7 +4,7 @@
   max-width: 400px;
   width: 100vw;
   margin-bottom: 1250px;
-  margin-left: 580px;
+  margin-left: 500px;
   border-radius: 10px;
   box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
 }
@@ -114,5 +114,14 @@
   margin-top: 1rem;
   text-align: center;
   color: #d9534f;
+}
+
+@media(max-width:786px){
+  
+    .login-container{
+     margin-left: 5px;
+     margin-top: 125px;
+    }
+  
 }
 
