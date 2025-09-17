@@ -2,6 +2,7 @@
     padding: 2rem 0 4rem 0;
     background-color: #f9fafb;
     font-family: 'Poppins', sans-serif;
+    width:100vw;
 }
 
 .fee-cards-grid {
@@ -148,4 +149,10 @@
 
 .contact-enquiry a:hover {
     text-decoration: underline;
+}
+
+@media( max-width:786px) {
+    .fee-structure-wrapper{
+        margin-top: 2000px;
+    }
 }
