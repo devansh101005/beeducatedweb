@@ -173,14 +173,24 @@ function AdminStudents() {
                 required
               >
                 <option value="">Select Grade Level</option>
+                <option value="Class UKG">Class UKG</option>
+                <option value="Class LKG">Class LKG</option>
+                <option value="Class 1">Class 1</option>
+                <option value="Class 2">Class 2</option>
+                <option value="Class 3">Class 3</option>
+                <option value="Class 4">Class 4</option>
+                <option value="Class 5">Class 5</option>
+                <option value="Class 6">Class 6</option>
+                <option value="Class 7">Class 7</option>
+                <option value="Class 8">Class 8</option>
                 <option value="Class 9">Class 9</option>
                 <option value="Class 10">Class 10</option>
                 <option value="Class 11">Class 11</option>
                 <option value="Class 12">Class 12</option>
                 <option value="B.Tech 1st Year">B.Tech 1st Year</option>
-                <option value="B.Tech 2nd Year">B.Tech 2nd Year</option>
+                {/* <option value="B.Tech 2nd Year">B.Tech 2nd Year</option>
                 <option value="B.Tech 3rd Year">B.Tech 3rd Year</option>
-                <option value="B.Tech 4th Year">B.Tech 4th Year</option>
+                <option value="B.Tech 4th Year">B.Tech 4th Year</option> */}
                 <option value="Other">Other</option>
               </select>
             </div>
