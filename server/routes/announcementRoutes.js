@@ -4,7 +4,7 @@ const router = express.Router();
 
 let latestAnnouncement = {
   id: 1,
-  message: "Welcome to Be Educated! New batches start next week 🎉",
+  message: "Registration process of test series has started for class 10th and 12th 🎉",
   createdAt: new Date()
 };
 
