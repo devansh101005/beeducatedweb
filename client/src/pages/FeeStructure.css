@@ -1,0 +1,151 @@
+.fee-structure-wrapper {
+    padding: 2rem 0 4rem 0;
+    background-color: #f9fafb;
+    font-family: 'Poppins', sans-serif;
+}
+
+.fee-cards-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 2rem;
+    margin-top: 3rem;
+}
+
+.fee-card {
+    background-color: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05), 0 10px 20px rgba(0, 0, 0, 0.05);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.fee-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 15px rgba(0, 0, 0, 0.07), 0 20px 40px rgba(0, 0, 0, 0.07);
+}
+
+.fee-card-header {
+    background-color: #1f2937;
+    color: #ffffff;
+    padding: 1.5rem;
+    text-align: center;
+}
+
+.fee-card-header h3 {
+    margin: 0;
+    font-size: 1.5rem;
+    font-weight: 600;
+}
+
+.fee-card-header p {
+    margin: 0.5rem 0 0;
+    font-size: 0.9rem;
+    color: #d1d5db;
+}
+
+.fee-card-body {
+    padding: 1.5rem;
+    flex-grow: 1;
+}
+
+.fee-pricing {
+    display: flex;
+    justify-content: space-around;
+    text-align: center;
+    margin-bottom: 2rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.fee-pricing .price {
+    display: block;
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: #10b981;
+}
+
+.fee-pricing .period {
+    font-size: 0.85rem;
+    color: #6b7280;
+}
+
+.fee-features {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    color: #374151;
+}
+
+.fee-features li {
+    margin-bottom: 0.75rem;
+    font-size: 0.95rem;
+    display: flex;
+    align-items: center;
+}
+
+.fee-card-footer {
+    padding: 1.5rem;
+    background-color: #f9fafb;
+    text-align: center;
+}
+
+.btn-enroll {
+    display: inline-block;
+    background-color: #10b981;
+    color: #ffffff;
+    padding: 0.75rem 2rem;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: 600;
+    transition: background-color 0.3s ease;
+}
+
+.btn-enroll:hover {
+    background-color: #059669;
+}
+
+/* Payment Policies */
+.payment-policies {
+    margin-top: 4rem;
+    padding: 2rem;
+    background-color: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+}
+
+.payment-policies h3 {
+    font-size: 1.75rem;
+    color: #1f2937;
+    margin-bottom: 1.5rem;
+    text-align: center;
+}
+
+.payment-policies ul {
+    list-style-position: inside;
+    padding-left: 1rem;
+    color: #374151;
+    margin-bottom: 1.5rem;
+}
+
+.payment-policies li {
+    margin-bottom: 0.75rem;
+    line-height: 1.6;
+}
+
+.contact-enquiry {
+    text-align: center;
+    font-size: 1.1rem;
+    color: #374151;
+}
+
+.contact-enquiry a {
+    color: #10b981;
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.contact-enquiry a:hover {
+    text-decoration: underline;
+}

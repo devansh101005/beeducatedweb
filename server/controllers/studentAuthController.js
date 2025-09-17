@@ -46,7 +46,7 @@ export const registerStudent = async (req, res) => {
         role: "STUDENT" 
       },
       process.env.JWT_SECRET,
-      { expiresIn: "7d" }
+      { expiresIn: "10h" }
     );
 
     res.status(201).json({

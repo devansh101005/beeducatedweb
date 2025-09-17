@@ -108,6 +108,9 @@ function Home() {
               <Link to="/courses" className="nav-link" onClick={() => setIsMobileMenuOpen(false)}>
                 Courses
               </Link>
+               <Link to="/fee-structure" className="nav-link" onClick={() => setIsMobileMenuOpen(false)}>
+                Fee Structure
+              </Link>
               <Link to="/contact" className="nav-link" onClick={() => setIsMobileMenuOpen(false)}>
                 Contact
               </Link>
@@ -426,7 +429,7 @@ function Home() {
                   <a href="#">Parent Login</a>
                 </li>
                 <li>
-                  <a href="#">Fee Structure</a>
+                  <a href="/fee-structure">Fee Structure</a>
                 </li>
                 <li>
                   <a href="#">Admission Process</a>
