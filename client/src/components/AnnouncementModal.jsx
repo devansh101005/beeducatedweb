@@ -12,7 +12,8 @@ const AnnouncementModal = ({ message, onClose }) => {
         </button>
         <div className="modal-body">
           <h2>Announcement</h2>
-          <p>{message}</p>
+          {/* <p>{message}</p> */}
+          <p>Registration process of test series has started for class 10th and 12th 🎉</p>
         </div>
       </div>
     </div>
