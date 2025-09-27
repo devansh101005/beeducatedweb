@@ -8,6 +8,74 @@
   padding: 20px;
 }
 
+
+.available-exams-section h2 {
+    font-size: 1.75rem;
+    color: #1f2937;
+    margin-bottom: 1.5rem;
+    border-bottom: 2px solid #e5e7eb;
+    padding-bottom: 0.5rem;
+}
+
+.exams-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1.5rem;
+}
+
+.exam-card {
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 1.5rem;
+    transition: transform 0.2s, box-shadow 0.2s;
+    display: flex;
+    flex-direction: column;
+}
+
+.exam-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+}
+
+.exam-card h3 {
+    font-size: 1.2rem;
+    color: #111827;
+    margin-bottom: 0.75rem;
+}
+
+.exam-card p {
+    font-size: 0.9rem;
+    color: #4b5563;
+    margin-bottom: 0.4rem;
+    flex-grow: 1;
+}
+
+.start-exam-btn {
+    display: block;
+    margin-top: 1rem;
+    padding: 0.6rem 1.2rem;
+    background-color: #2563eb;
+    color: white;
+    text-decoration: none;
+    border-radius: 6px;
+    font-weight: 500;
+    text-align: center;
+    transition: background-color 0.2s;
+}
+
+.start-exam-btn:hover {
+    background-color: #1d4ed8;
+}
+
+.error-message {
+    color: #dc2626;
+    font-weight: 500;
+    background-color: #fee2e2;
+    padding: 1rem;
+    border-radius: 6px;
+}
+
+
 .login-container {
   background: white;
   padding: 3rem;

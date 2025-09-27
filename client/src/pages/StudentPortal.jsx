@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate,Link } from "react-router-dom";
 import "./StudentPortal.css";
 
 function StudentPortal() {
@@ -11,6 +11,9 @@ function StudentPortal() {
   const [studentInfo, setStudentInfo] = useState(null);
   const [materials, setMaterials] = useState([]);
   const navigate = useNavigate();
+  const [exams, setExams] = useState([]);
+  const [loadingExams, setLoadingExams] = useState(true);
+  const [examError, setExamError] = useState(null);
 
   // Check if student is already logged in
   useEffect(() => {
@@ -24,6 +27,7 @@ function StudentPortal() {
           setIsLoggedIn(true);
           setStudentInfo(userData);
           fetchMaterials();
+          fetchExams();
         }
       } catch (err) {
         console.error("Error parsing user data:", err);
@@ -54,6 +58,7 @@ function StudentPortal() {
         setStudentInfo(data.user);
         setMessage("✅ Login successful!");
         fetchMaterials();
+        fetchExams()
       } else {
         setMessage("❌ " + (data.error || "Login failed"));
       }
@@ -81,12 +86,47 @@ function StudentPortal() {
     }
   };
 
+const fetchExams = async () => { 
+      try {
+          const token = localStorage.getItem('token');
+          if (!token) {
+              setExamError("Authentication required. Please log in again.");
+              setLoadingExams(false);
+              return;
+          }
+
+          const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/exams/available`, {
+              headers: {
+                  'Authorization': `Bearer ${token}`
+              }
+          });
+
+          if (!res.ok) {
+              throw new Error('Failed to fetch available exams');
+          }
+
+          const data = await res.json();
+          if (data.success) {
+              setExams(data.exams);
+          } else {
+              setExamError(data.message || 'Could not load exams.');
+          }
+      } catch (err) {
+          setExamError(err.message);
+      } finally {
+          setLoadingExams(false);
+      }
+  };
+
+
+
   const handleLogout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
     setIsLoggedIn(false);
     setStudentInfo(null);
     setMaterials([]);
+    setExams([]);
     setMessage("Logged out successfully");
   };
 
@@ -144,6 +184,33 @@ function StudentPortal() {
               </div>
             )}
           </div>
+
+           <section className="portal-section available-exams-section">
+            <h2>📝 Available Exams</h2>
+            {loadingExams && <p>Loading exams...</p>}
+            {examError && <p className="error-message">{examError}</p>}
+            {!loadingExams && !examError && (
+                <div className="exams-list">
+                    {exams.length > 0 ? (
+                        exams.map(exam => (
+                            <div key={exam.id} className="exam-card">
+                                <h3>{exam.title}</h3>
+                                <p><strong>Subject:</strong> {exam.subject}</p>
+                                <p><strong>Duration:</strong> {exam.durationInMinutes} minutes</p>
+                                <p><strong>Total Marks:</strong> {exam.totalMarks}</p>
+                                <Link to={`/take-exam/${exam.id}`} className="start-exam-btn">
+                                    Start Exam
+                                </Link>
+                            </div>
+                        ))
+                    ) : (
+                        <div className="no-materials">
+                           <p>🎉 No exams are currently available for you.</p>
+                        </div>
+                    )}
+                </div>
+            )}
+          </section>
 
           <div className="quick-actions">
             <h2>⚡ Quick Actions</h2>
