@@ -16,7 +16,6 @@ model User {
   password     String
   role         Role          @default(STUDENT)
   createdAt    DateTime      @default(now())
-  examAttempts ExamAttempt[]
   createdExams Exam[]
 }
 
@@ -36,6 +35,7 @@ model Student {
   gradeLevel  String   // e.g., "Class 12", "B.Tech 2nd Year"
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+  examAttempts ExamAttempt[]
 }
 
 model StudentApplication {
@@ -134,6 +134,7 @@ model ExamAttempt {
   id          Int           @id @default(autoincrement())
   examId      Int
   studentId   String
+  student     Student @relation(fields: [studentId], references: [id])
   // Persisted randomization + user selections:
   // {
   //   qOrder: [questionId...],
