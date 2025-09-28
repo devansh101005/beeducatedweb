@@ -17,7 +17,7 @@ const router = express.Router();
 // Admin / Tutor routes
 router.post('/', authenticate, authorize(['ADMIN', 'TUTOR']), createExam);
 router.post('/:examId/questions', authenticate, authorize(['ADMIN', 'TUTOR']), addQuestion);
-router.get('/', authenticate, authorize(['ADMIN', 'TUTOR']), getAllExams);
+router.get('/', authenticate, authorize(['ADMIN', 'TUTOR','STUDENT']), getAllExams);
 router.get('/:examId/questions', authenticate, authorize(['ADMIN', 'TUTOR']), getExamQuestions);
 
 // Student routes

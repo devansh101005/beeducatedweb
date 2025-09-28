@@ -152,16 +152,38 @@ export const startExam = async (req, res) => {
 
 export const submitExam = async (req, res) => {
   try {
+
+    console.log('=== SUBMIT EXAM STARTED ===');
+    console.log('Request params:', req.params);
+    console.log('Request body:', req.body);
+    console.log('User:', req.user);
+
+
     const { examId } = req.params;
     const { answers } = req.body;
+
+    console.log('Exam ID:', examId);
+    console.log('Answers received:', answers);
+
+
+    //const {answers,startedAt:startedAtISO}=req.body;
     const examIdInt = parseInt(examId);
+    console.log('Parsed exam ID:', examIdInt);
+
     if (isNaN(examIdInt)) {
       return res.status(400).json({ error: 'Invalid exam ID' });
     }
     
     let score = 0;
 
+    console.log('Fetching questions...');
+
     const questions = await prisma.question.findMany({ where: { examId: examIdInt } });
+
+
+  console.log('Questions found:', questions.length);
+    console.log('Questions:', questions);
+
 
     answers.forEach(ans => {
       const q = questions.find(q => q.id === ans.questionId);
@@ -187,8 +209,21 @@ export const submitExam = async (req, res) => {
       }
     });
 
-    res.json({ score: attempt.score, timeTaken: (new Date() - attempt.startedAt) / 1000, status: 'SUBMITTED' });
+    console.log('Exam attempt created:', attempt);
+
+
+    const response={ score: attempt.score, 
+      timeTaken: (new Date() - attempt.startedAt) / 1000,
+       status: 'SUBMITTED'
+       }
+
+       console.log('Sending response:', response);
+       res.json(response);
+      
   } catch (err) {
+    console.error('=== ERROR IN SUBMIT EXAM ===');
+    console.error('Error message:', err.message);
+    console.error('Error stack:', err.stack);
     res.status(500).json({ error: err.message });
   }
 };
