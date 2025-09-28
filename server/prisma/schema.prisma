@@ -150,7 +150,7 @@ model ExamAttempt {
   status      AttemptStatus @default(IN_PROGRESS)
 
   exam    Exam @relation(fields: [examId], references: [id])
-  student User @relation(fields: [studentId], references: [id])
+ //student User @relation(fields: [studentId], references: [id])
 
   @@unique([examId, studentId, status], map: "uniq_active_attempt_per_exam_student_status")
   @@index([examId])
