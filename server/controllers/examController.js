@@ -222,8 +222,10 @@ export const submitExam = async (req, res) => {
       
   } catch (err) {
     console.error('=== ERROR IN SUBMIT EXAM ===');
+    console.error("Attempted to use studentId:", req.user ? req.user.id : "N/A");
     console.error('Error message:', err.message);
     console.error('Error stack:', err.stack);
+    console.error("Error stack:", err);
     res.status(500).json({ error: err.message });
   }
 };
