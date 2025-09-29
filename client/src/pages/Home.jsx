@@ -26,9 +26,9 @@ function Home() {
         const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/announcements/latest`);
         const data = await res.json();
         if (!cancelled && data?.success && data.announcement?.message) {
-          const seenId = localStorage.getItem("seenAnnouncementId");
+          // const seenId = localStorage.getItem("seenAnnouncementId");
           if (String(seenId) !== String(data.announcement.id)) {
-            setAnnouncement(data.announcement);
+             setAnnouncement(data.announcement);
             setShowAnnouncement(true);
           }
         }
