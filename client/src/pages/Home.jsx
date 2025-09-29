@@ -405,7 +405,7 @@ function Home() {
               <h4>Programs</h4>
               <ul>
                 <li>
-                  <a href="#">Class 9-10 Foundation</a>
+                  <a href="#">Class 9-10 Board Prep</a>
                 </li>
                 <li>
                   <a href="#">Class 11-12 Board Prep</a>
