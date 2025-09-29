@@ -75,9 +75,9 @@ function Home() {
           message={announcement?.message}
           onClose={() => {
             if (announcement?.id) {
-              localStorage.setItem("seenAnnouncementId", String(announcement.id));
+              //localStorage.setItem("seenAnnouncementId", String(announcement.id));
             }
-            setShowAnnouncement(true);
+            setShowAnnouncement(false);
           }}
         />
       )}
