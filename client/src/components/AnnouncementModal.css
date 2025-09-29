@@ -17,6 +17,8 @@
   margin-left: 20px;
   border-radius: 8px;
 }
+
+
   
   .modal-content {
     background: #fff;
@@ -47,4 +49,12 @@
     margin-top: 10px;
     font-size: 1rem;
   }
+
+  @media (max-width: 768px) {
+  .ann-image {
+    width: 300px;
+  height: 400px;
+  margin-left: 0px;
+  }
+}
   
