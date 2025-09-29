@@ -10,6 +10,12 @@
     align-items: center;
     z-index: 9999;
   }
+
+  .ann-image {
+  width: 320px;
+  height: 240px;
+  border-radius: 8px;
+}
   
   .modal-content {
     background: #fff;
