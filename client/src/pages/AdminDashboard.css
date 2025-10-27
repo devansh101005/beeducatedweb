@@ -1,6 +1,9 @@
+
+
+
 .admin-dashboard {
   padding: 1rem;
-  max-width: 1400px;
+  width: 100vw;
   margin: 0 auto;
   min-height: 100vh;
   background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);

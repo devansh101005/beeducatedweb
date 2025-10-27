@@ -150,19 +150,23 @@ function AdminDashboard() {
         <div className="section-group">
           <h2>📚 Content Management</h2>
           <div className="action-grid">
+
             <Link to="/upload" className="action-card">
               <div className="action-icon">📤</div>
               <h3>Upload Materials</h3>
               <p>Upload study materials and resources</p>
             </Link>
+
             <Link to="/materials" className="action-card">
               <div className="action-icon">📖</div>
               <h3>View Materials</h3>
               <p>Browse and manage study materials</p>
             </Link>
-            <Link to="/create-exam" className="action-button">
-            <div className="action-icon"></div>
-             <p>Create New Exam</p>
+
+            <Link to="/create-exam" className="action-card">
+            <div className="action-icon">🌏</div>
+             <h3>Create New Exam</h3>
+             <p>Create exams for students</p>
         </Link>
           </div>
         </div>

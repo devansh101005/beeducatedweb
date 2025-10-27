@@ -1,18 +1,4 @@
 import prisma from '../config/prismaClient.js';
-
-// export const createExam = async (req, res) => {
-//   try {
-//     const exam = await prisma.exam.create({
-//       data: { 
-//         ...req.body, 
-//         createdBy: req.user.id // This should now be a string (User.id)
-//       }
-//     });
-//     res.json({ id: exam.id, message: 'Exam created successfully' });
-//   } catch (err) {
-//     res.status(500).json({ error: err.message });
-//   }
-// };
 export const createExam = async (req, res) => {
   try {
     const {
@@ -113,6 +99,9 @@ export const getExamQuestions = async (req, res) => {
 export const getAvailableExams = async (req, res) => {
   try {
     const now = new Date();
+    // if(createExam.classLevel==StudentPortal.gradeLevel){
+
+    // }
     const exams = await prisma.exam.findMany({
       where: {
         startTime: { lte: now },

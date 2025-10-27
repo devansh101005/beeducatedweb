@@ -172,7 +172,7 @@ const ExamCreator = () => {
   return (
     <div className="exam-creator">
       <div className="creator-header">
-        <h1>�� Create New Exam</h1>
+        <h1> Create New Exam</h1>
         <p>Design and configure your exam with questions</p>
       </div>
 
