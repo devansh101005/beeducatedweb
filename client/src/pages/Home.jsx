@@ -5,7 +5,7 @@ import "./Home.css"
 import logo from "../assets/logo.png";
 import { Link } from "react-router-dom"
 import { useState,useEffect } from "react"
-import {FaFacebook,FaInstagram,FaWhatsapp,FaLinkedin} from 'react-icons/fa';
+import {FaFacebook,FaInstagram,FaWhatsapp,FaLinkedin,FaYoutube} from 'react-icons/fa';
 import AnnouncementModal from "../components/AnnouncementModal";
 
 function Home() {
@@ -361,6 +361,9 @@ function Home() {
             </a>
             <a href="https://www.linkedin.com/company/be-educated-official/" className="social-link Linkedin" aria-label="Linkedin">
               <FaLinkedin/>
+            </a>
+            <a href="https://youtube.com/@be-beeducated?si=1yE_tdN05ir1dmHq" className="social-link Youtube" aria-label="Youtube">
+              <FaYoutube/>
             </a>
           </div>
         </div>
