@@ -15,7 +15,7 @@
 /* MANUAL MOBILE FIX: Increase padding if content is still hidden */
 @media (max-width: 768px) {
     .faculty-container {
-        padding-top: 300px; /* Increased specifically for mobile navbars */
+        padding-top: 30px; /* Increased specifically for mobile navbars */
         
     }
 }
