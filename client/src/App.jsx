@@ -35,11 +35,13 @@ import TakeExam from "./pages/exam/TakeExam";
 import AvailableExams from "./pages/exam/AvailableExams";
 import ExamResults from "./pages/exam/ExamResults";
 import FeeStructure from './pages/FeeStructure';
+import FacultyPage from "./pages/FacultyPage";
 
 function App() {
   return (
     <BrowserRouter>
       <Navbar />
+      <div className="nav-spacer"></div>
       <main>
         <Routes>
           {/* Public Pages */}
@@ -56,6 +58,7 @@ function App() {
           <Route path="/phone-login" element={<PhoneLogin />} />
           <Route path="/student-login" element={<StudentLogin />} />
           <Route path="/student-portal" element={<StudentPortal />} />
+          <Route path="/faculty" element={<FacultyPage />} />
 
           {/* Student Routes */}
           <Route

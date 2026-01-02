@@ -1,0 +1,146 @@
+/* FacultyPage.css */
+
+.faculty-container {
+    /* Desktop Default */
+    padding-top: 100px; 
+    padding-bottom: 50px;
+    padding-left: 20px;
+    padding-right: 20px;
+    background-color: #f9fafb;
+    min-height: 100vh;
+    font-family: 'Inter', sans-serif;
+    width: 100vw;
+}
+
+/* MANUAL MOBILE FIX: Increase padding if content is still hidden */
+@media (max-width: 768px) {
+    .faculty-container {
+        padding-top: 800px; /* Increased specifically for mobile navbars */
+    }
+}
+
+.faculty-header {
+    text-align: center;
+    margin-bottom: 40px;
+}
+
+.faculty-title {
+    font-size: 2.5rem;
+    color: #111827;
+    margin: 0;
+}
+
+.faculty-subtitle {
+    color: #6b7280;
+    font-size: 1.1rem;
+}
+
+.faculty-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 30px;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.faculty-card {
+    background-color: #fff;
+    border-radius: 16px;
+    padding: 24px;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    transition: transform 0.2s;
+    border: 1px solid #e5e7eb;
+}
+
+.faculty-card:hover {
+    transform: translateY(-5px);
+}
+
+.faculty-avatar {
+    width: 70px;
+    height: 70px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-size: 1.5rem;
+    font-weight: bold;
+    margin-bottom: 16px;
+}
+
+.faculty-info {
+    text-align: center;
+    width: 100%;
+}
+
+.faculty-name {
+    font-size: 1.25rem;
+    color: #111827;
+    margin-bottom: 4px;
+}
+
+.subject-tag {
+    display: inline-block;
+    background-color: #eff6ff;
+    color: #1d4ed8;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    margin-bottom: 16px;
+}
+
+.faculty-details {
+    text-align: left;
+    font-size: 0.9rem;
+    color: #4b5563;
+    line-height: 1.6;
+    margin-bottom: 16px;
+}
+
+.slot-container {
+    text-align: left;
+    margin-bottom: 20px;
+}
+
+.slot-title {
+    font-size: 0.8rem;
+    font-weight: bold;
+    color: #9ca3af;
+    text-transform: uppercase;
+}
+
+.slot-wrapper {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 8px;
+}
+
+.slot-badge {
+    background-color: #f3f4f6;
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    color: #374151;
+}
+
+.book-btn {
+    width: 100%;
+    padding: 12px;
+    border: none;
+    border-radius: 8px;
+    color: #fff;
+    font-weight: bold;
+    cursor: pointer;
+    margin-top: auto;
+    transition: opacity 0.2s;
+}
+
+.book-btn:hover {
+    opacity: 0.9;
+}
