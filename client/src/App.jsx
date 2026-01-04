@@ -41,7 +41,6 @@ function App() {
   return (
     <BrowserRouter>
       <Navbar />
-      <div className="nav-spacer"></div>
       <main>
         <Routes>
           {/* Public Pages */}

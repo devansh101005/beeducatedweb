@@ -1,22 +1,30 @@
 /* Navbar Styles */
+:root {
+  --navbar-height: 80px;
+}
+
 .navbar {
   position: fixed;
   top: 0;
+  left: 0;
+  right: 0;
   width: 100%;
   background: rgba(255, 255, 255, 0.95);
+  background-color: #fff;
   backdrop-filter: blur(15px);
   border-bottom: 1px solid rgba(0, 0, 0, 0.1);
   z-index: 1000;
   transition: all 0.3s ease;
   box-sizing: border-box;
   padding: 0 2rem;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
 .nav-content {
+  height: var(--navbar-height);
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 1rem 0;
   width: 100%;
 }
 

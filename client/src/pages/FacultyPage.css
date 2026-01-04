@@ -2,23 +2,13 @@
 
 .faculty-container {
     /* Desktop Default */
-    padding-top: 100px; 
-    padding-bottom: 50px;
-    padding-left: 20px;
-    padding-right: 20px;
+    padding: 100px 20px 50px;
     background-color: #f9fafb;
-    min-height: 100vh;
     font-family: 'Inter', sans-serif;
     width: 100vw;
 }
 
-/* MANUAL MOBILE FIX: Increase padding if content is still hidden */
-@media (max-width: 768px) {
-    .faculty-container {
-        padding-top: 300px; /* Increased specifically for mobile navbars */
-        
-    }
-}
+
 
 .faculty-header {
     text-align: center;
