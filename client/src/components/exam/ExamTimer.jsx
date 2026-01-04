@@ -1,8 +1,7 @@
 import { useState, useEffect } from 'react';
-import './ExamTimer.css';
 
 const ExamTimer = ({ duration, onTimeUp, isActive = true }) => {
-  const [timeLeft, setTimeLeft] = useState(duration * 60); // Convert minutes to seconds
+  const [timeLeft, setTimeLeft] = useState(duration * 60);
 
   useEffect(() => {
     if (!isActive) return;
@@ -32,18 +31,38 @@ const ExamTimer = ({ duration, onTimeUp, isActive = true }) => {
     return `${minutes}:${secs.toString().padStart(2, '0')}`;
   };
 
-  const getTimeColor = () => {
-    if (timeLeft <= 300) return 'red'; // Last 5 minutes
-    if (timeLeft <= 600) return 'orange'; // Last 10 minutes
-    return 'green';
+  const getTimerStyles = () => {
+    if (timeLeft <= 300) {
+      return {
+        container: 'bg-red-50 border-red-200 text-red-700',
+        icon: 'text-red-500',
+        value: 'text-red-600'
+      };
+    }
+    if (timeLeft <= 600) {
+      return {
+        container: 'bg-orange-50 border-orange-200 text-orange-700',
+        icon: 'text-orange-500',
+        value: 'text-orange-600'
+      };
+    }
+    return {
+      container: 'bg-green-50 border-green-200 text-green-700',
+      icon: 'text-green-500',
+      value: 'text-green-600'
+    };
   };
 
+  const styles = getTimerStyles();
+
   return (
-    <div className={`exam-timer ${getTimeColor()}`}>
-      <div className="timer-icon">⏰</div>
-      <div className="timer-text">
-        <span className="time-label">Time Remaining:</span>
-        <span className="time-value">{formatTime(timeLeft)}</span>
+    <div className={`flex items-center gap-3 px-4 py-3 rounded-xl border-2 shadow-sm transition-all duration-300 ${styles.container}`}>
+      <div className={`text-2xl ${styles.icon}`}>⏰</div>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:gap-2">
+        <span className="text-sm font-medium opacity-80">Time Remaining:</span>
+        <span className={`text-lg sm:text-xl font-bold font-mono ${styles.value}`}>
+          {formatTime(timeLeft)}
+        </span>
       </div>
     </div>
   );

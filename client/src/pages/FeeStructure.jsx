@@ -1,6 +1,5 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import './FeeStructure.css';
 
 const feeData = [
   {
@@ -72,45 +71,63 @@ const feeData = [
 
 const FeeStructure = () => {
   return (
-    <div className="fee-structure-wrapper">
-      <div className="container">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 py-8 px-4">
+      <div className="max-w-7xl mx-auto">
         {/* Header */}
-        <div className="section-header" style={{ marginTop: '4rem', textAlign: 'center' }}>
-          <h2>Our Fee Structure</h2>
-          <p>Transparent and affordable pricing for quality education.</p>
+        <div className="text-center mb-10">
+          <h1 className="text-3xl md:text-4xl font-bold text-gray-800 mb-3">
+            Our Fee Structure
+          </h1>
+          <p className="text-gray-600 text-lg">
+            Transparent and affordable pricing for quality education.
+          </p>
         </div>
 
-        {/* Fee Cards Grid */}
-        <div className="fee-cards-grid">
+        {/* Fee Cards */}
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {feeData.map((item, index) => (
-            <div key={index} className="fee-card">
-              <div className="fee-card-header">
-                <h3>{item.program}</h3>
-                <p>{item.subjects}</p>
+            <div
+              key={index}
+              className="bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-xl hover:-translate-y-1 transition-all duration-300"
+            >
+              {/* Header */}
+              <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white p-6">
+                <h3 className="text-xl font-bold mb-1">{item.program}</h3>
+                <p className="text-sm opacity-90">{item.subjects}</p>
               </div>
-              <div className="fee-card-body">
-                <div className="fee-pricing">
+
+              {/* Pricing */}
+              <div className="p-6">
+                <div className="grid grid-cols-3 gap-4 mb-6 text-center">
                   <div>
-                    <span className="price">₹{item.monthly}</span>
-                    <span className="period">/ Monthly</span>
+                    <div className="text-xl font-bold text-gray-800">₹{item.monthly}</div>
+                    <div className="text-xs text-gray-500">Monthly</div>
                   </div>
                   <div>
-                    <span className="price">₹{item.quarterly}</span>
-                    <span className="period">/ Quarterly</span>
+                    <div className="text-xl font-bold text-gray-800">₹{item.quarterly}</div>
+                    <div className="text-xs text-gray-500">Quarterly</div>
                   </div>
                   <div>
-                    <span className="price">₹{item.annually}</span>
-                    <span className="period">/ Annually</span>
+                    <div className="text-xl font-bold text-gray-800">₹{item.annually}</div>
+                    <div className="text-xs text-gray-500">Annually</div>
                   </div>
                 </div>
-                <ul className="fee-features">
+
+                {/* Features */}
+                <ul className="space-y-2 mb-6">
                   {item.features.map((feature, i) => (
-                    <li key={i}>✓ {feature}</li>
+                    <li key={i} className="flex items-start gap-2 text-sm text-gray-600">
+                      <span className="text-green-500 mt-0.5">✓</span>
+                      {feature}
+                    </li>
                   ))}
                 </ul>
-              </div>
-              <div className="fee-card-footer">
-                <Link to="/contact" className="btn-enroll">
+
+                {/* CTA */}
+                <Link
+                  to="/contact"
+                  className="block w-full py-3 text-center bg-gradient-to-r from-blue-600 to-purple-600 text-white font-semibold rounded-xl hover:shadow-lg transition-all duration-200"
+                >
                   Enroll Now
                 </Link>
               </div>
@@ -118,20 +135,42 @@ const FeeStructure = () => {
           ))}
         </div>
 
-        {/* Payment Policies Section */}
-        <div className="payment-policies">
-          <h3>General Information & Policies</h3>
-          <ul>
-            <li>A one-time registration fee of ₹1,000 is applicable for all new admissions.</li>
-            <li>Fees are payable in advance, either monthly, quarterly, or annually.</li>
-            <li>We offer a 5% discount on annual fee payments made in a single installment.</li>
-            <li>A 10% sibling discount is available for the second child enrolled.</li>
-            <li>Payment can be made via Cash, UPI, or Bank Transfer.</li>
-            <li>Fees once paid are non-refundable. Please read the terms and conditions carefully during admission.</li>
+        {/* Policies */}
+        <div className="bg-white rounded-2xl shadow-lg p-8 mt-10">
+          <h3 className="text-xl font-bold text-gray-800 mb-4">
+            General Information & Policies
+          </h3>
+          <ul className="space-y-3 text-gray-600">
+            <li className="flex items-start gap-2">
+              <span className="text-blue-500">•</span>
+              A one-time registration fee of ₹1,000 is applicable for all new admissions.
+            </li>
+            <li className="flex items-start gap-2">
+              <span className="text-blue-500">•</span>
+              Fees are payable in advance, either monthly, quarterly, or annually.
+            </li>
+            <li className="flex items-start gap-2">
+              <span className="text-blue-500">•</span>
+              We offer a 5% discount on annual fee payments made in a single installment.
+            </li>
+            <li className="flex items-start gap-2">
+              <span className="text-blue-500">•</span>
+              A 10% sibling discount is available for the second child enrolled.
+            </li>
+            <li className="flex items-start gap-2">
+              <span className="text-blue-500">•</span>
+              Payment can be made via Cash, UPI, or Bank Transfer.
+            </li>
+            <li className="flex items-start gap-2">
+              <span className="text-blue-500">•</span>
+              Fees once paid are non-refundable. Please read the terms and conditions carefully during admission.
+            </li>
           </ul>
-          <p className="contact-enquiry">
+          <p className="mt-6 text-gray-600">
             For any further queries regarding fees or the admission process, please{' '}
-            <Link to="/contact">contact our office</Link>.
+            <Link to="/contact" className="text-blue-600 hover:text-blue-700 font-medium">
+              contact our office
+            </Link>.
           </p>
         </div>
       </div>

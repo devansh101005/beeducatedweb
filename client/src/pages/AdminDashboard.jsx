@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import "./AdminDashboard.css";
 
 function AdminDashboard() {
   const { token, logout } = useAuth();
@@ -26,13 +25,12 @@ function AdminDashboard() {
         const data = await res.json();
         setUserInfo(data);
       } catch (err) {
-        setError("⚠️ Could not fetch user data");
+        setError("Could not fetch user data");
       }
     };
 
     const fetchStats = async () => {
       try {
-        // Fetch students count
         const studentsRes = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/admin/students`, {
           headers: { Authorization: `Bearer ${token}` }
         });
@@ -41,7 +39,6 @@ function AdminDashboard() {
           setStats(prev => ({ ...prev, totalStudents: studentsData.students?.length || 0 }));
         }
 
-        // Fetch users count
         const usersRes = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/admin/users`, {
           headers: { Authorization: `Bearer ${token}` }
         });
@@ -50,7 +47,6 @@ function AdminDashboard() {
           setStats(prev => ({ ...prev, totalUsers: usersData?.length || 0 }));
         }
 
-        // Fetch applications count
         const appsRes = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/admin/applications`, {
           headers: { Authorization: `Bearer ${token}` }
         });
@@ -60,7 +56,6 @@ function AdminDashboard() {
           setStats(prev => ({ ...prev, totalApplications: totalApps }));
         }
 
-        // Fetch materials count
         const materialsRes = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/materials`, {
           headers: { Authorization: `Bearer ${token}` }
         });
@@ -77,113 +72,168 @@ function AdminDashboard() {
     fetchStats();
   }, [token]);
 
-  if (error) return <div className="error-message">{error}</div>;
-  if (!userInfo) return <div className="loading">Loading...</div>;
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 flex items-center justify-center p-4">
+        <div className="bg-white rounded-2xl shadow-xl p-8 max-w-md w-full text-center">
+          <div className="text-5xl mb-4">⚠️</div>
+          <h2 className="text-xl font-bold text-gray-800 mb-2">Error</h2>
+          <p className="text-gray-600">{error}</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!userInfo) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-gray-600 text-lg">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  const statCards = [
+    { icon: "👥", label: "Total Students", value: stats.totalStudents, color: "blue" },
+    { icon: "👤", label: "Total Users", value: stats.totalUsers, color: "purple" },
+    { icon: "📝", label: "Applications", value: stats.totalApplications, color: "green" },
+    { icon: "📚", label: "Study Materials", value: stats.totalMaterials, color: "orange" }
+  ];
+
+  const sections = [
+    {
+      title: "User Management",
+      items: [
+        { to: "/admin/students", icon: "🎓", title: "Manage Students", desc: "Add, view, and manage student accounts" },
+        { to: "/admin/users", icon: "👤", title: "Manage Users", desc: "View and manage all user accounts" }
+      ]
+    },
+    {
+      title: "Applications",
+      items: [
+        { to: "/admin/applications", icon: "📋", title: "View Applications", desc: "Review student and tutor applications" }
+      ]
+    },
+    {
+      title: "Content Management",
+      items: [
+        { to: "/upload", icon: "📤", title: "Upload Materials", desc: "Upload study materials and resources" },
+        { to: "/materials", icon: "📖", title: "View Materials", desc: "Browse and manage study materials" },
+        { to: "/create-exam", icon: "📝", title: "Create New Exam", desc: "Create exams for students" }
+      ]
+    }
+  ];
 
   return (
-    <div className="admin-dashboard">
-      <div className="dashboard-header">
-        <h1>👨‍💼 Admin Dashboard</h1>
-        <p className="welcome-text">Welcome back, <strong>{userInfo.name || userInfo.email}</strong></p>
-        <p className="role-text">Role: <span className="role-badge">{userInfo.role}</span></p>
-      </div>
-
-      <div className="stats-grid">
-        <div className="stat-card">
-          <div className="stat-icon">👥</div>
-          <div className="stat-content">
-            <h3>{stats.totalStudents}</h3>
-            <p>Total Students</p>
-          </div>
-        </div>
-        <div className="stat-card">
-          <div className="stat-icon">👤</div>
-          <div className="stat-content">
-            <h3>{stats.totalUsers}</h3>
-            <p>Total Users</p>
-          </div>
-        </div>
-        <div className="stat-card">
-          <div className="stat-icon">📝</div>
-          <div className="stat-content">
-            <h3>{stats.totalApplications}</h3>
-            <p>Applications</p>
-          </div>
-        </div>
-        <div className="stat-card">
-          <div className="stat-icon">📚</div>
-          <div className="stat-content">
-            <h3>{stats.totalMaterials}</h3>
-            <p>Study Materials</p>
-          </div>
-        </div>
-      </div>
-
-      <div className="admin-sections">
-        <div className="section-group">
-          <h2>👥 User Management</h2>
-          <div className="action-grid">
-            <Link to="/admin/students" className="action-card">
-              <div className="action-icon">🎓</div>
-              <h3>Manage Students</h3>
-              <p>Add, view, and manage student accounts</p>
-            </Link>
-            <Link to="/admin/users" className="action-card">
-              <div className="action-icon">👤</div>
-              <h3>Manage Users</h3>
-              <p>View and manage all user accounts</p>
-            </Link>
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 py-8 px-4">
+      <div className="max-w-6xl mx-auto">
+        {/* Header */}
+        <div className="bg-white rounded-2xl shadow-lg p-6 md:p-8 mb-6">
+          <h1 className="text-2xl md:text-3xl font-bold text-gray-800 mb-2">Admin Dashboard</h1>
+          <p className="text-gray-600">
+            Welcome back, <span className="font-semibold text-gray-800">{userInfo.name || userInfo.email}</span>
+          </p>
+          <div className="mt-2">
+            <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-purple-100 text-purple-700">
+              {userInfo.role}
+            </span>
           </div>
         </div>
 
-        <div className="section-group">
-          <h2>📝 Applications</h2>
-          <div className="action-grid">
-            <Link to="/admin/applications" className="action-card">
-              <div className="action-icon">📋</div>
-              <h3>View Applications</h3>
-              <p>Review student and tutor applications</p>
-            </Link>
-          </div>
+        {/* Stats Grid */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+          {statCards.map((stat, index) => (
+            <div key={index} className="bg-white rounded-2xl shadow-lg p-6">
+              <div className="flex items-center gap-4">
+                <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-2xl ${
+                  stat.color === 'blue' ? 'bg-blue-100' :
+                  stat.color === 'purple' ? 'bg-purple-100' :
+                  stat.color === 'green' ? 'bg-green-100' : 'bg-orange-100'
+                }`}>
+                  {stat.icon}
+                </div>
+                <div>
+                  <div className="text-2xl font-bold text-gray-800">{stat.value}</div>
+                  <div className="text-sm text-gray-500">{stat.label}</div>
+                </div>
+              </div>
+            </div>
+          ))}
         </div>
 
-        <div className="section-group">
-          <h2>📚 Content Management</h2>
-          <div className="action-grid">
+        {/* Sections */}
+        <div className="space-y-6">
+          {sections.map((section, sectionIndex) => (
+            <div key={sectionIndex} className="bg-white rounded-2xl shadow-lg p-6 md:p-8">
+              <h2 className="text-xl font-bold text-gray-800 mb-6 pb-4 border-b border-gray-100">
+                {section.title}
+              </h2>
+              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                {section.items.map((item, itemIndex) => (
+                  <Link
+                    key={itemIndex}
+                    to={item.to}
+                    className="p-4 bg-gray-50 rounded-xl border border-gray-100 hover:shadow-md hover:border-blue-200 transition-all group"
+                  >
+                    <div className="flex items-start gap-4">
+                      <div className="w-12 h-12 bg-gradient-to-br from-blue-100 to-purple-100 rounded-xl flex items-center justify-center text-2xl group-hover:scale-110 transition-transform">
+                        {item.icon}
+                      </div>
+                      <div>
+                        <h3 className="font-semibold text-gray-800 group-hover:text-blue-600 transition-colors">
+                          {item.title}
+                        </h3>
+                        <p className="text-sm text-gray-500 mt-1">{item.desc}</p>
+                      </div>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            </div>
+          ))}
 
-            <Link to="/upload" className="action-card">
-              <div className="action-icon">📤</div>
-              <h3>Upload Materials</h3>
-              <p>Upload study materials and resources</p>
-            </Link>
+          {/* System Section */}
+          <div className="bg-white rounded-2xl shadow-lg p-6 md:p-8">
+            <h2 className="text-xl font-bold text-gray-800 mb-6 pb-4 border-b border-gray-100">
+              System
+            </h2>
+            <div className="grid gap-4 md:grid-cols-2">
+              <Link
+                to="/admin-dashboard"
+                className="p-4 bg-gray-50 rounded-xl border border-gray-100 hover:shadow-md hover:border-blue-200 transition-all group"
+              >
+                <div className="flex items-start gap-4">
+                  <div className="w-12 h-12 bg-gradient-to-br from-blue-100 to-purple-100 rounded-xl flex items-center justify-center text-2xl group-hover:scale-110 transition-transform">
+                    📊
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-gray-800 group-hover:text-blue-600 transition-colors">
+                      Dashboard
+                    </h3>
+                    <p className="text-sm text-gray-500 mt-1">View system overview and statistics</p>
+                  </div>
+                </div>
+              </Link>
 
-            <Link to="/materials" className="action-card">
-              <div className="action-icon">📖</div>
-              <h3>View Materials</h3>
-              <p>Browse and manage study materials</p>
-            </Link>
-
-            <Link to="/create-exam" className="action-card">
-            <div className="action-icon">🌏</div>
-             <h3>Create New Exam</h3>
-             <p>Create exams for students</p>
-        </Link>
-          </div>
-        </div>
-
-        <div className="section-group">
-          <h2>🔧 System</h2>
-          <div className="action-grid">
-            <Link to="/admin-dashboard" className="action-card">
-              <div className="action-icon">📊</div>
-              <h3>Dashboard</h3>
-              <p>View system overview and statistics</p>
-            </Link>
-            <button onClick={logout} className="action-card logout-card">
-              <div className="action-icon">🚪</div>
-              <h3>Logout</h3>
-              <p>Sign out of your account</p>
-            </button>
+              <button
+                onClick={logout}
+                className="p-4 bg-red-50 rounded-xl border border-red-100 hover:shadow-md hover:border-red-200 transition-all group text-left"
+              >
+                <div className="flex items-start gap-4">
+                  <div className="w-12 h-12 bg-red-100 rounded-xl flex items-center justify-center text-2xl group-hover:scale-110 transition-transform">
+                    🚪
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-red-700 group-hover:text-red-800 transition-colors">
+                      Logout
+                    </h3>
+                    <p className="text-sm text-red-500 mt-1">Sign out of your account</p>
+                  </div>
+                </div>
+              </button>
+            </div>
           </div>
         </div>
       </div>

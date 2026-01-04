@@ -1,5 +1,3 @@
-
-import "./Home.css"
 import logo from "../assets/logo.png";
 import { Link } from "react-router-dom"
 import { useState,useEffect } from "react"
@@ -15,7 +13,7 @@ function Home() {
     setIsMobileMenuOpen(!isMobileMenuOpen);
   };
 
-  
+
 
   useEffect(() => {
     let cancelled = false;
@@ -65,7 +63,7 @@ function Home() {
   ]
 
   return (
-    <div className="home-wrapper">
+    <div className="overflow-x-hidden w-full pt-0 mt-0 bg-gray-50">
 
 
       {showAnnouncement && (
@@ -79,43 +77,43 @@ function Home() {
           }}
         />
       )}
-      
+
 
       {/* Navigation */}
-      <nav className="navbar">
-        <div className="container">
-          <div className="nav-content">
-            <div className="logo-section">
-              <Link to="/" className="logo-link">
-                <div className="logo-container">
-                  <img src={logo} alt="Be Educated Logo" className="logo-image" />
-                  <div className="logo-content">
-                    <span className="logo-text">Be Educated</span>
-                    <span className="logo-tagline">Achieve Beyond Limits</span>
+      <nav className="fixed top-0 w-full bg-white/95 backdrop-blur-md border-b border-gray-200 z-[1000] transition-all duration-300 h-20">
+        <div className="max-w-7xl mx-auto px-5 w-full">
+          <div className="flex justify-between items-center py-4 h-full">
+            <div className="flex items-center">
+              <Link to="/" className="no-underline">
+                <div className="flex items-center gap-3">
+                  <img src={logo} alt="Be Educated Logo" className="w-20 h-15 object-contain rounded-lg" />
+                  <div className="flex flex-col items-start">
+                    <span className="font-['Poppins'] text-2xl font-bold text-blue-600">Be Educated</span>
+                    <span className="font-['Open_Sans'] text-xs font-normal text-gray-500 -mt-0.5 leading-none">Achieve Beyond Limits</span>
                   </div>
                 </div>
               </Link>
             </div>
-            <button className="mobile-menu-toggle" onClick={toggleMobileMenu}>
-              <span className={`hamburger ${isMobileMenuOpen ? 'open' : ''}`}></span>
+            <button className="md:hidden bg-none border-none cursor-pointer p-2.5 z-[1001]" onClick={toggleMobileMenu}>
+              <span className={`block w-6 h-0.5 bg-gray-700 relative transition-all duration-300 ${isMobileMenuOpen ? 'bg-transparent before:rotate-45 before:top-0 after:-rotate-45 after:bottom-0' : ''} before:content-[''] before:absolute before:w-6 before:h-0.5 before:bg-gray-700 before:transition-all before:duration-300 before:-top-2 after:content-[''] after:absolute after:w-6 after:h-0.5 after:bg-gray-700 after:transition-all after:duration-300 after:-bottom-2`}></span>
             </button>
-            <div className={`nav-links ${isMobileMenuOpen ? 'active' : ''}`}>
-              <Link to="/about" className="nav-link" onClick={() => setIsMobileMenuOpen(false)}>
+            <div className={`flex gap-8 items-center max-md:fixed max-md:top-20 max-md:left-0 max-md:right-0 max-md:bg-white max-md:flex-col max-md:p-8 max-md:gap-6 max-md:shadow-lg max-md:transition-all max-md:duration-300 ${isMobileMenuOpen ? 'max-md:translate-y-0 max-md:opacity-100 max-md:visible' : 'max-md:-translate-y-full max-md:opacity-0 max-md:invisible'}`}>
+              <Link to="/about" className="no-underline text-gray-700 font-medium font-['Open_Sans'] transition-all duration-300 hover:text-blue-600" onClick={() => setIsMobileMenuOpen(false)}>
                 About
               </Link>
-              <Link to="/courses" className="nav-link" onClick={() => setIsMobileMenuOpen(false)}>
+              <Link to="/courses" className="no-underline text-gray-700 font-medium font-['Open_Sans'] transition-all duration-300 hover:text-blue-600" onClick={() => setIsMobileMenuOpen(false)}>
                 Courses
               </Link>
-               <Link to="/fee-structure" className="nav-link" onClick={() => setIsMobileMenuOpen(false)}>
+               <Link to="/fee-structure" className="no-underline text-gray-700 font-medium font-['Open_Sans'] transition-all duration-300 hover:text-blue-600" onClick={() => setIsMobileMenuOpen(false)}>
                 Fee Structure
               </Link>
-              <Link to="/contact" className="nav-link" onClick={() => setIsMobileMenuOpen(false)}>
+              <Link to="/contact" className="no-underline text-gray-700 font-medium font-['Open_Sans'] transition-all duration-300 hover:text-blue-600" onClick={() => setIsMobileMenuOpen(false)}>
                 Contact
               </Link>
-              <Link to="/login" className="nav-link" onClick={() => setIsMobileMenuOpen(false)}>
+              <Link to="/login" className="no-underline text-gray-700 font-medium font-['Open_Sans'] transition-all duration-300 hover:text-blue-600" onClick={() => setIsMobileMenuOpen(false)}>
                 Login
               </Link>
-              <Link to="/signup" className="btn btn-nav" onClick={() => setIsMobileMenuOpen(false)}>
+              <Link to="/signup" className="bg-blue-600 text-white px-6 py-3 rounded-lg no-underline font-semibold transition-all duration-300 hover:bg-blue-700 hover:-translate-y-0.5" onClick={() => setIsMobileMenuOpen(false)}>
                 Join Now
               </Link>
             </div>
@@ -124,54 +122,53 @@ function Home() {
       </nav>
 
       {/* Logo + Tagline Section */}
-      <section className="logo-tagline-section">
-        <div className="container">
-          <div className="logo-showcase">
-            {/* <span className="main-logo-icon">🎓</span> */}
-            <img src={logo} alt="Be Educated Logo" className="logo-image" />
-            <h1 className="institute-name">Be Educated</h1>
-            <p className="tagline">Building Bright Minds Since 2025</p>
+      <section className="pt-[120px] pb-20 bg-gradient-to-br from-blue-600 to-teal-600 text-white text-center">
+        <div className="max-w-7xl mx-auto px-5 w-full">
+          <div className="max-w-[600px] mx-auto">
+            <img src={logo} alt="Be Educated Logo" className="w-32 h-24 object-contain rounded-lg mx-auto mb-6" />
+            <h1 className="font-['Poppins'] text-5xl md:text-6xl font-extrabold mb-4 drop-shadow-lg">Be Educated</h1>
+            <p className="font-['Open_Sans'] text-xl opacity-90 italic">Building Bright Minds Since 2025</p>
           </div>
         </div>
       </section>
 
       {/* Short Intro Section */}
-      <section className="short-intro">
-        <div className="container">
-          <div className="intro-content">
-            <h2>Personalized Learning for Classes 9-12 & Home Tutoring</h2>
-            <p>
+      <section className="py-16 bg-gray-50">
+        <div className="max-w-7xl mx-auto px-5 w-full">
+          <div className="max-w-4xl mx-auto">
+            <h2 className="font-['Poppins'] text-3xl md:text-4xl font-bold text-gray-800 mb-6 text-center">Personalized Learning for Classes 9-12 & Home Tutoring</h2>
+            <p className="text-lg text-gray-700 leading-relaxed mb-4 font-['Open_Sans']">
               We specialize in providing quality education through small batch sizes and personalized attention. Our
               experienced faculty focuses on conceptual clarity and individual student growth, ensuring every student
               reaches their full potential in board exams and competitive preparations.
             </p>
-            <p>
+            <p className="text-lg text-gray-700 leading-relaxed mb-8 font-['Open_Sans']">
               With flexible home tutoring options and comprehensive classroom programs, we adapt to each student's
               learning style and pace, making education accessible and effective for all.
             </p>
 
             {/* Intro Highlights */}
-            <div className="intro-highlights">
-              <div className="highlight">
-                <span className="highlight-number">15+</span>
-                <span className="highlight-text">Years of Excellence</span>
+            <div className="flex flex-col md:flex-row justify-around gap-8 md:gap-4 mt-12 mb-12">
+              <div className="flex flex-col items-center text-center bg-white p-6 rounded-xl shadow-md hover:shadow-xl transition-shadow duration-300">
+                <span className="text-5xl font-bold text-blue-600 font-['Poppins'] mb-2">15+</span>
+                <span className="text-gray-600 font-medium font-['Open_Sans']">Years of Excellence</span>
               </div>
-              <div className="highlight">
-                <span className="highlight-number">500+</span>
-                <span className="highlight-text">Top Rank Holders</span>
+              <div className="flex flex-col items-center text-center bg-white p-6 rounded-xl shadow-md hover:shadow-xl transition-shadow duration-300">
+                <span className="text-5xl font-bold text-blue-600 font-['Poppins'] mb-2">500+</span>
+                <span className="text-gray-600 font-medium font-['Open_Sans']">Top Rank Holders</span>
               </div>
-              <div className="highlight">
-                <span className="highlight-number">98%</span>
-                <span className="highlight-text">Parent Satisfaction</span>
+              <div className="flex flex-col items-center text-center bg-white p-6 rounded-xl shadow-md hover:shadow-xl transition-shadow duration-300">
+                <span className="text-5xl font-bold text-blue-600 font-['Poppins'] mb-2">98%</span>
+                <span className="text-gray-600 font-medium font-['Open_Sans']">Parent Satisfaction</span>
               </div>
             </div>
 
             {/* Student Portal Button */}
-            <div className="student-portal-section">
-              <h3>🎓 Access Your Learning Resources</h3>
-              <p>Students can access study materials, assignments, and resources through our secure portal.</p>
-              <Link to="/student-portal" className="student-portal-btn">
-                🚀 Student Portal
+            <div className="bg-gradient-to-br from-indigo-500 to-purple-600 p-8 rounded-2xl text-center text-white shadow-2xl mt-8">
+              <h3 className="text-3xl font-bold mb-2">Access Your Learning Resources</h3>
+              <p className="text-lg mb-6 opacity-90">Students can access study materials, assignments, and resources through our secure portal.</p>
+              <Link to="/student-portal" className="inline-block bg-white text-indigo-600 px-8 py-4 rounded-full no-underline font-bold text-lg transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl">
+                Student Portal
               </Link>
             </div>
           </div>
@@ -179,62 +176,64 @@ function Home() {
       </section>
 
       {/* Highlight Section */}
-      <section className="highlights">
-        <div className="container">
-          <div className="section-header">
-            <h2>Why Choose Be Educated?</h2>
-            <p>Discover what makes us the preferred choice for students and parents</p>
+      <section className="py-16 bg-gray-50">
+        <div className="max-w-7xl mx-auto px-5 w-full">
+          <div className="text-center mb-12">
+            <h2 className="font-['Poppins'] text-3xl md:text-4xl font-bold text-gray-800 mb-4">Why Choose Be Educated?</h2>
+            <p className="text-lg text-gray-600 font-['Open_Sans']">Discover what makes us the preferred choice for students and parents</p>
           </div>
-          <div className="highlights-grid">
-            <div className="highlight-card">
-              <div className="highlight-icon">
-                <span>🏆</span>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div className="bg-white p-8 rounded-xl shadow-lg hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 border border-gray-100">
+              <div className="bg-gradient-to-br from-blue-500 to-teal-500 w-20 h-20 rounded-full flex items-center justify-center mb-6 mx-auto shadow-lg">
+                <span className="text-4xl">🏆</span>
               </div>
-              <h3>98% Board Pass Rate</h3>
-              <p>Consistently high success rate in CBSE & State Board examinations</p>
+              <h3 className="font-['Poppins'] text-xl font-semibold text-gray-800 mb-3 text-center">98% Board Pass Rate</h3>
+              <p className="text-gray-600 text-center font-['Open_Sans'] leading-relaxed">Consistently high success rate in CBSE & State Board examinations</p>
             </div>
-            <div className="highlight-card">
-              <div className="highlight-icon">
-                <span>👨‍🏫</span>
+            <div className="bg-white p-8 rounded-xl shadow-lg hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 border border-gray-100">
+              <div className="bg-gradient-to-br from-blue-500 to-teal-500 w-20 h-20 rounded-full flex items-center justify-center mb-6 mx-auto shadow-lg">
+                <span className="text-4xl">👨‍🏫</span>
               </div>
-              <h3>1:1 Doubt Solving</h3>
-              <p>Personal attention with dedicated doubt clearing sessions</p>
+              <h3 className="font-['Poppins'] text-xl font-semibold text-gray-800 mb-3 text-center">1:1 Doubt Solving</h3>
+              <p className="text-gray-600 text-center font-['Open_Sans'] leading-relaxed">Personal attention with dedicated doubt clearing sessions</p>
             </div>
-            <div className="highlight-card">
-              <div className="highlight-icon">
-                <span>📚</span>
+            <div className="bg-white p-8 rounded-xl shadow-lg hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 border border-gray-100">
+              <div className="bg-gradient-to-br from-blue-500 to-teal-500 w-20 h-20 rounded-full flex items-center justify-center mb-6 mx-auto shadow-lg">
+                <span className="text-4xl">📚</span>
               </div>
-              <h3>Free Study Materials</h3>
-              <p>Comprehensive notes, practice papers, and reference materials</p>
+              <h3 className="font-['Poppins'] text-xl font-semibold text-gray-800 mb-3 text-center">Free Study Materials</h3>
+              <p className="text-gray-600 text-center font-['Open_Sans'] leading-relaxed">Comprehensive notes, practice papers, and reference materials</p>
             </div>
           </div>
         </div>
       </section>
 
       {/* Testimonials Section */}
-      <section className="testimonials">
-        <div className="container">
-          <div className="testimonials-heading-wrapper" style={{textAlign: 'center', margin: '4rem 0 2rem 0'}}>
-            <h2 style={{fontSize: '2.5rem', fontWeight: 700, color: '#1f2937', fontFamily: 'Poppins, sans-serif', marginBottom: '0.5rem'}}>What Our Students & Parents Say</h2>
-            <p style={{fontSize: '1.25rem', color: '#374151', fontFamily: 'Open Sans, sans-serif'}}>Real experiences from our learning community</p>
+      <section className="py-20 bg-gray-50">
+        <div className="max-w-7xl mx-auto px-5 w-full">
+          <div className="text-center mb-16">
+            <h2 className="font-['Poppins'] text-4xl md:text-5xl font-bold text-gray-800 mb-4">What Our Students & Parents Say</h2>
+            <p className="text-xl text-gray-600 font-['Open_Sans']">Real experiences from our learning community</p>
           </div>
-          <div className="testimonials-grid">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {testimonials.map((testimonial, index) => (
-              <div key={index} className="testimonial-card">
-                <div className="testimonial-content">
-                  <div className="quote-mark">"</div>
-                  <p>{testimonial.quote}</p>
-                  <div className="testimonial-footer">
-                    <div className="student-info">
-                      <div className="student-avatar">{testimonial.avatar}</div>
-                      <div className="student-details">
-                        <h4>{testimonial.name}</h4>
-                        <span>{testimonial.role}</span>
+              <div key={index} className="bg-white p-8 rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300 border border-gray-100 relative">
+                <div className="absolute -top-4 -left-4 text-8xl text-blue-100 font-serif leading-none select-none">"</div>
+                <div className="relative z-10">
+                  <p className="text-gray-700 mb-6 italic font-['Open_Sans'] leading-relaxed">{testimonial.quote}</p>
+                  <div className="flex justify-between items-center mt-6 pt-6 border-t border-gray-100">
+                    <div className="flex items-center gap-3">
+                      <div className="w-14 h-14 bg-gradient-to-br from-blue-500 to-teal-500 rounded-full flex items-center justify-center text-white font-bold text-lg shadow-md">
+                        {testimonial.avatar}
+                      </div>
+                      <div>
+                        <h4 className="font-['Poppins'] font-semibold text-gray-800 mb-0.5">{testimonial.name}</h4>
+                        <span className="text-sm text-gray-500 font-['Open_Sans']">{testimonial.role}</span>
                       </div>
                     </div>
-                    <div className="rating">
+                    <div className="flex gap-0.5">
                       {[...Array(testimonial.rating)].map((_, i) => (
-                        <span key={i}>⭐</span>
+                        <span key={i} className="text-lg">⭐</span>
                       ))}
                     </div>
                   </div>
@@ -246,100 +245,108 @@ function Home() {
       </section>
 
       {/* Address + Contact Section */}
-      <section className="contact-section">
-        <div className="container">
-          <div className="contact-grid">
-            <div className="contact-info">
-              <h2>Visit Our Institute</h2>
-              <p>Come and experience our learning environment firsthand</p>
+      <section className="py-16 bg-gray-50">
+        <div className="max-w-7xl mx-auto px-5 w-full">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
+            <div>
+              <h2 className="font-['Poppins'] text-3xl md:text-4xl font-bold text-gray-800 mb-4">Visit Our Institute</h2>
+              <p className="text-lg text-gray-600 mb-8 font-['Open_Sans']">Come and experience our learning environment firsthand</p>
 
-              <div className="contact-details">
-                <div className="contact-item">
-                  <div className="contact-icon">
-                    <span>📍</span>
-                  </div>
-                  <div className="contact-text">
-                    <h4>Our Address</h4>
-                    <p>
-                      Saraswati Mod,Lalganj Ajhara
-                      <br />
-                      Pratapgarh, UttarPradesh, 230132
-                      <br />
-                      India
-                    </p>
-                    <a href="https://maps.app.goo.gl/ukWj2xa2bHVWekvy8" target="_blank" rel="noopener noreferrer" className="maps-link">
-                      📍 View on Google Maps
-                    </a>
+              <div className="space-y-6">
+                <div className="bg-white p-6 rounded-xl shadow-md hover:shadow-lg transition-shadow duration-300 border border-gray-100">
+                  <div className="flex gap-4">
+                    <div className="flex-shrink-0 w-12 h-12 bg-gradient-to-br from-blue-500 to-teal-500 rounded-lg flex items-center justify-center text-2xl shadow-md">
+                      <span>📍</span>
+                    </div>
+                    <div className="flex-1">
+                      <h4 className="font-['Poppins'] font-semibold text-gray-800 mb-2">Our Address</h4>
+                      <p className="text-gray-600 mb-3 font-['Open_Sans'] leading-relaxed">
+                        Saraswati Mod,Lalganj Ajhara
+                        <br />
+                        Pratapgarh, UttarPradesh, 230132
+                        <br />
+                        India
+                      </p>
+                      <a href="https://maps.app.goo.gl/ukWj2xa2bHVWekvy8" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-700 font-medium no-underline transition-colors">
+                        <span>📍</span> View on Google Maps
+                      </a>
+                    </div>
                   </div>
                 </div>
 
-                <div className="contact-item">
-                  <div className="contact-icon">
-                    <span>📞</span>
-                  </div>
-                  <div className="contact-text">
-                    <h4>Phone Numbers</h4>
-                    <p>
-                      +91 9721145364
-                      <br />
-                      +91 8601575896
-                      <br />
-                    </p>
-                  </div>
-                </div>
-
-                <div className="contact-item">
-                  <div className="contact-icon">
-                    <span>✉️</span>
-                  </div>
-                  <div className="contact-text">
-                    <h4>Email Us</h4>
-                    <p>
-                      Officialbe.educated@gmail.com
-                      <br />
-                      
-                    </p>
+                <div className="bg-white p-6 rounded-xl shadow-md hover:shadow-lg transition-shadow duration-300 border border-gray-100">
+                  <div className="flex gap-4">
+                    <div className="flex-shrink-0 w-12 h-12 bg-gradient-to-br from-blue-500 to-teal-500 rounded-lg flex items-center justify-center text-2xl shadow-md">
+                      <span>📞</span>
+                    </div>
+                    <div className="flex-1">
+                      <h4 className="font-['Poppins'] font-semibold text-gray-800 mb-2">Phone Numbers</h4>
+                      <p className="text-gray-600 font-['Open_Sans'] leading-relaxed">
+                        +91 9721145364
+                        <br />
+                        +91 8601575896
+                        <br />
+                      </p>
+                    </div>
                   </div>
                 </div>
 
-                <div className="contact-item">
-                  <div className="contact-icon">
-                    <span>🕒</span>
+                <div className="bg-white p-6 rounded-xl shadow-md hover:shadow-lg transition-shadow duration-300 border border-gray-100">
+                  <div className="flex gap-4">
+                    <div className="flex-shrink-0 w-12 h-12 bg-gradient-to-br from-blue-500 to-teal-500 rounded-lg flex items-center justify-center text-2xl shadow-md">
+                      <span>✉️</span>
+                    </div>
+                    <div className="flex-1">
+                      <h4 className="font-['Poppins'] font-semibold text-gray-800 mb-2">Email Us</h4>
+                      <p className="text-gray-600 font-['Open_Sans'] leading-relaxed">
+                        Officialbe.educated@gmail.com
+                        <br />
+
+                      </p>
+                    </div>
                   </div>
-                  <div className="contact-text">
-                    <h4>Office Hours</h4>
-                    <p>
-                      Monday - Friday: 8:00 AM - 7:30 PM
-                      <br />
-                      Saturday: 9:00 AM - 6:00 PM
-                      <br />
-                      Sunday: 9:00 AM - 5:00 PM
-                    </p>
+                </div>
+
+                <div className="bg-white p-6 rounded-xl shadow-md hover:shadow-lg transition-shadow duration-300 border border-gray-100">
+                  <div className="flex gap-4">
+                    <div className="flex-shrink-0 w-12 h-12 bg-gradient-to-br from-blue-500 to-teal-500 rounded-lg flex items-center justify-center text-2xl shadow-md">
+                      <span>🕒</span>
+                    </div>
+                    <div className="flex-1">
+                      <h4 className="font-['Poppins'] font-semibold text-gray-800 mb-2">Office Hours</h4>
+                      <p className="text-gray-600 font-['Open_Sans'] leading-relaxed">
+                        Monday - Friday: 8:00 AM - 7:30 PM
+                        <br />
+                        Saturday: 9:00 AM - 6:00 PM
+                        <br />
+                        Sunday: 9:00 AM - 5:00 PM
+                      </p>
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
 
-            <div className="additional-info">
-              <div className="info-card">
-                <span className="info-icon">👥</span>
-                <h3>Small Batch Sizes</h3>
-                <p>Maximum 15 students per batch for personalized attention</p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 content-start">
+              <div className="bg-white p-6 rounded-xl shadow-md hover:shadow-lg transition-all duration-300 border border-gray-100 text-center">
+                <span className="inline-block text-5xl mb-4">👥</span>
+                <h3 className="font-['Poppins'] font-semibold text-gray-800 mb-2">Small Batch Sizes</h3>
+                <p className="text-gray-600 text-sm font-['Open_Sans'] leading-relaxed">Maximum 15 students per batch for personalized attention</p>
               </div>
-              <div className="info-card">
-                <span className="info-icon">🏠</span>
-                <h3>Home Tutoring</h3>
-                <p>Qualified teachers available for one-on-one home sessions</p>
+              <div className="bg-white p-6 rounded-xl shadow-md hover:shadow-lg transition-all duration-300 border border-gray-100 text-center">
+                <span className="inline-block text-5xl mb-4">🏠</span>
+                <h3 className="font-['Poppins'] font-semibold text-gray-800 mb-2">Home Tutoring</h3>
+                <p className="text-gray-600 text-sm font-['Open_Sans'] leading-relaxed">Qualified teachers available for one-on-one home sessions</p>
               </div>
-              <div className="info-card">
-                <span className="info-icon">🏅</span>
-                <h3>Experienced Faculty</h3>
-                <p>10+ years of teaching experience with proven track record</p>
+              <div className="bg-white p-6 rounded-xl shadow-md hover:shadow-lg transition-all duration-300 border border-gray-100 text-center">
+                <span className="inline-block text-5xl mb-4">🏅</span>
+                <h3 className="font-['Poppins'] font-semibold text-gray-800 mb-2">Experienced Faculty</h3>
+                <p className="text-gray-600 text-sm font-['Open_Sans'] leading-relaxed">10+ years of teaching experience with proven track record</p>
               </div>
-              <div className="info-card">
-                <span className="info-icon">💡</span>
-                <h3>Conceptual Learning</h3>
-                <p>Focus on understanding fundamentals rather than rote learning</p>
+              <div className="bg-white p-6 rounded-xl shadow-md hover:shadow-lg transition-all duration-300 border border-gray-100 text-center">
+                <span className="inline-block text-5xl mb-4">💡</span>
+                <h3 className="font-['Poppins'] font-semibold text-gray-800 mb-2">Conceptual Learning</h3>
+                <p className="text-gray-600 text-sm font-['Open_Sans'] leading-relaxed">Focus on understanding fundamentals rather than rote learning</p>
               </div>
             </div>
           </div>
@@ -347,20 +354,20 @@ function Home() {
       </section>
 
       {/* Social Media Icons */}
-      <section className="social-section">
-        <div className="container">
-          <h3>Connect With Us</h3>
-          <div className="social-links">
-            <a href="https://www.instagram.com/officialbe.educated/?igsh=MXJpOXV0eXliOHV6Mw%3D%3D#" className="social-link instagram" aria-label="Instagram">
+      <section className="py-16 bg-gray-50 text-center">
+        <div className="max-w-7xl mx-auto px-5 w-full">
+          <h3 className="font-['Poppins'] text-2xl font-semibold mb-8 text-gray-800">Connect With Us</h3>
+          <div className="flex justify-center gap-6">
+            <a href="https://www.instagram.com/officialbe.educated/?igsh=MXJpOXV0eXliOHV6Mw%3D%3D#" className="w-16 h-16 rounded-full flex items-center justify-center text-2xl no-underline text-white bg-gradient-to-br from-pink-500 via-red-500 to-yellow-500 hover:-translate-y-1 hover:scale-110 transition-all duration-300 shadow-lg hover:shadow-2xl" aria-label="Instagram">
               <FaInstagram/>
             </a>
-            <a href="https://www.facebook.com/share/14FMyCY2J8D/" className="social-link Facebook" aria-label="Facebook">
+            <a href="https://www.facebook.com/share/14FMyCY2J8D/" className="w-16 h-16 rounded-full flex items-center justify-center text-2xl no-underline text-white bg-[#1877f2] hover:-translate-y-1 hover:scale-110 transition-all duration-300 shadow-lg hover:shadow-2xl" aria-label="Facebook">
               <FaFacebook/>
             </a>
-            <a href="https://www.linkedin.com/company/be-educated-official/" className="social-link Linkedin" aria-label="Linkedin">
+            <a href="https://www.linkedin.com/company/be-educated-official/" className="w-16 h-16 rounded-full flex items-center justify-center text-2xl no-underline text-white bg-[#0077b5] hover:-translate-y-1 hover:scale-110 transition-all duration-300 shadow-lg hover:shadow-2xl" aria-label="Linkedin">
               <FaLinkedin/>
             </a>
-            <a href="https://youtube.com/@be-beeducated?si=1yE_tdN05ir1dmHq" className="social-link Youtube" aria-label="Youtube">
+            <a href="https://youtube.com/@be-beeducated?si=1yE_tdN05ir1dmHq" className="w-16 h-16 rounded-full flex items-center justify-center text-2xl no-underline text-white bg-[#ff0000] hover:-translate-y-1 hover:scale-110 transition-all duration-300 shadow-lg hover:shadow-2xl" aria-label="Youtube">
               <FaYoutube/>
             </a>
           </div>
@@ -368,79 +375,77 @@ function Home() {
       </section>
 
       {/* Footer */}
-      <footer className="footer">
-        <div className="container">
-          <div className="footer-content">
-            <div className="footer-section">
-              <div className="footer-logo">
-                <div className="logo-container">
-                  <img src={logo} alt="Excellence Coaching Logo" className="logo-image" />
-                  <div className="logo-content">
-                    <span className="logo-text">Be Educated</span>
-                    <span className="logo-tagline">Achieve Beyond Limits</span>
-                  </div>
+      <footer className="bg-gray-800 text-white py-12 pb-4">
+        <div className="max-w-7xl mx-auto px-5 w-full">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 mb-8">
+            <div>
+              <div className="flex items-center gap-3 mb-4">
+                <img src={logo} alt="Excellence Coaching Logo" className="w-16 h-12 object-contain rounded-lg" />
+                <div className="flex flex-col items-start">
+                  <span className="font-['Poppins'] text-lg font-bold text-white">Be Educated</span>
+                  <span className="font-['Open_Sans'] text-xs text-gray-400">Achieve Beyond Limits</span>
                 </div>
-                <p>Building bright minds through quality education and personalized attention.</p>
               </div>
+              <p className="text-gray-300 text-sm leading-relaxed font-['Open_Sans']">Building bright minds through quality education and personalized attention.</p>
             </div>
 
-            <div className="footer-section">
-              <h4>Quick Links</h4>
-              <ul>
+            <div>
+              <h4 className="font-['Poppins'] text-lg font-semibold mb-4">Quick Links</h4>
+              <ul className="space-y-2 list-none p-0">
                 <li>
-                  <Link to="/about">About Us</Link>
+                  <Link to="/about" className="text-gray-300 no-underline hover:text-blue-400 transition-colors font-['Open_Sans']">About Us</Link>
                 </li>
                 <li>
-                  <Link to="/courses">Courses</Link>
+                  <Link to="/courses" className="text-gray-300 no-underline hover:text-blue-400 transition-colors font-['Open_Sans']">Courses</Link>
                 </li>
                 <li>
-                  <Link to="/faculty">Faculty</Link>
+                  <Link to="/faculty" className="text-gray-300 no-underline hover:text-blue-400 transition-colors font-['Open_Sans']">Faculty</Link>
                 </li>
                 <li>
-                  <Link to="/contact">Contact</Link>
+                  <Link to="/contact" className="text-gray-300 no-underline hover:text-blue-400 transition-colors font-['Open_Sans']">Contact</Link>
                 </li>
               </ul>
             </div>
 
-            <div className="footer-section">
-              <h4>Programs</h4>
-              <ul>
+            <div>
+              <h4 className="font-['Poppins'] text-lg font-semibold mb-4">Programs</h4>
+              <ul className="space-y-2 list-none p-0">
                 <li>
-                  <a href="#">Class 9-10 Board Prep</a>
+                  <a href="#" className="text-gray-300 no-underline hover:text-blue-400 transition-colors font-['Open_Sans']">Class 9-10 Board Prep</a>
                 </li>
                 <li>
-                  <a href="#">Class 11-12 Board Prep</a>
+                  <a href="#" className="text-gray-300 no-underline hover:text-blue-400 transition-colors font-['Open_Sans']">Class 11-12 Board Prep</a>
                 </li>
                 <li>
-                  <a href="#">Home Tutoring</a>
+                  <a href="#" className="text-gray-300 no-underline hover:text-blue-400 transition-colors font-['Open_Sans']">Home Tutoring</a>
                 </li>
                 <li>
-                  <a href="#">Competitive Exam Prep</a>
+                  <a href="#" className="text-gray-300 no-underline hover:text-blue-400 transition-colors font-['Open_Sans']">Competitive Exam Prep</a>
                 </li>
               </ul>
             </div>
 
-            <div className="footer-section">
-              <h4>Support</h4>
-              <ul>
+            <div>
+              <h4 className="font-['Poppins'] text-lg font-semibold mb-4">Support</h4>
+              <ul className="space-y-2 list-none p-0">
                 <li>
-                  <Link to="/student-portal">Student Portal</Link>
+                  <Link to="/student-portal" className="text-gray-300 no-underline hover:text-blue-400 transition-colors font-['Open_Sans']">Student Portal</Link>
                 </li>
                 <li>
-                  <a href="#">Parent Login</a>
+                  <a href="#" className="text-gray-300 no-underline hover:text-blue-400 transition-colors font-['Open_Sans']">Parent Login</a>
                 </li>
                 <li>
-                  <a href="/fee-structure">Fee Structure</a>
+                  <a href="/fee-structure" className="text-gray-300 no-underline hover:text-blue-400 transition-colors font-['Open_Sans']">Fee Structure</a>
                 </li>
                 <li>
-                  <a href="#">Admission Process</a>
+                  <a href="#" className="text-gray-300 no-underline hover:text-blue-400 transition-colors font-['Open_Sans']">Admission Process</a>
                 </li>
               </ul>
             </div>
           </div>
 
-          <div className="footer-bottom">
-            <p>&copy; 2024 Be Educated. All rights reserved.</p>
+          <div className="border-t border-gray-700 pt-4 text-center">
+            <p className="text-gray-400 text-sm font-['Open_Sans']">&copy; 2024 Be Educated. All rights reserved.</p>
           </div>
         </div>
       </footer>
@@ -449,5 +454,4 @@ function Home() {
 }
 
 export default Home
-
 
