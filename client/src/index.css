@@ -2,6 +2,7 @@
   font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;
   font-weight: 400;
+  --navbar-height: 80px;
 
   color-scheme: light dark;
   color: rgba(255, 255, 255, 0.87);
@@ -80,7 +81,7 @@ button:focus-visible {
   }
 }
 
-/* Reset & base layout */
+
 * {
   box-sizing: border-box;
   margin: 0;
@@ -88,6 +89,8 @@ button:focus-visible {
 }
 
 body, html {
+  margin: 0;
+  padding: 0;
   height: 100%;
   font-family: Arial, sans-serif;
   background-color: #f0f2f5;
@@ -95,9 +98,37 @@ body, html {
 
 /* Center everything vertically */
 #root {
+  margin: 0;
+  padding: 0;
   min-height: 100vh;
   display: flex;
   justify-content: center;
   align-items: center;
+}
+
+/* Default height for Desktop */
+.nav-spacer {
+  height: var(--navbar-height);
+}
+
+/* Increase height for Mobile screens */
+@media (max-width: 768px) {
+  .nav-spacer {
+    height: var(--navbar-height);/* Adjust this number until the title is visible on mobile */
+
+  }
+}
+
+main {
+  padding-top: var(--navbar-height);
+}
+
+
+@media (max-width: 768px) {
+  .page-container {
+    /* If your mobile navbar is taller, increase this number */
+    /* Try 120px or 140px until the content is fully visible */
+    padding-top: 130px !important; 
+  }
 }
 

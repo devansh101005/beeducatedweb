@@ -86,37 +86,55 @@ function StudentPortal() {
     }
   };
 
+// const fetchExams = async () => { 
+//       try {
+//           const token = localStorage.getItem('token');
+//           if (!token) {
+//               setExamError("Authentication required. Please log in again.");
+//               setLoadingExams(false);
+//               return;
+//           }
+
+//           const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/exams/available`, {
+//               headers: {
+//                   'Authorization': `Bearer ${token}`
+//               }
+//           });
+
+//           if (!res.ok) {
+//               throw new Error('Failed to fetch available exams');
+//           }
+
+//           const data = await res.json();
+//           console.log("EXAMS RESPONSE:", data);
+//           if (data.success) {
+//               setExams(data);
+//           } else {
+//               setExamError(data.message || 'Could not load exams.');
+//           }
+//       } catch (err) {
+//           setExamError(err.message);
+//       } finally {
+//           setLoadingExams(false);
+//       }
+//   };
 const fetchExams = async () => { 
-      try {
-          const token = localStorage.getItem('token');
-          if (!token) {
-              setExamError("Authentication required. Please log in again.");
-              setLoadingExams(false);
-              return;
-          }
+  try {
+    const token = localStorage.getItem('token');
+    const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/exams/available`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
 
-          const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/exams/available`, {
-              headers: {
-                  'Authorization': `Bearer ${token}`
-              }
-          });
+    const data = await res.json();
+    console.log("EXAMS RESPONSE:", data);
 
-          if (!res.ok) {
-              throw new Error('Failed to fetch available exams');
-          }
-
-          const data = await res.json();
-          if (data.success) {
-              setExams(data.exams);
-          } else {
-              setExamError(data.message || 'Could not load exams.');
-          }
-      } catch (err) {
-          setExamError(err.message);
-      } finally {
-          setLoadingExams(false);
-      }
-  };
+    setExams(data); // ✅ simply store the array
+  } catch (err) {
+    setExamError("Unable to load exams.");
+  } finally {
+    setLoadingExams(false);
+  }
+};
 
 
 

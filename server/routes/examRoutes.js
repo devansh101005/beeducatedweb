@@ -22,6 +22,8 @@ router.get('/:examId/questions', authenticate, authorize(['ADMIN', 'TUTOR']), ge
 
 // Student routes
 router.get('/available', authenticate, authorize(['STUDENT']), getAvailableExams);
+//router.get('/', authenticate, authorize(['ADMIN', 'TUTOR','STUDENT']), getAllExams);
+//router.get('/:examId/questions', authenticate, authorize(['ADMIN', 'TUTOR']), getExamQuestions);
 router.get('/:examId/start', authenticate, authorize(['STUDENT']), startExam);
 router.post('/:examId/submit', authenticate, authorize(['STUDENT']), submitExam);
 router.get('/:examId/result', authenticate, authorize(['STUDENT']), getResult);

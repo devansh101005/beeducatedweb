@@ -135,6 +135,8 @@ app.use('/api/materials', materialRoutes);
 console.log('Mounting /api/resources');
 app.use('/api/resources', resourceRoutes);
 
+app.use('/api/exams', examRoutes);
+
 console.log('Mounting /api (protected)');
 app.use('/api', protectedRoutes);
 
@@ -143,7 +145,6 @@ app.use('/api/admin', adminRoutes);
 
 console.log('Mounting /api/apply');
 app.use('/api/apply', applicationRoutes);
-app.use('/api/exams', examRoutes);
 app.use('/api/announcements', announcementRoutes);
 //console.log(announcementRoutes);
 
