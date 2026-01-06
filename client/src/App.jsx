@@ -36,6 +36,7 @@ import AvailableExams from "./pages/exam/AvailableExams";
 import ExamResults from "./pages/exam/ExamResults";
 import FeeStructure from './pages/FeeStructure';
 import FacultyPage from "./pages/FacultyPage";
+import Contact from "./pages/Contact";
 
 function App() {
   return (
@@ -47,6 +48,7 @@ function App() {
           <Route path="/" element={<Home />} />
           <Route path="/about" element={<About />} />
           <Route path="/courses" element={<Courses />} />
+          <Route path="/contact" element={<Contact />}/>
           <Route path="/signup" element={<SignupForm />} />
           <Route path="/login" element={<LoginForm />} />
           <Route path="/unauthorized" element={<Unauthorized />} />
