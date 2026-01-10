@@ -62,15 +62,8 @@ router.post("/tutor", upload.fields([
   }
 });
 
-router.get('/admin/applications', async (req, res) => {
-  try {
-    const students = await prisma.studentApplication.findMany();
-    const tutors = await prisma.tutorApplication.findMany();
-    res.json({ students, tutors });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: err.message });
-  }
-});
+// SECURITY: Removed unprotected /admin/applications endpoint
+// Use /api/admin/applications instead (requires authentication + ADMIN role)
+// See adminRoutes.js for the secure implementation
 
 export default router;

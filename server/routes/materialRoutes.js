@@ -59,7 +59,20 @@ router.get('/', verifyToken, async (req, res) => {
   }
 });
 
-router.post('/upload', upload.single('file'), async (req, res) => {
+// SECURITY: Upload requires authentication + ADMIN or TUTOR role
+// Students should not be able to upload study materials
+const canUploadMaterials = (req, res, next) => {
+  if (!req.user) {
+    return res.status(401).json({ error: 'Authentication required' });
+  }
+  const allowedRoles = ['ADMIN', 'TUTOR'];
+  if (!allowedRoles.includes(req.user.role)) {
+    return res.status(403).json({ error: 'Only administrators and tutors can upload materials' });
+  }
+  next();
+};
+
+router.post('/upload', verifyToken, canUploadMaterials, upload.single('file'), async (req, res) => {
   try {
     const file = req.file;
     const { category, classLevel, title } = req.body;

@@ -61,12 +61,24 @@ import { PutObjectCommand } from "@aws-sdk/client-s3";
 import s3Client from "../config/s3.js";
 import upload from "../middleware/uploadMiddleware.js";
 import prisma from "../config/prismaClient.js";
+import { verifyToken } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
-// Optional upload route (now using AWS SDK v3) - not used by current admin UI,
-// but kept working and consistent.
-router.post("/upload", upload.single("file"), async (req, res) => {
+// SECURITY: Middleware to require ADMIN or TUTOR role for uploads
+const canUpload = (req, res, next) => {
+  if (!req.user) {
+    return res.status(401).json({ error: "Authentication required" });
+  }
+  const allowedRoles = ["ADMIN", "TUTOR"];
+  if (!allowedRoles.includes(req.user.role)) {
+    return res.status(403).json({ error: "Only administrators and tutors can upload resources" });
+  }
+  next();
+};
+
+// Upload route - requires authentication + ADMIN/TUTOR role
+router.post("/upload", verifyToken, canUpload, upload.single("file"), async (req, res) => {
   try {
     const { title, category, classLevel } = req.body;
     const file = req.file;
