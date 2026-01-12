@@ -445,7 +445,7 @@ function Home() {
           </div>
 
           <div className="border-t border-gray-700 pt-4 text-center">
-            <p className="text-gray-400 text-sm font-['Open_Sans']">&copy; 2024 Be Educated. All rights reserved.</p>
+            <p className="text-gray-400 text-sm font-['Open_Sans']">&copy; 2024-{new Date().getFullYear()} Be Educated. All rights reserved.</p>
           </div>
         </div>
       </footer>
