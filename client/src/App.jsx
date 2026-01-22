@@ -1,177 +1,259 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { auth } from "./firebase"; // Force early initialization
 
+// Public pages
 import Home from "./pages/Home";
 import About from "./pages/About";
-import AdminUsers from "./pages/AdminUsers";
-import TutorList from "./pages/TutorList";
+import Courses from "./pages/Courses";
+import FeeStructure from './pages/FeeStructure';
+import FacultyPage from "./pages/FacultyPage";
+import Contact from "./pages/Contact";
+import StudyMaterials from "./pages/StudyMaterials";
+
+// Legacy auth pages (keep during migration)
 import SignupForm from "./pages/SignupForm";
 import LoginForm from "./pages/LoginForm";
+import StudentOtpLoginForm from "./pages/StudentOtpLoginForm";
+import PhoneLogin from "./pages/PhoneLogin";
+import StudentLogin from "./pages/StudentLogin";
+
+// New Clerk auth pages
+import { SignIn, SignUp, UserProfile } from "./pages/auth";
+
+// Legacy dashboards (keep during migration)
+import AdminUsers from "./pages/AdminUsers";
+import TutorList from "./pages/TutorList";
 import StudentDashboard from "./pages/StudentDashboard";
 import TutorDashboard from "./pages/TutorDashboard";
 import AdminDashboard from "./pages/AdminDashboard";
 import StudentProfile from "./pages/StudentProfile";
-import StudentApplyForm from "./pages/StudentApplyForm";
-import TutorApplyForm from "./pages/TutorApplyForm";
-import UploadForm from "./pages/uploadForm";
 import AdminApplications from "./pages/AdminApplications";
-import StudentOtpLoginForm from "./pages/StudentOtpLoginForm";
-import PhoneLogin from "./pages/PhoneLogin";
-import StudentLogin from "./pages/StudentLogin";
 import AdminStudents from "./pages/AdminStudents";
 import StudentPortal from "./pages/StudentPortal";
 
+// Application forms
+import StudentApplyForm from "./pages/StudentApplyForm";
+import TutorApplyForm from "./pages/TutorApplyForm";
+import UploadForm from "./pages/uploadForm";
+
+// Legacy protected routes
 import ProtectedRoute from "./components/ProtectedRoute";
 import RoleProtectedRoute from "./components/RoleProtectedRoute";
+
+// New Clerk protected route
+import { ClerkProtectedRoute } from "./components/auth";
+
+// New dashboard components
+import { DashboardLayout, DashboardHome } from "./components/dashboard";
+
+// Other pages
 import Unauthorized from "./pages/Unauthorized";
 import Navbar from "./components/Navbar";
-//import UploadForm from "/src/pages/UploadForm.jsx";
-import StudyMaterials from "./pages/StudyMaterials";
-import Courses from "./pages/Courses";
-
-//import StudyMaterials from "./pages/StudyMaterials";
 import ExamCreator from "./pages/exam/ExamCreator";
 import TakeExam from "./pages/exam/TakeExam";
 import AvailableExams from "./pages/exam/AvailableExams";
 import ExamResults from "./pages/exam/ExamResults";
-import FeeStructure from './pages/FeeStructure';
-import FacultyPage from "./pages/FacultyPage";
-import Contact from "./pages/Contact";
+import AuthTest from "./pages/AuthTest";
 
 function App() {
   return (
     <BrowserRouter>
-      <Navbar />
-      <main>
-        <Routes>
-          {/* Public Pages */}
-          <Route path="/" element={<Home />} />
-          <Route path="/about" element={<About />} />
-          <Route path="/courses" element={<Courses />} />
-          <Route path="/contact" element={<Contact />}/>
-          <Route path="/signup" element={<SignupForm />} />
-          <Route path="/login" element={<LoginForm />} />
-          <Route path="/unauthorized" element={<Unauthorized />} />
-          <Route path="/upload" element={<UploadForm />} />
-          <Route path="/fee-structure" element={<FeeStructure />} />
-          <Route path="/materials" element={<StudyMaterials />} />
-          <Route path="/student-id-login" element={<StudentOtpLoginForm />} />
-          <Route path="/phone-login" element={<PhoneLogin />} />
-          <Route path="/student-login" element={<StudentLogin />} />
-          <Route path="/student-portal" element={<StudentPortal />} />
-          <Route path="/faculty" element={<FacultyPage />} />
+      <Routes>
+        {/* ============================================ */}
+        {/* NEW Clerk Auth Routes (Phase 1) */}
+        {/* ============================================ */}
+        <Route path="/sign-in/*" element={<SignIn />} />
+        <Route path="/sign-up/*" element={<SignUp />} />
+        <Route path="/profile/*" element={
+          <ClerkProtectedRoute>
+            <UserProfile />
+          </ClerkProtectedRoute>
+        } />
 
-          {/* Student Routes */}
-          <Route
-            path="/student-profile"
-            element={
+        {/* ============================================ */}
+        {/* NEW Dashboard Routes (Phase 1) */}
+        {/* ============================================ */}
+        <Route path="/dashboard" element={
+          <ClerkProtectedRoute>
+            <DashboardLayout />
+          </ClerkProtectedRoute>
+        }>
+          <Route index element={<DashboardHome />} />
+          {/* More dashboard routes will be added in Phase 2 */}
+        </Route>
+
+        {/* ============================================ */}
+        {/* Public Pages (with Navbar) */}
+        {/* ============================================ */}
+        <Route path="/" element={<><Navbar /><Home /></>} />
+        <Route path="/about" element={<><Navbar /><About /></>} />
+        <Route path="/courses" element={<><Navbar /><Courses /></>} />
+        <Route path="/contact" element={<><Navbar /><Contact /></>} />
+        <Route path="/fee-structure" element={<><Navbar /><FeeStructure /></>} />
+        <Route path="/materials" element={<><Navbar /><StudyMaterials /></>} />
+        <Route path="/faculty" element={<><Navbar /><FacultyPage /></>} />
+        <Route path="/unauthorized" element={<><Navbar /><Unauthorized /></>} />
+        <Route path="/auth-test" element={<><Navbar /><AuthTest /></>} />
+
+        {/* Application Forms (Public) */}
+        <Route path="/apply/student" element={<><Navbar /><StudentApplyForm /></>} />
+        <Route path="/apply/tutor" element={<><Navbar /><TutorApplyForm /></>} />
+
+        {/* ============================================ */}
+        {/* Legacy Auth Routes (keep during migration) */}
+        {/* ============================================ */}
+        <Route path="/signup" element={<><Navbar /><SignupForm /></>} />
+        <Route path="/login" element={<><Navbar /><LoginForm /></>} />
+        <Route path="/student-id-login" element={<><Navbar /><StudentOtpLoginForm /></>} />
+        <Route path="/phone-login" element={<><Navbar /><PhoneLogin /></>} />
+        <Route path="/student-login" element={<><Navbar /><StudentLogin /></>} />
+        <Route path="/student-portal" element={<><Navbar /><StudentPortal /></>} />
+        <Route path="/upload" element={<><Navbar /><UploadForm /></>} />
+
+        {/* ============================================ */}
+        {/* Legacy Protected Routes (keep during migration) */}
+        {/* ============================================ */}
+
+        {/* Student Routes */}
+        <Route
+          path="/student-profile"
+          element={
+            <>
+              <Navbar />
               <RoleProtectedRoute allowedRoles={["STUDENT"]}>
                 <StudentProfile />
               </RoleProtectedRoute>
-            }
-          />
-          <Route
-            path="/student-dashboard"
-            element={
+            </>
+          }
+        />
+        <Route
+          path="/student-dashboard"
+          element={
+            <>
+              <Navbar />
               <RoleProtectedRoute allowedRoles={["STUDENT"]}>
                 <StudentDashboard />
               </RoleProtectedRoute>
-            }
-          />
-          <Route
-            path="/find-tutors"
-            element={
+            </>
+          }
+        />
+        <Route
+          path="/find-tutors"
+          element={
+            <>
+              <Navbar />
               <RoleProtectedRoute allowedRoles={["STUDENT"]}>
                 <TutorList />
               </RoleProtectedRoute>
-            }
-          />
+            </>
+          }
+        />
 
-          {/* Tutor Route */}
-          <Route
-            path="/tutor-dashboard"
-            element={
+        {/* Tutor Route */}
+        <Route
+          path="/tutor-dashboard"
+          element={
+            <>
+              <Navbar />
               <RoleProtectedRoute allowedRoles={["TUTOR"]}>
                 <TutorDashboard />
               </RoleProtectedRoute>
-            }
-          />
+            </>
+          }
+        />
 
-          {/* Admin Routes */}
-          <Route
-            path="/admin-dashboard"
-            element={
+        {/* Admin Routes */}
+        <Route
+          path="/admin-dashboard"
+          element={
+            <>
+              <Navbar />
               <RoleProtectedRoute allowedRoles={["ADMIN"]}>
                 <AdminDashboard />
               </RoleProtectedRoute>
-            }
-
-          />
-          <Route
-            path="/admin/users"
-            element={
+            </>
+          }
+        />
+        <Route
+          path="/admin/users"
+          element={
+            <>
+              <Navbar />
               <RoleProtectedRoute allowedRoles={["ADMIN"]}>
                 <AdminUsers />
               </RoleProtectedRoute>
-            }
-          />
-          <Route
-            path="/admin/students"
-            element={
+            </>
+          }
+        />
+        <Route
+          path="/admin/students"
+          element={
+            <>
+              <Navbar />
               <RoleProtectedRoute allowedRoles={["ADMIN"]}>
                 <AdminStudents />
               </RoleProtectedRoute>
-            }
-          />
-          <Route path="/apply/student" element={<StudentApplyForm />} />
-          <Route path="/apply/tutor" element={<TutorApplyForm />} />
-          <Route
-            path="/admin/applications"
-            element={
+            </>
+          }
+        />
+        <Route
+          path="/admin/applications"
+          element={
+            <>
+              <Navbar />
               <RoleProtectedRoute allowedRoles={["ADMIN"]}>
                 <AdminApplications />
               </RoleProtectedRoute>
-            }
-          />
+            </>
+          }
+        />
 
-
-          <Route 
-            path="/create-exam" 
-            element={
+        {/* Exam Routes */}
+        <Route
+          path="/create-exam"
+          element={
+            <>
+              <Navbar />
               <RoleProtectedRoute allowedRoles={["ADMIN", "TUTOR"]}>
                 <ExamCreator />
               </RoleProtectedRoute>
-            } 
-          />
-
-          <Route 
-            path="/available-exams" 
-            element={
+            </>
+          }
+        />
+        <Route
+          path="/available-exams"
+          element={
+            <>
+              <Navbar />
               <RoleProtectedRoute allowedRoles={["STUDENT"]}>
                 <AvailableExams />
               </RoleProtectedRoute>
-            } 
-          />
-
-          <Route 
-            path="/take-exam/:examId" 
-            element={
+            </>
+          }
+        />
+        <Route
+          path="/take-exam/:examId"
+          element={
+            <>
+              <Navbar />
               <RoleProtectedRoute allowedRoles={["STUDENT"]}>
                 <TakeExam />
               </RoleProtectedRoute>
-            } 
-          />
-
-          <Route 
-            path="/exam-results/:examId" 
-            element={
+            </>
+          }
+        />
+        <Route
+          path="/exam-results/:examId"
+          element={
+            <>
+              <Navbar />
               <RoleProtectedRoute allowedRoles={["STUDENT"]}>
                 <ExamResults />
               </RoleProtectedRoute>
-            } 
-          />
-        </Routes>
-      </main>
+            </>
+          }
+        />
+      </Routes>
     </BrowserRouter>
   );
 }

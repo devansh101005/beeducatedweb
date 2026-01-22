@@ -1,0 +1,374 @@
+// Student Service
+// Handles student CRUD operations with Supabase
+
+import { getSupabase } from '../config/supabase.js';
+
+// Types
+export type StudentType = 'coaching_online' | 'coaching_offline' | 'test_series' | 'home_tuition';
+export type SubscriptionStatus = 'active' | 'inactive' | 'pending' | 'expired' | 'cancelled';
+
+export interface Student {
+  id: string;
+  user_id: string;
+  student_id: string;
+  student_type: StudentType;
+  date_of_birth: string | null;
+  gender: string | null;
+  address: string | null;
+  city: string | null;
+  state: string | null;
+  pincode: string | null;
+  class_grade: string | null;
+  school_name: string | null;
+  board: string | null;
+  target_exam: string | null;
+  target_year: number | null;
+  parent_name: string | null;
+  parent_phone: string | null;
+  parent_email: string | null;
+  subscription_status: SubscriptionStatus;
+  subscription_start_date: string | null;
+  subscription_end_date: string | null;
+  is_active: boolean;
+  joined_at: string;
+  metadata: Record<string, unknown>;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CreateStudentInput {
+  user_id: string;
+  student_type: StudentType;
+  date_of_birth?: string;
+  gender?: string;
+  address?: string;
+  city?: string;
+  state?: string;
+  pincode?: string;
+  class_grade?: string;
+  school_name?: string;
+  board?: string;
+  target_exam?: string;
+  target_year?: number;
+  parent_name?: string;
+  parent_phone?: string;
+  parent_email?: string;
+}
+
+export interface UpdateStudentInput {
+  student_type?: StudentType;
+  date_of_birth?: string;
+  gender?: string;
+  address?: string;
+  city?: string;
+  state?: string;
+  pincode?: string;
+  class_grade?: string;
+  school_name?: string;
+  board?: string;
+  target_exam?: string;
+  target_year?: number;
+  parent_name?: string;
+  parent_phone?: string;
+  parent_email?: string;
+  subscription_status?: SubscriptionStatus;
+  subscription_start_date?: string;
+  subscription_end_date?: string;
+  is_active?: boolean;
+  metadata?: Record<string, unknown>;
+}
+
+class StudentService {
+  private supabase = getSupabase();
+
+  /**
+   * Generate a unique student ID
+   */
+  private async generateStudentId(): Promise<string> {
+    const year = new Date().getFullYear();
+    const prefix = `BEE-${year}-`;
+
+    // Get the highest existing student ID for this year
+    const { data } = await this.supabase
+      .from('students')
+      .select('student_id')
+      .like('student_id', `${prefix}%`)
+      .order('student_id', { ascending: false })
+      .limit(1);
+
+    let nextNum = 1;
+    if (data && data.length > 0) {
+      const lastId = data[0].student_id;
+      const lastNum = parseInt(lastId.replace(prefix, ''), 10);
+      nextNum = lastNum + 1;
+    }
+
+    return `${prefix}${nextNum.toString().padStart(4, '0')}`;
+  }
+
+  /**
+   * Get student by ID
+   */
+  async getById(id: string): Promise<Student | null> {
+    const { data, error } = await this.supabase
+      .from('students')
+      .select('*')
+      .eq('id', id)
+      .single();
+
+    if (error) {
+      if (error.code === 'PGRST116') return null;
+      throw error;
+    }
+
+    return data as Student;
+  }
+
+  /**
+   * Get student by user ID
+   */
+  async getByUserId(userId: string): Promise<Student | null> {
+    const { data, error } = await this.supabase
+      .from('students')
+      .select('*')
+      .eq('user_id', userId)
+      .single();
+
+    if (error) {
+      if (error.code === 'PGRST116') return null;
+      throw error;
+    }
+
+    return data as Student;
+  }
+
+  /**
+   * Get student by student ID (BEE-2024-0001)
+   */
+  async getByStudentId(studentId: string): Promise<Student | null> {
+    const { data, error } = await this.supabase
+      .from('students')
+      .select('*')
+      .eq('student_id', studentId)
+      .single();
+
+    if (error) {
+      if (error.code === 'PGRST116') return null;
+      throw error;
+    }
+
+    return data as Student;
+  }
+
+  /**
+   * Create a new student
+   */
+  async create(input: CreateStudentInput): Promise<Student> {
+    const studentId = await this.generateStudentId();
+
+    const { data, error } = await this.supabase
+      .from('students')
+      .insert({
+        ...input,
+        student_id: studentId,
+        subscription_status: 'pending',
+      })
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data as Student;
+  }
+
+  /**
+   * Update a student
+   */
+  async update(id: string, input: UpdateStudentInput): Promise<Student> {
+    const { data, error } = await this.supabase
+      .from('students')
+      .update(input)
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data as Student;
+  }
+
+  /**
+   * Update student by user ID
+   */
+  async updateByUserId(userId: string, input: UpdateStudentInput): Promise<Student> {
+    const { data, error } = await this.supabase
+      .from('students')
+      .update(input)
+      .eq('user_id', userId)
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data as Student;
+  }
+
+  /**
+   * Deactivate student
+   */
+  async deactivate(id: string): Promise<void> {
+    const { error } = await this.supabase
+      .from('students')
+      .update({ is_active: false })
+      .eq('id', id);
+
+    if (error) throw error;
+  }
+
+  /**
+   * List students with pagination and filters
+   */
+  async list(options: {
+    page?: number;
+    limit?: number;
+    studentType?: string;
+    isActive?: boolean;
+    search?: string;
+    targetExam?: string;
+    subscriptionStatus?: SubscriptionStatus;
+  } = {}): Promise<{ students: Student[]; total: number }> {
+    const { page = 1, limit = 20, studentType, isActive, search, targetExam, subscriptionStatus } = options;
+    const offset = (page - 1) * limit;
+
+    let query = this.supabase
+      .from('students')
+      .select('*', { count: 'exact' });
+
+    if (studentType) {
+      query = query.eq('student_type', studentType);
+    }
+
+    if (isActive !== undefined) {
+      query = query.eq('is_active', isActive);
+    }
+
+    if (targetExam) {
+      query = query.eq('target_exam', targetExam);
+    }
+
+    if (subscriptionStatus) {
+      query = query.eq('subscription_status', subscriptionStatus);
+    }
+
+    if (search) {
+      query = query.or(
+        `student_id.ilike.%${search}%,parent_name.ilike.%${search}%,parent_email.ilike.%${search}%`
+      );
+    }
+
+    const { data, error, count } = await query
+      .order('created_at', { ascending: false })
+      .range(offset, offset + limit - 1);
+
+    if (error) throw error;
+
+    return {
+      students: data as Student[],
+      total: count || 0,
+    };
+  }
+
+  /**
+   * Get student with user details
+   */
+  async getWithUser(id: string): Promise<{ student: Student; user: any } | null> {
+    const { data, error } = await this.supabase
+      .from('students')
+      .select(`
+        *,
+        user:users(*)
+      `)
+      .eq('id', id)
+      .single();
+
+    if (error) {
+      if (error.code === 'PGRST116') return null;
+      throw error;
+    }
+
+    return {
+      student: data as Student,
+      user: data.user,
+    };
+  }
+
+  /**
+   * Get students by batch
+   */
+  async getByBatch(batchId: string): Promise<Student[]> {
+    const { data, error } = await this.supabase
+      .from('batch_students')
+      .select(`
+        student:students(*)
+      `)
+      .eq('batch_id', batchId)
+      .eq('status', 'active');
+
+    if (error) throw error;
+
+    return data.map((d: any) => d.student) as Student[];
+  }
+
+  /**
+   * Enroll student in batch
+   */
+  async enrollInBatch(studentId: string, batchId: string): Promise<void> {
+    const { error } = await this.supabase
+      .from('batch_students')
+      .insert({
+        student_id: studentId,
+        batch_id: batchId,
+        status: 'active',
+      });
+
+    if (error) throw error;
+
+    // Update batch student count
+    await this.supabase.rpc('increment_batch_students', { batch_id: batchId });
+  }
+
+  /**
+   * Remove student from batch
+   */
+  async removeFromBatch(studentId: string, batchId: string): Promise<void> {
+    const { error } = await this.supabase
+      .from('batch_students')
+      .update({ status: 'dropped' })
+      .eq('student_id', studentId)
+      .eq('batch_id', batchId);
+
+    if (error) throw error;
+
+    // Update batch student count
+    await this.supabase.rpc('decrement_batch_students', { batch_id: batchId });
+  }
+
+  /**
+   * Update subscription status
+   */
+  async updateSubscription(
+    id: string,
+    status: SubscriptionStatus,
+    startDate?: string,
+    endDate?: string
+  ): Promise<Student> {
+    const updateData: UpdateStudentInput = {
+      subscription_status: status,
+    };
+
+    if (startDate) updateData.subscription_start_date = startDate;
+    if (endDate) updateData.subscription_end_date = endDate;
+
+    return this.update(id, updateData);
+  }
+}
+
+// Export singleton instance
+export const studentService = new StudentService();
