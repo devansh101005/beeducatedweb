@@ -2,42 +2,26 @@
   "name": "beeducated-server",
   "version": "1.0.0",
   "description": "BeEducated Backend API",
-  "main": "server.js",
+  "main": "dist/src/server.js",
   "type": "module",
   "scripts": {
-    "dev": "nodemon server.js",
-    "dev:ts": "tsx watch src/server.ts",
+    "dev": "tsx watch src/server.ts",
     "build": "tsc",
-    "start": "node server.js",
-    "start:ts": "node dist/src/server.js",
+    "start": "node dist/src/server.js",
     "lint": "eslint src --ext .ts",
     "lint:fix": "eslint src --ext .ts --fix",
     "format": "prettier --write \"src/**/*.ts\"",
-    "type-check": "tsc --noEmit",
-    "prisma:generate": "prisma generate",
-    "prisma:migrate": "prisma migrate dev"
+    "type-check": "tsc --noEmit"
   },
   "dependencies": {
-    "@aws-sdk/client-s3": "^3.857.0",
     "@clerk/clerk-sdk-node": "^5.0.0",
-    "@prisma/client": "^6.9.0",
     "@supabase/supabase-js": "^2.47.0",
-    "accepts": "^2.0.0",
-    "aws-sdk": "^2.1692.0",
-    "bcryptjs": "^3.0.2",
-    "body-parser": "^2.2.0",
-    "cookie": "^0.7.2",
-    "cookie-signature": "^1.2.2",
     "cors": "^2.8.5",
-    "debug": "^4.4.1",
     "dotenv": "^16.5.0",
     "express": "^5.1.0",
-    "firebase-admin": "^13.4.0",
-    "http-errors": "^2.0.0",
-    "jsonwebtoken": "^9.0.2",
     "multer": "^2.0.1",
-    "svix": "^1.15.0",
-    "twilio": "^5.8.0"
+    "razorpay": "^2.9.4",
+    "svix": "^1.15.0"
   },
   "devDependencies": {
     "@types/cors": "^2.8.17",
@@ -50,11 +34,7 @@
     "eslint-config-prettier": "^10.0.0",
     "nodemon": "^3.1.10",
     "prettier": "^3.4.0",
-    "prisma": "^6.9.0",
     "tsx": "^4.19.0",
     "typescript": "^5.6.0"
-  },
-  "imports": {
-    "#serviceAccount": "./serviceAccountKey.json"
   }
 }

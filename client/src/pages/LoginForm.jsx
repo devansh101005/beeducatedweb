@@ -5,7 +5,7 @@
 //   const [formData, setFormData] = useState({ email: "", password: "" });
 //   const [message, setMessage] = useState("");
 
-//   const API_BASE = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:5000";
+//   const API_BASE = import.meta.env.VITE_API_BASE_URL ?? "";
   
 
 //   const handleChange = (e) => {
@@ -89,7 +89,7 @@ function LoginForm() {
   const [message, setMessage] = useState("");
   const navigate = useNavigate();
 
-  const API_BASE = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:5000";
+  const API_BASE = import.meta.env.VITE_API_BASE_URL ?? "";
 
   const handleChange = (e) => {
     setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));

@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate, Outlet } from "react-router-dom";
 import { useAuth, useUser, UserButton } from "@clerk/clerk-react";
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+const API_URL = import.meta.env.VITE_API_URL || "/api";
 
 // Navigation items by role
 const navigationByRole = {

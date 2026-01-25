@@ -3,7 +3,8 @@ import { useAuth, useUser, SignedIn, SignedOut, RedirectToSignIn } from "@clerk/
 import { Navigate, useLocation } from "react-router-dom";
 import { useState, useEffect } from "react";
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+// Use relative URL to go through Vite's proxy in development
+const API_URL = import.meta.env.VITE_API_URL || "/api";
 
 /**
  * ClerkProtectedRoute - Protects routes using Clerk authentication

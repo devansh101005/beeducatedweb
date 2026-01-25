@@ -1,0 +1,7 @@
+// Admin Module - Administrative management pages
+// Premium admin experience with full control
+
+export { UsersPage } from './components/UsersPage';
+export { BatchesPage } from './components/BatchesPage';
+export { CoursesPage } from './components/CoursesPage';
+export { ExamsPage } from './components/ExamsPage';

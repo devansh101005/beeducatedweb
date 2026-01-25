@@ -1,5 +1,36 @@
-// Utils barrel export
-// Created in Phase 0
+// Shared utilities barrel export
 
-export * from './response.js';
-export * from './errors.js';
+// Error classes
+export {
+  AppError,
+  NotFoundError,
+  UnauthorizedError,
+  ForbiddenError,
+  BadRequestError,
+  ValidationError,
+  ConflictError,
+  DatabaseError,
+} from './errors.js';
+
+// Response helpers
+export {
+  sendSuccess,
+  sendCreated,
+  sendError,
+  sendNotFound,
+  sendUnauthorized,
+  sendForbidden,
+  sendBadRequest,
+  sendValidationError,
+  sendPaginated,
+} from './response.js';
+export type { ApiResponse, PaginatedData } from './response.js';
+
+// Supabase helpers
+export {
+  unwrapJoinOne,
+  unwrapJoinMany,
+  isSupabaseError,
+  castJoinResult,
+  createJoinMapper,
+} from './supabaseHelpers.js';

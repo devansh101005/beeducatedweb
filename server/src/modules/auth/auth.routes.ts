@@ -91,4 +91,46 @@ router.post('/sync-user', requireAuth, attachUser, async (req: Request, res: Res
   }
 });
 
+/**
+ * PATCH /api/v2/auth/role (DEV ONLY)
+ * Change current user's role for testing
+ * Only available in development environment
+ */
+router.patch('/role', requireAuth, attachUser, async (req: Request, res: Response) => {
+  try {
+    // Only allow in development
+    if (process.env.NODE_ENV === 'production') {
+      return res.status(403).json({ success: false, message: 'Not available in production' });
+    }
+
+    const { role } = req.body;
+    const validRoles = ['admin', 'student', 'teacher', 'parent', 'batch_manager'];
+
+    if (!role || !validRoles.includes(role)) {
+      return res.status(400).json({
+        success: false,
+        message: `Invalid role. Must be one of: ${validRoles.join(', ')}`,
+      });
+    }
+
+    if (!req.user) {
+      return sendNotFound(res, 'User');
+    }
+
+    const updatedUser = await userService.updateRole(req.user.id, role);
+
+    sendSuccess(res, {
+      message: `Role updated to ${role}`,
+      user: {
+        id: updatedUser.id,
+        email: updatedUser.email,
+        role: updatedUser.role,
+      },
+    });
+  } catch (error) {
+    console.error('Error updating role:', error);
+    sendError(res, 'Failed to update role');
+  }
+});
+
 export default router;

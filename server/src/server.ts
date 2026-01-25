@@ -18,7 +18,12 @@ import { contentRoutes } from './modules/content/index.js';
 import { announcementRoutes } from './modules/announcements/index.js';
 import { examRoutes } from './modules/exams/index.js';
 import { questionRoutes } from './modules/questions/index.js';
+import { dashboardRoutes } from './modules/dashboard/index.js';
+import { reportRoutes } from './modules/reports/index.js';
+import { feeRoutes } from './modules/fees/index.js';
+import { paymentRoutes } from './modules/payments/index.js';
 import clerkWebhook from './webhooks/clerk.js';
+import razorpayWebhook from './webhooks/razorpay.js';
 
 // Validate environment variables
 validateEnv();
@@ -32,6 +37,7 @@ const app: Express = express();
 const allowedOrigins = [
   env.FRONTEND_URL,
   'http://localhost:5173',
+  'http://localhost:5174',
   'http://localhost:3000',
   // Add production domains here
 ];
@@ -60,6 +66,7 @@ app.use(
 // ============================================
 // Note: Webhook routes need raw body for signature verification
 app.use('/api/v2/webhooks/clerk', express.raw({ type: 'application/json' }));
+app.use('/api/v2/webhooks/razorpay', express.json());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -82,6 +89,7 @@ app.use('/api/v2/health', healthRoutes);
 
 // Webhooks (must come before auth middleware)
 app.use('/api/v2/webhooks/clerk', clerkWebhook);
+app.use('/api/v2/webhooks/razorpay', razorpayWebhook);
 
 // Auth routes
 app.use('/api/v2/auth', authRoutes);
@@ -113,29 +121,50 @@ app.use('/api/v2/exams', examRoutes);
 // Question routes (Phase 5)
 app.use('/api/v2/questions', questionRoutes);
 
+// Dashboard routes (Phase 6)
+app.use('/api/v2/dashboard', dashboardRoutes);
+
+// Report routes (Phase 6)
+app.use('/api/v2/reports', reportRoutes);
+
+// Fee routes (Phase 4)
+app.use('/api/v2/fees', feeRoutes);
+
+// Payment routes (Phase 4)
+app.use('/api/v2/payments', paymentRoutes);
+
 // ============================================
 // Root endpoint
 // ============================================
+const apiInfo = {
+  name: 'BeEducated API',
+  version: '2.0.0',
+  status: 'running',
+  endpoints: {
+    health: '/api/v2/health',
+    auth: '/api/v2/auth',
+    admin: '/api/v2/admin',
+    batches: '/api/v2/batches',
+    courses: '/api/v2/courses',
+    students: '/api/v2/students',
+    parents: '/api/v2/parents',
+    content: '/api/v2/content',
+    announcements: '/api/v2/announcements',
+    exams: '/api/v2/exams',
+    questions: '/api/v2/questions',
+    dashboard: '/api/v2/dashboard',
+    reports: '/api/v2/reports',
+    fees: '/api/v2/fees',
+    payments: '/api/v2/payments',
+  },
+};
+
 app.get('/', (_req: Request, res: Response) => {
-  res.json({
-    name: 'BeEducated API',
-    version: '2.0.0',
-    status: 'running',
-    timestamp: new Date().toISOString(),
-    endpoints: {
-      health: '/api/v2/health',
-      auth: '/api/v2/auth',
-      admin: '/api/v2/admin',
-      batches: '/api/v2/batches',
-      courses: '/api/v2/courses',
-      students: '/api/v2/students',
-      parents: '/api/v2/parents',
-      content: '/api/v2/content',
-      announcements: '/api/v2/announcements',
-      exams: '/api/v2/exams',
-      questions: '/api/v2/questions',
-    },
-  });
+  res.json({ ...apiInfo, timestamp: new Date().toISOString() });
+});
+
+app.get('/api/v2', (_req: Request, res: Response) => {
+  res.json({ ...apiInfo, timestamp: new Date().toISOString() });
 });
 
 // ============================================
@@ -151,13 +180,13 @@ const PORT = env.PORT;
 
 app.listen(PORT, () => {
   console.log('');
-  console.log('🐝 ================================');
-  console.log('🐝  BeEducated Server Started');
-  console.log('🐝 ================================');
-  console.log(`🐝  Environment: ${env.NODE_ENV}`);
-  console.log(`🐝  Port: ${PORT}`);
-  console.log(`🐝  API Base: http://localhost:${PORT}/api/v2`);
-  console.log('🐝 ================================');
+  console.log(' ================================');
+  console.log('  BeEducated Server Started');
+  console.log(' ================================');
+  console.log(`  Environment: ${env.NODE_ENV}`);
+  console.log(`  Port: ${PORT}`);
+  console.log(`  API Base: http://localhost:${PORT}/api/v2`);
+  console.log(' ================================');
   console.log('');
 });
 

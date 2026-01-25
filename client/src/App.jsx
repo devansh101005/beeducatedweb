@@ -43,8 +43,26 @@ import RoleProtectedRoute from "./components/RoleProtectedRoute";
 // New Clerk protected route
 import { ClerkProtectedRoute } from "./components/auth";
 
-// New dashboard components
-import { DashboardLayout, DashboardHome } from "./components/dashboard";
+// New dashboard components (Premium redesign)
+import { DashboardLayout, DashboardHome } from "@modules/dashboard";
+
+// Fee Management
+import { FeeListPage, MyFeesPage } from "@modules/fees";
+
+// Payments
+import { PaymentPage, PaymentSuccessPage, PaymentHistoryPage } from "@modules/payments";
+
+// Announcements
+import { AnnouncementsFeed } from "@modules/announcements";
+
+// Admin Management
+import { UsersPage, BatchesPage, CoursesPage, ExamsPage } from "@modules/admin";
+
+// Student Pages
+import { MyCoursesPage, StudyMaterialsPage, MyExamsPage, MyResultsPage } from "@modules/student";
+
+// Teacher Pages
+import { MyBatchesPage, MyStudentsPage, GradingPage } from "@modules/teacher";
 
 // Other pages
 import Unauthorized from "./pages/Unauthorized";
@@ -79,7 +97,35 @@ function App() {
           </ClerkProtectedRoute>
         }>
           <Route index element={<DashboardHome />} />
-          {/* More dashboard routes will be added in Phase 2 */}
+
+          {/* Fee Management */}
+          <Route path="fees" element={<FeeListPage />} />
+          <Route path="my-fees" element={<MyFeesPage />} />
+
+          {/* Payments */}
+          <Route path="pay/:feeId" element={<PaymentPage />} />
+          <Route path="payment-success" element={<PaymentSuccessPage />} />
+          <Route path="payment-history" element={<PaymentHistoryPage />} />
+
+          {/* Announcements */}
+          <Route path="announcements" element={<AnnouncementsFeed />} />
+
+          {/* Admin Management */}
+          <Route path="users" element={<UsersPage />} />
+          <Route path="batches" element={<BatchesPage />} />
+          <Route path="courses" element={<CoursesPage />} />
+          <Route path="exams" element={<ExamsPage />} />
+
+          {/* Student Pages */}
+          <Route path="my-courses" element={<MyCoursesPage />} />
+          <Route path="study-materials" element={<StudyMaterialsPage />} />
+          <Route path="my-exams" element={<MyExamsPage />} />
+          <Route path="my-results" element={<MyResultsPage />} />
+
+          {/* Teacher Pages */}
+          <Route path="my-batches" element={<MyBatchesPage />} />
+          <Route path="my-students" element={<MyStudentsPage />} />
+          <Route path="grading" element={<GradingPage />} />
         </Route>
 
         {/* ============================================ */}
