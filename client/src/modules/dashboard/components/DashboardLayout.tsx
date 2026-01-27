@@ -39,7 +39,7 @@ import { PageLoader, Spinner } from '@shared/components/ui';
 // TYPES
 // ============================================
 
-type UserRole = 'admin' | 'teacher' | 'student' | 'parent' | 'batch_manager';
+type UserRole = 'admin' | 'teacher' | 'student' | 'parent' | 'batch_manager' | 'user';
 
 interface NavItem {
   name: string;
@@ -163,6 +163,13 @@ const navigationByRole: Record<UserRole, NavSection[]> = {
         { name: 'Schedule', href: '/dashboard/schedule', icon: Calendar },
         { name: 'Attendance', href: '/dashboard/attendance', icon: CheckSquare },
         { name: 'Announcements', href: '/dashboard/announcements', icon: Megaphone },
+      ],
+    },
+  ],
+  user: [
+    {
+      items: [
+        { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
       ],
     },
   ],

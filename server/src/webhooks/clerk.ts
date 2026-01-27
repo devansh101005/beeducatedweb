@@ -82,6 +82,11 @@ async function handleUserCreated(data: ClerkWebhookEvent['data']) {
     (p) => p.verification?.status === 'verified'
   ) || data.phone_numbers?.[0];
 
+  // Check if email is in admin whitelist
+  const adminEmails = process.env.ADMIN_EMAILS?.split(',').map(e => e.trim().toLowerCase()) || [];
+  const userEmail = (primaryEmail?.email_address || '').toLowerCase();
+  const isAdmin = adminEmails.includes(userEmail);
+
   const userData = {
     clerk_id: data.id,
     email: primaryEmail?.email_address || '',
@@ -89,7 +94,7 @@ async function handleUserCreated(data: ClerkWebhookEvent['data']) {
     first_name: data.first_name || null,
     last_name: data.last_name || null,
     avatar_url: data.image_url || null,
-    role: 'student' as const, // Default role, can be changed by admin
+    role: isAdmin ? ('admin' as const) : ('user' as const), // Auto-assign admin or default to user
     email_verified: primaryEmail?.verification?.status === 'verified',
     phone_verified: primaryPhone?.verification?.status === 'verified',
     metadata: {
@@ -97,6 +102,8 @@ async function handleUserCreated(data: ClerkWebhookEvent['data']) {
       public_metadata: data.public_metadata || {},
     },
   };
+
+  console.log(`Creating user with email: ${userEmail}, role: ${userData.role}`);
 
   const { data: newUser, error } = await supabase
     .from('users')

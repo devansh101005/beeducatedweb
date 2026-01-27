@@ -3,8 +3,10 @@ import { Link } from "react-router-dom"
 import { useState,useEffect } from "react"
 import {FaFacebook,FaInstagram,FaWhatsapp,FaLinkedin,FaYoutube} from 'react-icons/fa';
 import AnnouncementModal from "../components/AnnouncementModal";
+import { useAuth, UserButton } from '@clerk/clerk-react';
 
 function Home() {
+  const { isSignedIn, isLoaded } = useAuth();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [announcement, setAnnouncement] = useState(null);
     const [showAnnouncement, setShowAnnouncement] = useState(false);
@@ -110,12 +112,31 @@ function Home() {
               <Link to="/contact" className="no-underline text-gray-700 font-medium font-['Open_Sans'] transition-all duration-300 hover:text-blue-600" onClick={() => setIsMobileMenuOpen(false)}>
                 Contact
               </Link>
-              <Link to="/login" className="no-underline text-gray-700 font-medium font-['Open_Sans'] transition-all duration-300 hover:text-blue-600" onClick={() => setIsMobileMenuOpen(false)}>
-                Login
-              </Link>
-              <Link to="/signup" className="bg-blue-600 text-white px-6 py-3 rounded-lg no-underline font-semibold transition-all duration-300 hover:bg-blue-700 hover:-translate-y-0.5" onClick={() => setIsMobileMenuOpen(false)}>
-                Join Now
-              </Link>
+              {isLoaded && isSignedIn ? (
+                <>
+                  <Link to="/dashboard" className="bg-gradient-to-r from-blue-600 to-teal-600 text-white px-6 py-3 rounded-lg no-underline font-semibold transition-all duration-300 hover:from-blue-700 hover:to-teal-700 hover:-translate-y-0.5 shadow-lg" onClick={() => setIsMobileMenuOpen(false)}>
+                    Go to Dashboard
+                  </Link>
+                  <UserButton
+                    afterSignOutUrl="/"
+                    appearance={{
+                      elements: {
+                        avatarBox: 'w-10 h-10 rounded-full border-2 border-blue-600 hover:border-blue-700 transition-all',
+                        userButtonPopoverCard: 'shadow-2xl',
+                      },
+                    }}
+                  />
+                </>
+              ) : (
+                <>
+                  <Link to="/sign-in" className="no-underline text-gray-700 font-medium font-['Open_Sans'] transition-all duration-300 hover:text-blue-600" onClick={() => setIsMobileMenuOpen(false)}>
+                    Sign In
+                  </Link>
+                  <Link to="/sign-up" className="bg-blue-600 text-white px-6 py-3 rounded-lg no-underline font-semibold transition-all duration-300 hover:bg-blue-700 hover:-translate-y-0.5" onClick={() => setIsMobileMenuOpen(false)}>
+                    Get Started
+                  </Link>
+                </>
+              )}
             </div>
           </div>
         </div>
@@ -163,12 +184,21 @@ function Home() {
               </div>
             </div>
 
-            {/* Student Portal Button */}
+            {/* Dashboard/Portal Button */}
             <div className="bg-gradient-to-br from-indigo-500 to-purple-600 p-8 rounded-2xl text-center text-white shadow-2xl mt-8">
-              <h3 className="text-3xl font-bold mb-2">Access Your Learning Resources</h3>
-              <p className="text-lg mb-6 opacity-90">Students can access study materials, assignments, and resources through our secure portal.</p>
-              <Link to="/student-portal" className="inline-block bg-white text-indigo-600 px-8 py-4 rounded-full no-underline font-bold text-lg transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl">
-                Student Portal
+              <h3 className="text-3xl font-bold mb-2">
+                {isLoaded && isSignedIn ? 'Access Your Dashboard' : 'Join Our Platform'}
+              </h3>
+              <p className="text-lg mb-6 opacity-90">
+                {isLoaded && isSignedIn
+                  ? 'Access your courses, exams, study materials, and track your progress.'
+                  : 'Sign up to access study materials, assignments, and personalized learning resources.'}
+              </p>
+              <Link
+                to={isLoaded && isSignedIn ? "/dashboard" : "/sign-up"}
+                className="inline-block bg-white text-indigo-600 px-8 py-4 rounded-full no-underline font-bold text-lg transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl"
+              >
+                {isLoaded && isSignedIn ? 'Go to Dashboard' : 'Get Started Now'}
               </Link>
             </div>
           </div>
@@ -429,16 +459,18 @@ function Home() {
               <h4 className="font-['Poppins'] text-lg font-semibold mb-4">Support</h4>
               <ul className="space-y-2 list-none p-0">
                 <li>
-                  <Link to="/student-portal" className="text-gray-300 no-underline hover:text-blue-400 transition-colors font-['Open_Sans']">Student Portal</Link>
+                  <Link to={isLoaded && isSignedIn ? "/dashboard" : "/sign-in"} className="text-gray-300 no-underline hover:text-blue-400 transition-colors font-['Open_Sans']">
+                    {isLoaded && isSignedIn ? 'Dashboard' : 'Sign In'}
+                  </Link>
                 </li>
                 <li>
-                  <a href="#" className="text-gray-300 no-underline hover:text-blue-400 transition-colors font-['Open_Sans']">Parent Login</a>
+                  <Link to="/sign-up" className="text-gray-300 no-underline hover:text-blue-400 transition-colors font-['Open_Sans']">Create Account</Link>
                 </li>
                 <li>
-                  <a href="/fee-structure" className="text-gray-300 no-underline hover:text-blue-400 transition-colors font-['Open_Sans']">Fee Structure</a>
+                  <Link to="/fee-structure" className="text-gray-300 no-underline hover:text-blue-400 transition-colors font-['Open_Sans']">Fee Structure</Link>
                 </li>
                 <li>
-                  <a href="#" className="text-gray-300 no-underline hover:text-blue-400 transition-colors font-['Open_Sans']">Admission Process</a>
+                  <Link to="/contact" className="text-gray-300 no-underline hover:text-blue-400 transition-colors font-['Open_Sans']">Contact Us</Link>
                 </li>
               </ul>
             </div>

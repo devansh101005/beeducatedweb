@@ -27,6 +27,9 @@ export const env = {
   RAZORPAY_KEY_ID: process.env.RAZORPAY_KEY_ID || '',
   RAZORPAY_KEY_SECRET: process.env.RAZORPAY_KEY_SECRET || '',
   RAZORPAY_WEBHOOK_SECRET: process.env.RAZORPAY_WEBHOOK_SECRET || '',
+
+  // Admin Whitelist (comma-separated emails)
+  ADMIN_EMAILS: process.env.ADMIN_EMAILS || '',
 } as const;
 
 // Validate required env vars
