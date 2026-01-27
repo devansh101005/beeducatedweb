@@ -22,6 +22,7 @@ import { dashboardRoutes } from './modules/dashboard/index.js';
 import { reportRoutes } from './modules/reports/index.js';
 import { feeRoutes } from './modules/fees/index.js';
 import { paymentRoutes } from './modules/payments/index.js';
+import { contactRoutes } from './modules/contact/index.js';
 import clerkWebhook from './webhooks/clerk.js';
 import razorpayWebhook from './webhooks/razorpay.js';
 
@@ -133,6 +134,9 @@ app.use('/api/v2/fees', feeRoutes);
 // Payment routes (Phase 4)
 app.use('/api/v2/payments', paymentRoutes);
 
+// Contact routes (Public)
+app.use('/api/v2/contact', contactRoutes);
+
 // ============================================
 // Root endpoint
 // ============================================
@@ -156,6 +160,7 @@ const apiInfo = {
     reports: '/api/v2/reports',
     fees: '/api/v2/fees',
     payments: '/api/v2/payments',
+    contact: '/api/v2/contact',
   },
 };
 

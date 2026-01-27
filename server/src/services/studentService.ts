@@ -38,6 +38,7 @@ export interface Student {
 
 export interface CreateStudentInput {
   user_id: string;
+  student_id?: string; // Optional - admin can provide manually
   student_type: StudentType;
   date_of_birth?: string;
   gender?: string;
@@ -53,6 +54,7 @@ export interface CreateStudentInput {
   parent_name?: string;
   parent_phone?: string;
   parent_email?: string;
+  subscription_status?: SubscriptionStatus;
 }
 
 export interface UpdateStudentInput {
@@ -82,9 +84,9 @@ class StudentService {
   private supabase = getSupabase();
 
   /**
-   * Generate a unique student ID
+   * Generate a suggested student ID (helper for admins)
    */
-  private async generateStudentId(): Promise<string> {
+  async generateSuggestedStudentId(): Promise<string> {
     const year = new Date().getFullYear();
     const prefix = `BEE-${year}-`;
 
@@ -104,6 +106,19 @@ class StudentService {
     }
 
     return `${prefix}${nextNum.toString().padStart(4, '0')}`;
+  }
+
+  /**
+   * Check if student ID is available
+   */
+  async isStudentIdAvailable(studentId: string): Promise<boolean> {
+    const { data } = await this.supabase
+      .from('students')
+      .select('id')
+      .eq('student_id', studentId)
+      .maybeSingle();
+
+    return !data; // Available if no data found
   }
 
   /**
@@ -161,17 +176,25 @@ class StudentService {
   }
 
   /**
-   * Create a new student
+   * Create a new student with manual or auto-generated student ID
    */
   async create(input: CreateStudentInput): Promise<Student> {
-    const studentId = await this.generateStudentId();
+    // If student_id not provided, throw error - admin must provide it manually
+    if (!input.student_id) {
+      throw new Error('Student ID is required. Admin must assign a student ID manually.');
+    }
+
+    // Check if student ID already exists
+    const isAvailable = await this.isStudentIdAvailable(input.student_id);
+    if (!isAvailable) {
+      throw new Error(`Student ID ${input.student_id} is already taken.`);
+    }
 
     const { data, error } = await this.supabase
       .from('students')
       .insert({
         ...input,
-        student_id: studentId,
-        subscription_status: 'pending',
+        subscription_status: input.subscription_status || 'pending',
       })
       .select()
       .single();

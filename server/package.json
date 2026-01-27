@@ -21,6 +21,7 @@
     "express": "^5.1.0",
     "multer": "^2.0.1",
     "razorpay": "^2.9.4",
+    "resend": "^6.8.0",
     "svix": "^1.15.0"
   },
   "devDependencies": {

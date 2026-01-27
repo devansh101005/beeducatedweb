@@ -30,6 +30,11 @@ export const env = {
 
   // Admin Whitelist (comma-separated emails)
   ADMIN_EMAILS: process.env.ADMIN_EMAILS || '',
+
+  // Email (Resend)
+  RESEND_API_KEY: process.env.RESEND_API_KEY || '',
+  RESEND_FROM_EMAIL: process.env.RESEND_FROM_EMAIL || 'noreply@beeducated.com',
+  ENQUIRY_EMAIL: process.env.ENQUIRY_EMAIL || 'Officialbe.educated@gmail.com',
 } as const;
 
 // Validate required env vars

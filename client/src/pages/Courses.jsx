@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import Footer from '../components/Footer';
 
 const Courses = () => {
   const [activeTab, setActiveTab] = useState('school');
@@ -180,6 +181,9 @@ const Courses = () => {
           </div>
         )}
       </div>
+
+      {/* Footer */}
+      <Footer />
     </div>
   );
 };
