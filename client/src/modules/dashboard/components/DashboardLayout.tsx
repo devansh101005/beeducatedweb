@@ -132,6 +132,7 @@ const navigationByRole: Record<UserRole, NavSection[]> = {
     {
       items: [
         { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
+        { name: 'My Enrollments', href: '/dashboard/my-enrollments', icon: GraduationCap },
         { name: 'My Courses', href: '/dashboard/courses', icon: BookOpen },
         { name: 'Exams', href: '/dashboard/exams', icon: ClipboardList },
         { name: 'Materials', href: '/dashboard/materials', icon: FolderOpen },

@@ -64,6 +64,9 @@ import { MyCoursesPage, StudyMaterialsPage, MyExamsPage, MyResultsPage } from "@
 // Teacher Pages
 import { MyBatchesPage, MyStudentsPage, GradingPage } from "@modules/teacher";
 
+// Courses & Enrollment Pages
+import { CoursesPage as NewCoursesPage, ClassesPage, MyEnrollmentsPage } from "@modules/courses";
+
 // Other pages
 import Unauthorized from "./pages/Unauthorized";
 import Navbar from "./components/Navbar";
@@ -119,6 +122,7 @@ function App() {
 
           {/* Student Pages */}
           <Route path="my-courses" element={<MyCoursesPage />} />
+          <Route path="my-enrollments" element={<MyEnrollmentsPage />} />
           <Route path="study-materials" element={<StudyMaterialsPage />} />
           <Route path="my-exams" element={<MyExamsPage />} />
           <Route path="my-results" element={<MyResultsPage />} />
@@ -134,7 +138,8 @@ function App() {
         {/* ============================================ */}
         <Route path="/" element={<><Navbar /><Home /></>} />
         <Route path="/about" element={<><Navbar /><About /></>} />
-        <Route path="/courses" element={<><Navbar /><Courses /></>} />
+        <Route path="/courses" element={<><Navbar /><NewCoursesPage /></>} />
+        <Route path="/courses/:slug" element={<><Navbar /><ClassesPage /></>} />
         <Route path="/contact" element={<><Navbar /><Contact /></>} />
         <Route path="/fee-structure" element={<><Navbar /><FeeStructure /></>} />
         <Route path="/materials" element={<><Navbar /><StudyMaterials /></>} />
