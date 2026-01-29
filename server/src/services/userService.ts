@@ -4,7 +4,7 @@
 import { getSupabase } from '../config/supabase.js';
 
 // Types
-export type UserRole = 'admin' | 'student' | 'parent' | 'teacher' | 'batch_manager';
+export type UserRole = 'admin' | 'student' | 'parent' | 'teacher' | 'batch_manager' | 'user';
 
 export interface User {
   id: string;

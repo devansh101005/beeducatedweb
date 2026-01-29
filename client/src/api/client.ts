@@ -1,7 +1,7 @@
 // API client configuration with Clerk authentication
 // Updated to automatically inject Clerk JWT token
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api/v2';
+const API_BASE_URL = import.meta.env.VITE_API_URL || '/api/v2';
 
 interface RequestOptions extends RequestInit {
   params?: Record<string, string>;

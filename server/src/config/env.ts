@@ -23,9 +23,18 @@ export const env = {
   // Frontend URL (for CORS)
   FRONTEND_URL: process.env.FRONTEND_URL || 'http://localhost:5173',
 
-  // Razorpay (for later)
+  // Razorpay
   RAZORPAY_KEY_ID: process.env.RAZORPAY_KEY_ID || '',
   RAZORPAY_KEY_SECRET: process.env.RAZORPAY_KEY_SECRET || '',
+  RAZORPAY_WEBHOOK_SECRET: process.env.RAZORPAY_WEBHOOK_SECRET || '',
+
+  // Admin Whitelist (comma-separated emails)
+  ADMIN_EMAILS: process.env.ADMIN_EMAILS || '',
+
+  // Email (Resend)
+  RESEND_API_KEY: process.env.RESEND_API_KEY || '',
+  RESEND_FROM_EMAIL: process.env.RESEND_FROM_EMAIL || 'noreply@beeducated.com',
+  ENQUIRY_EMAIL: process.env.ENQUIRY_EMAIL || 'Officialbe.educated@gmail.com',
 } as const;
 
 // Validate required env vars

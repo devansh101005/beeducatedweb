@@ -24,8 +24,113 @@ const getParam = (param: string | string[] | undefined): string => {
 const router = Router();
 
 // ============================================
+// STUDENT ID MANAGEMENT
+// ============================================
+
+/**
+ * GET /api/v2/students/suggest-id
+ * Get suggested next student ID (admin only)
+ */
+router.get('/suggest-id', requireAuth, attachUser, async (req: Request, res: Response) => {
+  try {
+    if (req.user?.role !== 'admin') {
+      return sendBadRequest(res, 'Admin access required');
+    }
+
+    const suggestedId = await studentService.generateSuggestedStudentId();
+    sendSuccess(res, { studentId: suggestedId });
+  } catch (error) {
+    console.error('Error generating suggested student ID:', error);
+    sendError(res, 'Failed to generate student ID');
+  }
+});
+
+/**
+ * GET /api/v2/students/check-id/:studentId
+ * Check if student ID is available (admin only)
+ */
+router.get('/check-id/:studentId', requireAuth, attachUser, async (req: Request, res: Response) => {
+  try {
+    if (req.user?.role !== 'admin') {
+      return sendBadRequest(res, 'Admin access required');
+    }
+
+    const studentId = getParam(req.params.studentId);
+    const available = await studentService.isStudentIdAvailable(studentId);
+    sendSuccess(res, { studentId, available });
+  } catch (error) {
+    console.error('Error checking student ID:', error);
+    sendError(res, 'Failed to check student ID');
+  }
+});
+
+// ============================================
 // STUDENT PROFILE
 // ============================================
+
+/**
+ * POST /api/v2/students
+ * Create a new student record (admin only)
+ */
+router.post('/', requireAuth, attachUser, async (req: Request, res: Response) => {
+  try {
+    if (req.user?.role !== 'admin') {
+      return sendBadRequest(res, 'Admin access required');
+    }
+
+    const {
+      userId,
+      studentId,
+      studentType,
+      dateOfBirth,
+      gender,
+      address,
+      city,
+      state,
+      pincode,
+      classGrade,
+      schoolName,
+      board,
+      targetExam,
+      targetYear,
+      parentName,
+      parentPhone,
+      parentEmail,
+      subscriptionStatus,
+    } = req.body;
+
+    if (!userId || !studentId || !studentType) {
+      return sendBadRequest(res, 'userId, studentId, and studentType are required');
+    }
+
+    const student = await studentService.create({
+      user_id: userId,
+      student_id: studentId,
+      student_type: studentType,
+      date_of_birth: dateOfBirth,
+      gender,
+      address,
+      city,
+      state,
+      pincode,
+      class_grade: classGrade,
+      school_name: schoolName,
+      board,
+      target_exam: targetExam,
+      target_year: targetYear,
+      parent_name: parentName,
+      parent_phone: parentPhone,
+      parent_email: parentEmail,
+      subscription_status: subscriptionStatus,
+    });
+
+    sendCreated(res, student, 'Student created successfully');
+  } catch (error: unknown) {
+    console.error('Error creating student:', error);
+    const message = error instanceof Error ? error.message : 'Failed to create student';
+    sendError(res, message);
+  }
+});
 
 /**
  * GET /api/v2/students

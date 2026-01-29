@@ -39,7 +39,7 @@ function AdminApplications() {
             <strong>{s.name}</strong> | {s.email}<br />
             Resume: {s.resume ? (
               <a
-                href={`http://localhost:5000/${s.resume}`}
+                href={`/${s.resume}`}
                 target="_blank"
                 rel="noopener noreferrer"
               >
@@ -50,7 +50,7 @@ function AdminApplications() {
             {Array.isArray(s.marksheets) && s.marksheets.map((m, i) => (
               <a
                 key={i}
-                href={`http://localhost:5000/${m}`}
+                href={`/${m}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 style={{ marginRight: "5px" }}
@@ -63,7 +63,7 @@ function AdminApplications() {
             {Array.isArray(s.idcards) && s.idcards.map((id, i) => (
               <a
                 key={i}
-                href={`http://localhost:5000/${id}`}
+                href={`/${id}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 style={{ marginRight: "5px" }}
@@ -82,7 +82,7 @@ function AdminApplications() {
             <strong>{t.name}</strong> | {t.email}<br />
             Resume: {t.resume ? (
               <a
-                href={`http://localhost:5000/${t.resume}`}
+                href={`/${t.resume}`}
                 target="_blank"
                 rel="noopener noreferrer"
               >
@@ -93,7 +93,7 @@ function AdminApplications() {
             {Array.isArray(t.idcards) && t.idcards.map((id, i) => (
               <a
                 key={i}
-                href={`http://localhost:5000/${id}`}
+                href={`/${id}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 style={{ marginRight: "5px" }}

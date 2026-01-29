@@ -1,5 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import Footer from '../components/Footer';
 
 const feeData = [
   {
@@ -174,6 +175,9 @@ const FeeStructure = () => {
           </p>
         </div>
       </div>
+
+      {/* Footer */}
+      <Footer />
     </div>
   );
 };

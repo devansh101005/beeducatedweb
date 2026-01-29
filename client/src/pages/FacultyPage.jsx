@@ -1,5 +1,6 @@
 import React from 'react';
 import { facultyList } from '../facultyData';
+import Footer from '../components/Footer';
 
 const FacultyPage = () => {
   return (
@@ -81,6 +82,9 @@ const FacultyPage = () => {
           ))}
         </div>
       </div>
+
+      {/* Footer */}
+      <Footer />
     </div>
   );
 };

@@ -5,6 +5,7 @@ import { ClerkProvider } from "@clerk/clerk-react";
 import App from "./App.jsx";
 import { AuthProvider } from "./context/AuthContext.jsx";
 import { ApiSetup } from "./components/ApiSetup.tsx";
+import { DevTools } from "./components/DevTools.tsx";
 
 // Get Clerk publishable key from environment
 const CLERK_PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
@@ -27,6 +28,8 @@ const AppWithProviders = () => {
         {/* Keep legacy AuthProvider during migration */}
         <AuthProvider>
           <App />
+          {/* Dev Tools - Role Switcher (only shows in dev mode) */}
+          <DevTools />
         </AuthProvider>
       </ApiSetup>
     </ClerkProvider>
