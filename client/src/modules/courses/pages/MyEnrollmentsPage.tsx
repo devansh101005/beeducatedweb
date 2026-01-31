@@ -233,9 +233,18 @@ export function MyEnrollmentsPage() {
                       <div className="flex flex-wrap items-center gap-4 text-sm text-slate-600">
                         <span className="flex items-center gap-1">
                           <CreditCard className="w-4 h-4" />
-                          {enrollment.payment.paymentMethod || 'Online Payment'}
+                          {enrollment.payment.paymentType === 'cash' ? 'Cash Payment' :
+                           enrollment.payment.paymentType === 'bank_transfer' ? 'Bank Transfer' :
+                           enrollment.payment.paymentType === 'cheque' ? 'Cheque' :
+                           enrollment.payment.paymentType === 'upi_direct' ? 'UPI' :
+                           enrollment.payment.paymentMethod || 'Online Payment'}
                         </span>
-                        {enrollment.payment.razorpayPaymentId && (
+                        {enrollment.payment.receiptNumber && (
+                          <span className="font-mono bg-slate-100 px-2 py-0.5 rounded">
+                            Receipt: {enrollment.payment.receiptNumber}
+                          </span>
+                        )}
+                        {enrollment.payment.razorpayPaymentId && !enrollment.payment.receiptNumber && (
                           <span>
                             Payment ID: {enrollment.payment.razorpayPaymentId}
                           </span>

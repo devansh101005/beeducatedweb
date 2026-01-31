@@ -2,13 +2,13 @@
 // Premium study materials library with organized categories
 
 import { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { useSearchParams } from 'react-router-dom';
+import { useAuth } from '@clerk/clerk-react';
+import { motion } from 'framer-motion';
 import {
   FileText,
   Video,
   Download,
-  Search,
-  Filter,
   FolderOpen,
   BookOpen,
   FileImage,
@@ -16,151 +16,156 @@ import {
   ExternalLink,
   Clock,
   Eye,
-  ChevronRight,
-  ChevronDown,
-  Star,
-  Bookmark,
-  BookmarkCheck,
+  Play,
 } from 'lucide-react';
-import { format } from 'date-fns';
 import {
-  PageTransition,
-  FadeIn,
-  Stagger,
-  StaggerItem,
-  HoverScale,
-} from '@shared/components/ui/motion';
-import { Button, IconButton } from '@shared/components/ui/Button';
-import { Card, CardBody, CardHeader } from '@shared/components/ui/Card';
-import { SearchInput, Select } from '@shared/components/ui/Input';
-import { Badge } from '@shared/components/ui/Badge';
-import { SkeletonCard, InlineLoader } from '@shared/components/ui/Loading';
-import { EmptyState } from '@shared/components/ui/EmptyState';
+  Card,
+  Button,
+  SearchInput,
+  Select,
+  EmptyState,
+  Skeleton,
+} from '@shared/components/ui';
+import { Stagger, StaggerItem, fadeInUp } from '@shared/components/ui/motion';
+
+// ============================================
+// TYPES
+// ============================================
 
 interface Material {
   id: string;
   title: string;
   description?: string;
-  type: 'pdf' | 'video' | 'document' | 'image' | 'link';
-  fileUrl: string;
+  type: 'pdf' | 'video' | 'document' | 'image' | 'link' | 'audio';
+  materialType?: 'lecture' | 'notes' | 'dpp' | 'dpp_solution' | 'ncert' | 'pyq';
+  classId: string;
+  className: string;
+  subjectId?: string;
+  subjectName?: string;
+  fileUrl?: string;
   fileSize?: number;
-  duration?: string; // for videos
-  course: {
-    id: string;
-    name: string;
-  };
-  chapter?: string;
-  topic?: string;
-  isBookmarked: boolean;
-  viewCount: number;
-  downloadCount: number;
+  duration?: number;
+  thumbnailUrl?: string;
+  isDownloadable: boolean;
+  isFree: boolean;
+  isCompleted?: boolean;
+  progressPercent?: number;
   createdAt: string;
 }
 
-interface Category {
-  id: string;
-  name: string;
-  courseId: string;
-  materialsCount: number;
-  chapters: {
-    name: string;
-    materialsCount: number;
-  }[];
+interface EnrolledClass {
+  classId: string;
+  className: string;
+  courseTypeName: string;
+  daysRemaining: number | null;
 }
 
-const typeIcons: Record<string, React.ReactNode> = {
-  pdf: <FileText className="w-5 h-5 text-danger-500" />,
-  video: <Video className="w-5 h-5 text-primary-500" />,
-  document: <File className="w-5 h-5 text-info-500" />,
-  image: <FileImage className="w-5 h-5 text-success-500" />,
-  link: <ExternalLink className="w-5 h-5 text-warning-500" />,
+const API_URL = import.meta.env.VITE_API_URL || '/api';
+
+const typeIcons: Record<string, React.ReactElement> = {
+  pdf: <FileText className="w-5 h-5 text-rose-500" />,
+  video: <Video className="w-5 h-5 text-sky-500" />,
+  document: <File className="w-5 h-5 text-blue-500" />,
+  image: <FileImage className="w-5 h-5 text-emerald-500" />,
+  link: <ExternalLink className="w-5 h-5 text-amber-500" />,
+  audio: <BookOpen className="w-5 h-5 text-violet-500" />,
 };
 
-const typeLabels: Record<string, string> = {
-  pdf: 'PDF',
-  video: 'Video',
-  document: 'Document',
-  image: 'Image',
-  link: 'Link',
+const materialTypeLabels: Record<string, string> = {
+  lecture: 'Lecture',
+  notes: 'Notes',
+  dpp: 'DPP',
+  dpp_solution: 'DPP Solution',
+  ncert: 'NCERT',
+  pyq: 'PYQ',
 };
+
+const materialTypeColors: Record<string, string> = {
+  lecture: 'bg-sky-100 text-sky-700',
+  notes: 'bg-amber-100 text-amber-700',
+  dpp: 'bg-violet-100 text-violet-700',
+  dpp_solution: 'bg-emerald-100 text-emerald-700',
+  ncert: 'bg-rose-100 text-rose-700',
+  pyq: 'bg-blue-100 text-blue-700',
+};
+
+// ============================================
+// MAIN COMPONENT
+// ============================================
 
 export function StudyMaterialsPage() {
+  const { getToken } = useAuth();
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  // State
   const [materials, setMaterials] = useState<Material[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]);
+  const [enrolledClasses, setEnrolledClasses] = useState<EnrolledClass[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+
+  // Filters
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCourse, setSelectedCourse] = useState<string>('all');
+  const [selectedClass, setSelectedClass] = useState<string>(searchParams.get('classId') || 'all');
   const [selectedType, setSelectedType] = useState<string>('all');
-  const [showBookmarked, setShowBookmarked] = useState(false);
-  const [expandedCategories, setExpandedCategories] = useState<string[]>([]);
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [selectedMaterialType, setSelectedMaterialType] = useState<string>('all');
 
+  // Fetch materials
   useEffect(() => {
+    const fetchMaterials = async () => {
+      setLoading(true);
+      setError('');
+
+      try {
+        const token = await getToken();
+        const params = new URLSearchParams();
+
+        if (selectedClass !== 'all') params.append('classId', selectedClass);
+        if (selectedType !== 'all') params.append('type', selectedType);
+        if (selectedMaterialType !== 'all') params.append('materialType', selectedMaterialType);
+
+        const response = await fetch(`${API_URL}/v2/student/materials?${params}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          setMaterials(data.data?.materials || []);
+          setEnrolledClasses(data.data?.enrolledClasses || []);
+        } else {
+          setError(data.message || 'Failed to load materials');
+        }
+      } catch (err) {
+        console.error('Failed to fetch materials:', err);
+        setError('Failed to load study materials. Please try again.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
     fetchMaterials();
-    fetchCategories();
-  }, [selectedCourse, selectedType, searchQuery, showBookmarked]);
+  }, [selectedClass, selectedType, selectedMaterialType, getToken]);
 
-  const fetchMaterials = async () => {
-    setLoading(true);
-    try {
-      const params = new URLSearchParams({
-        ...(selectedCourse !== 'all' && { courseId: selectedCourse }),
-        ...(selectedType !== 'all' && { type: selectedType }),
-        ...(searchQuery && { search: searchQuery }),
-        ...(showBookmarked && { bookmarked: 'true' }),
-      });
-
-      const response = await fetch(`/api/v2/student/materials?${params}`);
-      const data = await response.json();
-      if (data.success) {
-        setMaterials(data.data);
-      }
-    } catch (error) {
-      console.error('Failed to fetch materials:', error);
-    } finally {
-      setLoading(false);
+  // Update URL when class filter changes
+  useEffect(() => {
+    if (selectedClass !== 'all') {
+      searchParams.set('classId', selectedClass);
+    } else {
+      searchParams.delete('classId');
     }
-  };
+    setSearchParams(searchParams, { replace: true });
+  }, [selectedClass]);
 
-  const fetchCategories = async () => {
-    try {
-      const response = await fetch('/api/v2/student/materials/categories');
-      const data = await response.json();
-      if (data.success) {
-        setCategories(data.data);
-      }
-    } catch (error) {
-      console.error('Failed to fetch categories:', error);
-    }
-  };
-
-  const toggleBookmark = async (materialId: string) => {
-    try {
-      const response = await fetch(`/api/v2/student/materials/${materialId}/bookmark`, {
-        method: 'POST',
-      });
-
-      if (response.ok) {
-        setMaterials((prev) =>
-          prev.map((m) =>
-            m.id === materialId ? { ...m, isBookmarked: !m.isBookmarked } : m
-          )
-        );
-      }
-    } catch (error) {
-      console.error('Failed to toggle bookmark:', error);
-    }
-  };
-
-  const trackDownload = async (materialId: string) => {
-    try {
-      await fetch(`/api/v2/student/materials/${materialId}/download`, {
-        method: 'POST',
-      });
-    } catch (error) {
-      console.error('Failed to track download:', error);
-    }
-  };
+  // Filter materials by search query
+  const filteredMaterials = materials.filter((m) => {
+    if (!searchQuery) return true;
+    const query = searchQuery.toLowerCase();
+    return (
+      m.title?.toLowerCase().includes(query) ||
+      m.description?.toLowerCase().includes(query) ||
+      m.subjectName?.toLowerCase().includes(query)
+    );
+  });
 
   const formatFileSize = (bytes?: number) => {
     if (!bytes) return '';
@@ -168,318 +173,285 @@ export function StudyMaterialsPage() {
     return mb >= 1 ? `${mb.toFixed(1)} MB` : `${(bytes / 1024).toFixed(0)} KB`;
   };
 
-  const toggleCategory = (categoryId: string) => {
-    setExpandedCategories((prev) =>
-      prev.includes(categoryId)
-        ? prev.filter((id) => id !== categoryId)
-        : [...prev, categoryId]
-    );
+  const formatDuration = (seconds?: number) => {
+    if (!seconds) return '';
+    const mins = Math.floor(seconds / 60);
+    const hrs = Math.floor(mins / 60);
+    if (hrs > 0) {
+      return `${hrs}h ${mins % 60}m`;
+    }
+    return `${mins} min`;
+  };
+
+  const handleMaterialClick = (material: Material) => {
+    if (material.fileUrl) {
+      window.open(material.fileUrl, '_blank');
+    }
   };
 
   return (
-    <PageTransition>
-      <div className="space-y-6">
-        {/* Header */}
-        <FadeIn>
-          <div>
-            <h1 className="text-2xl font-bold text-neutral-900">Study Materials</h1>
-            <p className="text-neutral-600 mt-1">
-              Access notes, videos, and resources for your courses
-            </p>
+    <div className="space-y-6">
+      {/* Page Header */}
+      <motion.div
+        variants={fadeInUp}
+        initial="initial"
+        animate="animate"
+      >
+        <h1 className="text-2xl font-heading font-semibold text-slate-900 flex items-center gap-2">
+          <FolderOpen className="w-7 h-7 text-amber-600" />
+          Study Materials
+        </h1>
+        <p className="text-slate-500 mt-1">
+          Access notes, videos, and resources for your enrolled classes
+        </p>
+      </motion.div>
+
+      {/* Filters */}
+      <Card className="p-4">
+        <div className="flex flex-col md:flex-row gap-4">
+          <div className="flex-1">
+            <SearchInput
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search by title, subject..."
+            />
           </div>
-        </FadeIn>
-
-        {/* Filters */}
-        <FadeIn delay={0.1}>
-          <Card>
-            <CardBody className="p-4">
-              <div className="flex flex-col md:flex-row gap-4">
-                <div className="flex-1">
-                  <SearchInput
-                    placeholder="Search materials by title or topic..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                  />
-                </div>
-                <div className="flex gap-3 flex-wrap">
-                  <Select
-                    value={selectedCourse}
-                    onChange={(e) => setSelectedCourse(e.target.value)}
-                    className="w-44"
-                  >
-                    <option value="all">All Courses</option>
-                    {categories.map((cat) => (
-                      <option key={cat.id} value={cat.courseId}>
-                        {cat.name}
-                      </option>
-                    ))}
-                  </Select>
-                  <Select
-                    value={selectedType}
-                    onChange={(e) => setSelectedType(e.target.value)}
-                    className="w-36"
-                  >
-                    <option value="all">All Types</option>
-                    <option value="pdf">PDF</option>
-                    <option value="video">Video</option>
-                    <option value="document">Document</option>
-                    <option value="image">Image</option>
-                    <option value="link">Link</option>
-                  </Select>
-                  <Button
-                    variant={showBookmarked ? 'primary' : 'outline'}
-                    leftIcon={showBookmarked ? <BookmarkCheck className="w-4 h-4" /> : <Bookmark className="w-4 h-4" />}
-                    onClick={() => setShowBookmarked(!showBookmarked)}
-                  >
-                    Bookmarked
-                  </Button>
-                </div>
-              </div>
-            </CardBody>
-          </Card>
-        </FadeIn>
-
-        <div className="flex gap-6">
-          {/* Sidebar - Categories */}
-          <FadeIn delay={0.15} className="hidden lg:block w-72 flex-shrink-0">
-            <Card className="sticky top-6">
-              <CardHeader>
-                <h3 className="font-semibold text-neutral-900">Categories</h3>
-              </CardHeader>
-              <CardBody className="p-0">
-                <div className="divide-y divide-neutral-100">
-                  {categories.map((category) => (
-                    <div key={category.id}>
-                      <button
-                        onClick={() => toggleCategory(category.id)}
-                        className="w-full px-4 py-3 flex items-center justify-between hover:bg-neutral-50 transition-colors"
-                      >
-                        <div className="flex items-center gap-2">
-                          <FolderOpen className="w-4 h-4 text-primary-500" />
-                          <span className="text-sm font-medium text-neutral-700">
-                            {category.name}
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <Badge variant="default" className="text-xs">
-                            {category.materialsCount}
-                          </Badge>
-                          <ChevronDown
-                            className={`w-4 h-4 text-neutral-400 transition-transform ${
-                              expandedCategories.includes(category.id) ? 'rotate-180' : ''
-                            }`}
-                          />
-                        </div>
-                      </button>
-
-                      <AnimatePresence>
-                        {expandedCategories.includes(category.id) && (
-                          <motion.div
-                            initial={{ height: 0, opacity: 0 }}
-                            animate={{ height: 'auto', opacity: 1 }}
-                            exit={{ height: 0, opacity: 0 }}
-                            className="overflow-hidden bg-neutral-50"
-                          >
-                            {category.chapters.map((chapter, idx) => (
-                              <button
-                                key={idx}
-                                onClick={() => setSearchQuery(chapter.name)}
-                                className="w-full pl-10 pr-4 py-2 text-left text-sm text-neutral-600 hover:text-primary-600 hover:bg-neutral-100 transition-colors flex items-center justify-between"
-                              >
-                                <span className="truncate">{chapter.name}</span>
-                                <span className="text-xs text-neutral-400">
-                                  {chapter.materialsCount}
-                                </span>
-                              </button>
-                            ))}
-                          </motion.div>
-                        )}
-                      </AnimatePresence>
-                    </div>
-                  ))}
-                </div>
-              </CardBody>
-            </Card>
-          </FadeIn>
-
-          {/* Main Content - Materials */}
-          <div className="flex-1 min-w-0">
-            {loading ? (
-              <div className="grid md:grid-cols-2 gap-4">
-                {[...Array(6)].map((_, i) => (
-                  <SkeletonCard key={i} />
-                ))}
-              </div>
-            ) : materials.length === 0 ? (
-              <EmptyState
-                title={showBookmarked ? 'No bookmarked materials' : 'No materials found'}
-                description={
-                  showBookmarked
-                    ? 'Bookmark materials to access them quickly later'
-                    : 'Try adjusting your search or filters'
-                }
-                icon={<FileText className="w-12 h-12" />}
-              />
-            ) : (
-              <Stagger className="grid md:grid-cols-2 gap-4">
-                {materials.map((material) => (
-                  <StaggerItem key={material.id}>
-                    <MaterialCard
-                      material={material}
-                      onBookmark={() => toggleBookmark(material.id)}
-                      onDownload={() => trackDownload(material.id)}
-                    />
-                  </StaggerItem>
-                ))}
-              </Stagger>
-            )}
+          <div className="flex flex-wrap gap-3">
+            <Select
+              value={selectedClass}
+              onChange={(e) => setSelectedClass(e.target.value)}
+              className="w-40"
+              options={[
+                { value: 'all', label: 'All Classes' },
+                ...enrolledClasses.map((c) => ({ value: c.classId, label: c.className })),
+              ]}
+            />
+            <Select
+              value={selectedMaterialType}
+              onChange={(e) => setSelectedMaterialType(e.target.value)}
+              className="w-36"
+              options={[
+                { value: 'all', label: 'All Types' },
+                { value: 'lecture', label: 'Lectures' },
+                { value: 'notes', label: 'Notes' },
+                { value: 'dpp', label: 'DPP' },
+                { value: 'dpp_solution', label: 'DPP Solutions' },
+                { value: 'ncert', label: 'NCERT' },
+                { value: 'pyq', label: 'PYQ' },
+              ]}
+            />
+            <Select
+              value={selectedType}
+              onChange={(e) => setSelectedType(e.target.value)}
+              className="w-32"
+              options={[
+                { value: 'all', label: 'All' },
+                { value: 'video', label: 'Videos' },
+                { value: 'pdf', label: 'PDFs' },
+                { value: 'document', label: 'Docs' },
+              ]}
+            />
           </div>
         </div>
-      </div>
-    </PageTransition>
+      </Card>
+
+      {/* Enrolled Classes Summary */}
+      {enrolledClasses.length > 0 && selectedClass === 'all' && (
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          {enrolledClasses.map((cls) => (
+            <button
+              key={cls.classId}
+              onClick={() => setSelectedClass(cls.classId)}
+              className="p-4 bg-white rounded-xl border border-slate-200 hover:border-amber-300 hover:shadow-sm transition-all text-left"
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center text-white font-bold text-sm">
+                  {cls.className.replace(/[^0-9]/g, '') || cls.className.charAt(0)}
+                </div>
+                <div>
+                  <p className="font-medium text-slate-900 text-sm">{cls.className}</p>
+                  <p className="text-xs text-slate-500">{cls.courseTypeName}</p>
+                </div>
+              </div>
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* Materials List */}
+      {loading ? (
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {[1, 2, 3, 4, 5, 6].map((i) => (
+            <Card key={i} className="p-4">
+              <div className="flex gap-4">
+                <Skeleton className="w-12 h-12 rounded-lg" />
+                <div className="flex-1 space-y-2">
+                  <Skeleton className="h-4 w-3/4" />
+                  <Skeleton className="h-3 w-1/2" />
+                  <Skeleton className="h-3 w-1/4" />
+                </div>
+              </div>
+            </Card>
+          ))}
+        </div>
+      ) : error ? (
+        <Card className="p-8 text-center">
+          <p className="text-rose-600 mb-4">{error}</p>
+          <Button variant="outline" onClick={() => window.location.reload()}>
+            Try Again
+          </Button>
+        </Card>
+      ) : filteredMaterials.length === 0 ? (
+        <EmptyState
+          title={enrolledClasses.length === 0 ? 'No Active Enrollments' : 'No Materials Found'}
+          description={
+            enrolledClasses.length === 0
+              ? 'You need to enroll in a class to access study materials.'
+              : searchQuery
+              ? 'Try adjusting your search or filters.'
+              : 'Materials will appear here once your teacher uploads them.'
+          }
+          icon={<FolderOpen className="w-12 h-12" />}
+          action={
+            enrolledClasses.length === 0
+              ? {
+                  label: 'Browse Classes',
+                  onClick: () => (window.location.href = '/courses'),
+                  variant: 'primary' as const,
+                }
+              : undefined
+          }
+        />
+      ) : (
+        <Stagger className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {filteredMaterials.map((material) => (
+            <StaggerItem key={material.id}>
+              <MaterialCard
+                material={material}
+                onView={() => handleMaterialClick(material)}
+                formatFileSize={formatFileSize}
+                formatDuration={formatDuration}
+              />
+            </StaggerItem>
+          ))}
+        </Stagger>
+      )}
+    </div>
   );
 }
 
-// Material Card Component
-function MaterialCard({
-  material,
-  onBookmark,
-  onDownload,
-}: {
+// ============================================
+// MATERIAL CARD COMPONENT
+// ============================================
+
+interface MaterialCardProps {
   material: Material;
-  onBookmark: () => void;
-  onDownload: () => void;
-}) {
-  const formatFileSize = (bytes?: number) => {
-    if (!bytes) return '';
-    const mb = bytes / (1024 * 1024);
-    return mb >= 1 ? `${mb.toFixed(1)} MB` : `${(bytes / 1024).toFixed(0)} KB`;
-  };
+  onView: () => void;
+  formatFileSize: (bytes?: number) => string;
+  formatDuration: (seconds?: number) => string;
+}
 
-  const handleDownload = () => {
-    onDownload();
-    window.open(material.fileUrl, '_blank');
-  };
-
+function MaterialCard({ material, onView, formatFileSize, formatDuration }: MaterialCardProps) {
   return (
-    <HoverScale>
-      <Card className="h-full">
-        <CardBody className="p-4">
-          <div className="flex gap-4">
-            {/* Icon */}
-            <div className="w-12 h-12 rounded-xl bg-neutral-100 flex items-center justify-center flex-shrink-0">
-              {typeIcons[material.type]}
+    <Card className="h-full hover:shadow-md transition-shadow">
+      <div className="p-4">
+        <div className="flex gap-4">
+          {/* Icon */}
+          <div className="w-12 h-12 rounded-xl bg-slate-100 flex items-center justify-center flex-shrink-0">
+            {typeIcons[material.type] || <File className="w-5 h-5 text-slate-500" />}
+          </div>
+
+          {/* Content */}
+          <div className="flex-1 min-w-0">
+            <h3 className="font-medium text-slate-900 truncate">{material.title}</h3>
+
+            {/* Subject & Class */}
+            <div className="flex items-center gap-2 mt-1 text-sm text-slate-500">
+              <span>{material.className}</span>
+              {material.subjectName && (
+                <>
+                  <span className="text-slate-300">•</span>
+                  <span>{material.subjectName}</span>
+                </>
+              )}
             </div>
 
-            {/* Content */}
-            <div className="flex-1 min-w-0">
-              <div className="flex items-start justify-between gap-2">
-                <div className="flex-1 min-w-0">
-                  <h3 className="font-medium text-neutral-900 truncate">{material.title}</h3>
-                  <p className="text-sm text-neutral-500 mt-0.5">{material.course.name}</p>
-                </div>
-                <IconButton
-                  variant="ghost"
-                  size="sm"
-                  onClick={onBookmark}
-                  className={material.isBookmarked ? 'text-warning-500' : ''}
+            {/* Meta info */}
+            <div className="flex flex-wrap items-center gap-2 mt-2">
+              {material.materialType && (
+                <span
+                  className={`text-xs px-2 py-0.5 rounded-full ${
+                    materialTypeColors[material.materialType] || 'bg-slate-100 text-slate-600'
+                  }`}
                 >
-                  {material.isBookmarked ? (
-                    <BookmarkCheck className="w-4 h-4 fill-current" />
-                  ) : (
-                    <Bookmark className="w-4 h-4" />
-                  )}
-                </IconButton>
-              </div>
-
-              {material.description && (
-                <p className="text-sm text-neutral-600 mt-2 line-clamp-2">
-                  {material.description}
-                </p>
-              )}
-
-              {/* Meta */}
-              <div className="flex items-center gap-3 mt-3 text-xs text-neutral-500">
-                <Badge variant={material.type === 'video' ? 'primary' : 'default'} className="text-xs">
-                  {typeLabels[material.type]}
-                </Badge>
-                {material.fileSize && (
-                  <span>{formatFileSize(material.fileSize)}</span>
-                )}
-                {material.duration && (
-                  <span className="flex items-center gap-1">
-                    <Clock className="w-3 h-3" />
-                    {material.duration}
-                  </span>
-                )}
-                <span className="flex items-center gap-1">
-                  <Eye className="w-3 h-3" />
-                  {material.viewCount}
+                  {materialTypeLabels[material.materialType] || material.materialType}
                 </span>
-              </div>
-
-              {/* Chapter/Topic */}
-              {(material.chapter || material.topic) && (
-                <div className="flex items-center gap-2 mt-2 text-xs text-neutral-500">
-                  {material.chapter && (
-                    <span className="px-2 py-0.5 bg-neutral-100 rounded">
-                      {material.chapter}
-                    </span>
-                  )}
-                  {material.topic && (
-                    <span className="px-2 py-0.5 bg-primary-50 text-primary-600 rounded">
-                      {material.topic}
-                    </span>
-                  )}
-                </div>
               )}
-
-              {/* Actions */}
-              <div className="flex items-center gap-2 mt-4">
-                {material.type === 'video' ? (
-                  <Button
-                    size="sm"
-                    className="flex-1"
-                    leftIcon={<Play className="w-4 h-4" />}
-                    onClick={handleDownload}
-                  >
-                    Watch
-                  </Button>
-                ) : material.type === 'link' ? (
-                  <Button
-                    size="sm"
-                    className="flex-1"
-                    leftIcon={<ExternalLink className="w-4 h-4" />}
-                    onClick={handleDownload}
-                  >
-                    Open Link
-                  </Button>
-                ) : (
-                  <>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="flex-1"
-                      leftIcon={<Eye className="w-4 h-4" />}
-                      onClick={handleDownload}
-                    >
-                      View
-                    </Button>
-                    <Button
-                      size="sm"
-                      className="flex-1"
-                      leftIcon={<Download className="w-4 h-4" />}
-                      onClick={handleDownload}
-                    >
-                      Download
-                    </Button>
-                  </>
-                )}
-              </div>
+              {material.fileSize && (
+                <span className="text-xs text-slate-400">{formatFileSize(material.fileSize)}</span>
+              )}
+              {material.duration && (
+                <span className="text-xs text-slate-400 flex items-center gap-1">
+                  <Clock className="w-3 h-3" />
+                  {formatDuration(material.duration)}
+                </span>
+              )}
             </div>
           </div>
-        </CardBody>
-      </Card>
-    </HoverScale>
+        </div>
+
+        {/* Description */}
+        {material.description && (
+          <p className="text-sm text-slate-600 mt-3 line-clamp-2">{material.description}</p>
+        )}
+
+        {/* Actions */}
+        <div className="flex items-center gap-2 mt-4">
+          {material.type === 'video' ? (
+            <Button size="sm" className="flex-1" leftIcon={<Play className="w-4 h-4" />} onClick={onView}>
+              Watch
+            </Button>
+          ) : material.type === 'link' ? (
+            <Button
+              size="sm"
+              className="flex-1"
+              leftIcon={<ExternalLink className="w-4 h-4" />}
+              onClick={onView}
+            >
+              Open Link
+            </Button>
+          ) : (
+            <>
+              <Button size="sm" variant="outline" className="flex-1" leftIcon={<Eye className="w-4 h-4" />} onClick={onView}>
+                View
+              </Button>
+              {material.isDownloadable && (
+                <Button size="sm" className="flex-1" leftIcon={<Download className="w-4 h-4" />} onClick={onView}>
+                  Download
+                </Button>
+              )}
+            </>
+          )}
+        </div>
+
+        {/* Progress indicator */}
+        {material.progressPercent !== undefined && material.progressPercent > 0 && (
+          <div className="mt-3">
+            <div className="flex items-center justify-between text-xs text-slate-500 mb-1">
+              <span>Progress</span>
+              <span>{material.progressPercent}%</span>
+            </div>
+            <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
+              <div
+                className="h-full bg-emerald-500 rounded-full transition-all"
+                style={{ width: `${material.progressPercent}%` }}
+              />
+            </div>
+          </div>
+        )}
+      </div>
+    </Card>
   );
 }
+
+export default StudyMaterialsPage;

@@ -107,6 +107,7 @@ app.use('/api/v2/courses', courseRoutes);
 
 // Student routes (Phase 2)
 app.use('/api/v2/students', studentRoutes);
+app.use('/api/v2/student', studentRoutes); // Alias for frontend compatibility
 
 // Parent routes (Phase 2)
 app.use('/api/v2/parents', parentRoutes);

@@ -1,11 +1,14 @@
-// Student Routes - /api/v2/students
-// Handles student profile and enrollment operations
+// Student Routes - /api/v2/students and /api/v2/student
+// Handles student profile, enrollment, and materials operations
 
 import { Router, Request, Response } from 'express';
 import { requireAuth, attachUser, requireTeacherOrAdmin } from '../../middleware/auth.js';
 import { studentService } from '../../services/studentService.js';
 import { courseService } from '../../services/courseService.js';
 import { batchService } from '../../services/batchService.js';
+import { contentService } from '../../services/contentService.js';
+import { enrollmentService } from '../../services/enrollmentService.js';
+import { parentService } from '../../services/parentService.js';
 import {
   sendSuccess,
   sendCreated,
@@ -20,6 +23,27 @@ const getParam = (param: string | string[] | undefined): string => {
   if (Array.isArray(param)) return param[0];
   return param || '';
 };
+
+/**
+ * Helper to check if a parent is linked to a specific student
+ * Returns true if the parent has a valid relationship with the student
+ */
+async function isParentOfStudent(userId: string, studentId: string): Promise<boolean> {
+  try {
+    // Get parent profile by user ID
+    const parent = await parentService.getByUserId(userId);
+    if (!parent) return false;
+
+    // Get all children linked to this parent
+    const children = await parentService.getChildren(parent.id);
+
+    // Check if the requested student is in the parent's children list
+    return children.some((child: any) => child.id === studentId);
+  } catch (error) {
+    console.error('Error checking parent-student relationship:', error);
+    return false;
+  }
+}
 
 const router = Router();
 
@@ -175,6 +199,311 @@ router.get('/me', requireAuth, attachUser, async (req: Request, res: Response) =
   }
 });
 
+// ============================================
+// STUDENT MATERIALS (Content Access)
+// IMPORTANT: These routes MUST come before /:id routes
+// ============================================
+
+/**
+ * GET /api/v2/student/materials
+ * Get study materials for the current student
+ * Only shows content for classes the student is enrolled in
+ */
+router.get('/materials', requireAuth, attachUser, async (req: Request, res: Response) => {
+  try {
+    if (!req.user) {
+      return sendBadRequest(res, 'User not authenticated');
+    }
+
+    const student = await studentService.getByUserId(req.user.id);
+    if (!student) {
+      return sendBadRequest(res, 'Student profile not found');
+    }
+
+    // Get filters from query params
+    const classId = req.query.classId as string | undefined;
+    const subjectId = req.query.subjectId as string | undefined;
+    const materialType = req.query.materialType as string | undefined;
+    const type = req.query.type as string | undefined;
+    const search = req.query.search as string | undefined;
+    const page = parseInt(req.query.page as string) || 1;
+    const limit = parseInt(req.query.limit as string) || 20;
+
+    // Get student's active enrollments
+    const accessSummary = await enrollmentService.getStudentAccessSummary(student.id);
+    const enrolledClassIds = accessSummary.activeEnrollments.map(e => e.classId);
+
+    if (enrolledClassIds.length === 0) {
+      return sendSuccess(res, {
+        materials: [],
+        total: 0,
+        enrolledClasses: [],
+        message: 'No active enrollments found. Please enroll in a class to access study materials.',
+      });
+    }
+
+    // If a specific class is requested, verify the student is enrolled
+    if (classId && !enrolledClassIds.includes(classId)) {
+      return sendBadRequest(res, 'You are not enrolled in this class');
+    }
+
+    // Get content for enrolled classes using the new hierarchy
+    // Use getStudentClassContent for class-based content filtering
+    const content = await contentService.getStudentClassContent(student.id, {
+      classId: classId || undefined,
+      subjectId: subjectId || undefined,
+      materialType: materialType as any || undefined,
+    });
+
+    // Apply additional filters (search, content type)
+    let filteredContent = content;
+    if (search) {
+      const searchLower = search.toLowerCase();
+      filteredContent = filteredContent.filter((c: any) =>
+        c.title?.toLowerCase().includes(searchLower) ||
+        c.description?.toLowerCase().includes(searchLower)
+      );
+    }
+    if (type) {
+      filteredContent = filteredContent.filter((c: any) => c.content_type === type);
+    }
+
+    // Paginate
+    const total = filteredContent.length;
+    const startIndex = (page - 1) * limit;
+    const paginatedContent = filteredContent.slice(startIndex, startIndex + limit);
+
+    // Transform content to materials format expected by frontend
+    const materials = paginatedContent.map((content: any) => ({
+      id: content.id,
+      title: content.title,
+      description: content.description,
+      type: content.content_type,
+      materialType: content.material_type,
+      classId: content.class_id,
+      className: content.class_name,
+      subjectId: content.subject_id,
+      subjectName: content.subject_name,
+      subjectCode: content.subject_code,
+      fileSize: content.file_size,
+      duration: content.duration_seconds,
+      thumbnailUrl: content.thumbnail_path,
+      fileUrl: content.file_path,
+      isDownloadable: content.is_downloadable,
+      isFree: content.is_free,
+      isCompleted: content.is_completed,
+      progressPercent: content.progress_percent,
+      createdAt: content.created_at,
+      updatedAt: content.updated_at,
+    }));
+
+    sendSuccess(res, {
+      materials,
+      total,
+      page,
+      limit,
+      enrolledClasses: accessSummary.activeEnrollments,
+    });
+  } catch (error) {
+    console.error('Error fetching student materials:', error);
+    sendError(res, 'Failed to fetch study materials');
+  }
+});
+
+/**
+ * GET /api/v2/student/materials/categories
+ * Get material categories (classes with subjects) for the current student
+ */
+router.get('/materials/categories', requireAuth, attachUser, async (req: Request, res: Response) => {
+  try {
+    if (!req.user) {
+      return sendBadRequest(res, 'User not authenticated');
+    }
+
+    const student = await studentService.getByUserId(req.user.id);
+    if (!student) {
+      return sendBadRequest(res, 'Student profile not found');
+    }
+
+    // Get student's enrolled classes
+    const accessSummary = await enrollmentService.getStudentAccessSummary(student.id);
+
+    if (accessSummary.activeEnrollments.length === 0) {
+      return sendSuccess(res, []);
+    }
+
+    // Get content counts by class
+    const categories = await Promise.all(
+      accessSummary.activeEnrollments.map(async (enrollment) => {
+        // Get content count for this class
+        const content = await contentService.getByClass(enrollment.classId, { publishedOnly: true });
+
+        // Group content by subject
+        const subjectGroups: Record<string, number> = {};
+        content.forEach((c: any) => {
+          if (c.subject_id) {
+            subjectGroups[c.subject_id] = (subjectGroups[c.subject_id] || 0) + 1;
+          }
+        });
+
+        return {
+          id: enrollment.classId,
+          name: enrollment.className,
+          courseType: enrollment.courseTypeName,
+          materialCount: content.length,
+          daysRemaining: enrollment.daysRemaining,
+          subjects: Object.entries(subjectGroups).map(([subjectId, count]) => ({
+            id: subjectId,
+            count,
+          })),
+          icon: getContentIcon(enrollment.courseTypeName),
+        };
+      })
+    );
+
+    // Also add a general category for free content
+    const freeContent = await contentService.list({
+      isFree: true,
+      isPublished: true,
+      limit: 1,
+    });
+
+    const allCategories = [
+      ...categories,
+      {
+        id: 'free',
+        name: 'Free Materials',
+        courseType: 'Free',
+        materialCount: freeContent.total,
+        daysRemaining: null,
+        subjects: [],
+        icon: 'gift',
+      },
+    ];
+
+    sendSuccess(res, allCategories);
+  } catch (error) {
+    console.error('Error fetching material categories:', error);
+    sendError(res, 'Failed to fetch categories');
+  }
+});
+
+/**
+ * POST /api/v2/student/materials/:id/bookmark
+ * Bookmark a material (placeholder - needs bookmark table)
+ */
+router.post('/materials/:id/bookmark', requireAuth, attachUser, async (req: Request, res: Response) => {
+  try {
+    const contentId = getParam(req.params.id);
+
+    // For now, just acknowledge the bookmark
+    // TODO: Implement proper bookmarking with a database table
+    console.log(`Student ${req.user?.id} bookmarked content ${contentId}`);
+
+    sendSuccess(res, { bookmarked: true, contentId });
+  } catch (error) {
+    console.error('Error bookmarking material:', error);
+    sendError(res, 'Failed to bookmark material');
+  }
+});
+
+/**
+ * POST /api/v2/student/materials/:id/download
+ * Track material download
+ */
+router.post('/materials/:id/download', requireAuth, attachUser, async (req: Request, res: Response) => {
+  try {
+    const contentId = getParam(req.params.id);
+
+    if (!req.user) {
+      return sendBadRequest(res, 'User not authenticated');
+    }
+
+    const student = await studentService.getByUserId(req.user.id);
+    if (!student) {
+      return sendBadRequest(res, 'Student profile not found');
+    }
+
+    // Get the content to check if downloadable
+    const content = await contentService.getById(contentId);
+    if (!content) {
+      return sendNotFound(res, 'Content');
+    }
+
+    if (!content.is_downloadable && !content.is_free) {
+      return sendBadRequest(res, 'This content is not available for download');
+    }
+
+    // Update progress to track the download/view
+    await contentService.updateProgress(contentId, student.id, {
+      view_count: 1, // Increment view count
+    });
+
+    // Generate signed URL for download
+    const signedUrl = await contentService.getAccessUrl(contentId, req.user.id);
+
+    sendSuccess(res, {
+      downloaded: true,
+      contentId,
+      url: signedUrl,
+    });
+  } catch (error) {
+    console.error('Error tracking download:', error);
+    sendError(res, 'Failed to track download');
+  }
+});
+
+/**
+ * GET /api/v2/student/materials/:id
+ * Get a specific material with access check
+ */
+router.get('/materials/:id', requireAuth, attachUser, async (req: Request, res: Response) => {
+  try {
+    const contentId = getParam(req.params.id);
+
+    if (!req.user) {
+      return sendBadRequest(res, 'User not authenticated');
+    }
+
+    const content = await contentService.getById(contentId);
+    if (!content) {
+      return sendNotFound(res, 'Content');
+    }
+
+    // Check if content is free
+    if (content.is_free) {
+      return sendSuccess(res, content);
+    }
+
+    // Check if student is enrolled
+    const student = await studentService.getByUserId(req.user.id);
+    if (!student) {
+      return sendBadRequest(res, 'Student profile not found');
+    }
+
+    // Check access using class_id (new hierarchy) or course_id (legacy)
+    const classIdToCheck = content.class_id || content.course_id;
+    if (!classIdToCheck) {
+      // Content has no class association, treat as general content
+      return sendSuccess(res, content);
+    }
+
+    const accessResult = await enrollmentService.checkClassAccess(student.id, classIdToCheck);
+    if (!accessResult.hasAccess) {
+      return sendBadRequest(res, `You do not have access to this content. ${accessResult.reason}`);
+    }
+
+    sendSuccess(res, content);
+  } catch (error) {
+    console.error('Error fetching material:', error);
+    sendError(res, 'Failed to fetch material');
+  }
+});
+
+// ============================================
+// STUDENT PROFILE BY ID (must come AFTER /materials routes)
+// ============================================
+
 /**
  * GET /api/v2/students/:id
  * Get student by ID
@@ -193,7 +522,13 @@ router.get('/:id', requireAuth, attachUser, async (req: Request, res: Response) 
     const isOwner = req.user?.role === 'student' && student.user_id === req.user.id;
     const isAdminOrTeacher = req.user?.role === 'admin' || req.user?.role === 'teacher';
 
-    if (!isOwner && !isAdminOrTeacher) {
+    // For parents, verify they are actually linked to this student
+    let isLinkedParent = false;
+    if (req.user?.role === 'parent' && req.user?.id) {
+      isLinkedParent = await isParentOfStudent(req.user.id, studentId);
+    }
+
+    if (!isOwner && !isAdminOrTeacher && !isLinkedParent) {
       return sendBadRequest(res, 'Not authorized to view this student');
     }
 
@@ -266,9 +601,14 @@ router.get('/:id/courses', requireAuth, attachUser, async (req: Request, res: Re
     // Check permissions
     const isOwner = req.user?.role === 'student' && student.user_id === req.user.id;
     const isAdminOrTeacher = req.user?.role === 'admin' || req.user?.role === 'teacher';
-    const isParent = req.user?.role === 'parent';
 
-    if (!isOwner && !isAdminOrTeacher && !isParent) {
+    // For parents, verify they are actually linked to this student
+    let isLinkedParent = false;
+    if (req.user?.role === 'parent' && req.user?.id) {
+      isLinkedParent = await isParentOfStudent(req.user.id, studentId);
+    }
+
+    if (!isOwner && !isAdminOrTeacher && !isLinkedParent) {
       return sendBadRequest(res, 'Not authorized to view this student\'s courses');
     }
 
@@ -374,9 +714,14 @@ router.get('/:id/batches', requireAuth, attachUser, async (req: Request, res: Re
     // Check permissions
     const isOwner = req.user?.role === 'student' && student.user_id === req.user.id;
     const isAdminOrTeacher = req.user?.role === 'admin' || req.user?.role === 'teacher';
-    const isParent = req.user?.role === 'parent';
 
-    if (!isOwner && !isAdminOrTeacher && !isParent) {
+    // For parents, verify they are actually linked to this student
+    let isLinkedParent = false;
+    if (req.user?.role === 'parent' && req.user?.id) {
+      isLinkedParent = await isParentOfStudent(req.user.id, studentId);
+    }
+
+    if (!isOwner && !isAdminOrTeacher && !isLinkedParent) {
       return sendBadRequest(res, 'Not authorized to view this student\'s batches');
     }
 
@@ -387,5 +732,21 @@ router.get('/:id/batches', requireAuth, attachUser, async (req: Request, res: Re
     sendError(res, 'Failed to fetch student batches');
   }
 });
+
+// Helper function to get icon based on course type
+function getContentIcon(courseType: string): string {
+  switch (courseType?.toLowerCase()) {
+    case 'offline coaching':
+      return 'school';
+    case 'online coaching':
+      return 'video';
+    case 'home tuition':
+      return 'home';
+    case 'test series':
+      return 'clipboard';
+    default:
+      return 'book';
+  }
+}
 
 export default router;

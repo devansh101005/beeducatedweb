@@ -7,6 +7,7 @@ const Contact = () => {
     lastName: '',
     email: '',
     role: 'student',
+    department: 'general',
     message: '',
   });
   const [loading, setLoading] = useState(false);
@@ -44,6 +45,7 @@ const Contact = () => {
           lastName: '',
           email: '',
           role: 'student',
+          department: 'general',
           message: '',
         });
       } else {
@@ -222,6 +224,24 @@ const Contact = () => {
                   <option value="student">Student</option>
                   <option value="parent">Parent</option>
                   <option value="teacher">Teacher</option>
+                </select>
+              </div>
+
+              <div>
+                <label htmlFor="department" className="block text-sm font-medium text-gray-700 mb-2">Inquiry For *</label>
+                <select
+                  id="department"
+                  name="department"
+                  value={formData.department}
+                  onChange={handleChange}
+                  required
+                  className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition outline-none bg-gray-50 focus:bg-white"
+                >
+                  <option value="general">General Information</option>
+                  <option value="admission">Admission</option>
+                  <option value="technical">Technical Support</option>
+                  <option value="hr">HR Department</option>
+                  <option value="accounts">Accounts & Finance</option>
                 </select>
               </div>
 

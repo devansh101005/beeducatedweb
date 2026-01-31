@@ -4,6 +4,7 @@
 import { Router, Request, Response } from 'express';
 import { requireAuth, attachUser, requireAdmin, requireTeacherOrAdmin } from '../../middleware/auth.js';
 import { dashboardService } from '../../services/dashboardService.js';
+import { enrollmentService } from '../../services/enrollmentService.js';
 import { sendSuccess, sendError, sendBadRequest } from '../../shared/utils/response.js';
 
 const router = Router();
@@ -149,6 +150,35 @@ router.post('/admin/update-daily-stats', requireAdmin, async (req: Request, res:
   } catch (error) {
     console.error('Error updating daily stats:', error);
     sendError(res, 'Failed to update daily stats');
+  }
+});
+
+/**
+ * GET /api/v2/dashboard/admin/recent-enrollments
+ * Get recent enrollments for dashboard
+ */
+router.get('/admin/recent-enrollments', requireAdmin, async (req: Request, res: Response) => {
+  try {
+    const limit = parseInt(req.query.limit as string) || 10;
+    const recentEnrollments = await enrollmentService.getRecentEnrollments(limit);
+    sendSuccess(res, recentEnrollments);
+  } catch (error) {
+    console.error('Error fetching recent enrollments:', error);
+    sendError(res, 'Failed to fetch recent enrollments');
+  }
+});
+
+/**
+ * GET /api/v2/dashboard/admin/enrollment-stats
+ * Get enrollment statistics
+ */
+router.get('/admin/enrollment-stats', requireAdmin, async (_req: Request, res: Response) => {
+  try {
+    const stats = await enrollmentService.getEnrollmentStats();
+    sendSuccess(res, stats);
+  } catch (error) {
+    console.error('Error fetching enrollment stats:', error);
+    sendError(res, 'Failed to fetch enrollment statistics');
   }
 });
 

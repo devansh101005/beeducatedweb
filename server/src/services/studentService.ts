@@ -179,9 +179,19 @@ class StudentService {
    * Create a new student with manual or auto-generated student ID
    */
   async create(input: CreateStudentInput): Promise<Student> {
-    // If student_id not provided, throw error - admin must provide it manually
+    // Validate required fields
     if (!input.student_id) {
       throw new Error('Student ID is required. Admin must assign a student ID manually.');
+    }
+
+    if (!input.user_id) {
+      throw new Error('User ID is required to create a student profile.');
+    }
+
+    // Validate student_type enum
+    const validStudentTypes: StudentType[] = ['coaching_online', 'coaching_offline', 'test_series', 'home_tuition'];
+    if (!input.student_type || !validStudentTypes.includes(input.student_type)) {
+      throw new Error(`Invalid student type: ${input.student_type}. Must be one of: ${validStudentTypes.join(', ')}`);
     }
 
     // Check if student ID already exists
@@ -190,16 +200,51 @@ class StudentService {
       throw new Error(`Student ID ${input.student_id} is already taken.`);
     }
 
+    // Check if user already has a student profile
+    const existingStudent = await this.getByUserId(input.user_id);
+    if (existingStudent) {
+      throw new Error('This user already has a student profile.');
+    }
+
+    const insertData = {
+      user_id: input.user_id,
+      student_id: input.student_id,
+      student_type: input.student_type,
+      date_of_birth: input.date_of_birth || null,
+      gender: input.gender || null,
+      address: input.address || null,
+      city: input.city || null,
+      state: input.state || null,
+      pincode: input.pincode || null,
+      class_grade: input.class_grade || null,
+      school_name: input.school_name || null,
+      board: input.board || null,
+      target_exam: input.target_exam || null,
+      target_year: input.target_year || null,
+      parent_name: input.parent_name || null,
+      parent_phone: input.parent_phone || null,
+      parent_email: input.parent_email || null,
+      subscription_status: input.subscription_status || 'pending',
+    };
+
+    console.log('Inserting student with data:', { ...insertData, user_id: '[REDACTED]' });
+
     const { data, error } = await this.supabase
       .from('students')
-      .insert({
-        ...input,
-        subscription_status: input.subscription_status || 'pending',
-      })
+      .insert(insertData)
       .select()
       .single();
 
-    if (error) throw error;
+    if (error) {
+      console.error('Supabase student insert error:', {
+        message: error.message,
+        code: error.code,
+        details: error.details,
+        hint: error.hint,
+      });
+      throw new Error(`Database error: ${error.message}${error.hint ? ` (Hint: ${error.hint})` : ''}`);
+    }
+
     return data as Student;
   }
 

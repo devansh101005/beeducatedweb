@@ -215,6 +215,89 @@ router.get('/classes/:classId', async (req: Request, res: Response) => {
   }
 });
 
+/**
+ * GET /api/v2/course-types/classes/:classId/subjects
+ * Get subjects for a specific class
+ */
+router.get('/classes/:classId/subjects', async (req: Request, res: Response) => {
+  try {
+    const { classId } = req.params;
+
+    const classSubjects = await courseTypeService.getClassSubjects(classId);
+
+    const transformed = classSubjects.map((cs) => ({
+      id: cs.id,
+      classId: cs.class_id,
+      subjectId: cs.subject_id,
+      displayOrder: cs.display_order,
+      subject: cs.subject
+        ? {
+            id: cs.subject.id,
+            code: cs.subject.code,
+            name: cs.subject.name,
+            description: cs.subject.description,
+            icon: cs.subject.icon,
+            color: cs.subject.color,
+          }
+        : null,
+    }));
+
+    sendSuccess(res, transformed);
+  } catch (error) {
+    console.error('Error fetching class subjects:', error);
+    sendError(res, 'Failed to fetch class subjects');
+  }
+});
+
+/**
+ * GET /api/v2/course-types/subjects
+ * Get all subjects
+ */
+router.get('/subjects/all', async (_req: Request, res: Response) => {
+  try {
+    const subjects = await courseTypeService.getAllSubjects();
+
+    const transformed = subjects.map((s) => ({
+      id: s.id,
+      code: s.code,
+      name: s.name,
+      description: s.description,
+      icon: s.icon,
+      color: s.color,
+      targetExams: s.target_exams,
+      displayOrder: s.display_order,
+    }));
+
+    sendSuccess(res, transformed);
+  } catch (error) {
+    console.error('Error fetching subjects:', error);
+    sendError(res, 'Failed to fetch subjects');
+  }
+});
+
+/**
+ * GET /api/v2/course-types/material-types
+ * Get all material types
+ */
+router.get('/material-types', async (_req: Request, res: Response) => {
+  try {
+    // Return the available material types
+    const materialTypes = [
+      { value: 'lecture', label: 'Lecture', description: 'Video lectures' },
+      { value: 'notes', label: 'Notes', description: 'Written notes and study materials' },
+      { value: 'dpp', label: 'DPP', description: 'Daily Practice Problems' },
+      { value: 'dpp_solution', label: 'DPP Solution', description: 'Solutions for DPPs' },
+      { value: 'ncert', label: 'NCERT', description: 'NCERT content and solutions' },
+      { value: 'pyq', label: 'PYQ', description: 'Previous Year Questions' },
+    ];
+
+    sendSuccess(res, materialTypes);
+  } catch (error) {
+    console.error('Error fetching material types:', error);
+    sendError(res, 'Failed to fetch material types');
+  }
+});
+
 // ============================================
 // PROTECTED ROUTES (Auth required)
 // ============================================
@@ -380,7 +463,9 @@ router.get(
         payment: e.payment
           ? {
               id: e.payment.id,
+              paymentType: e.payment.payment_type || 'razorpay',
               razorpayPaymentId: e.payment.razorpay_payment_id,
+              receiptNumber: e.payment.receipt_number,
               amount: e.payment.amount,
               status: e.payment.status,
               paidAt: e.payment.paid_at,
@@ -393,6 +478,91 @@ router.get(
     } catch (error) {
       console.error('Error fetching enrollments:', error);
       sendError(res, 'Failed to fetch enrollments');
+    }
+  }
+);
+
+/**
+ * GET /api/v2/course-types/enrollments/my-access
+ * Get current user's access summary (what classes they can access)
+ */
+router.get(
+  '/enrollments/my-access',
+  requireAuth,
+  attachUser,
+  async (req: Request, res: Response) => {
+    try {
+      if (!req.user || req.user.role !== 'student') {
+        return sendSuccess(res, {
+          activeEnrollments: [],
+          totalActiveClasses: 0,
+          message: 'Only students have class enrollments',
+        });
+      }
+
+      const student = await studentService.getByUserId(req.user.id);
+      if (!student) {
+        return sendSuccess(res, {
+          activeEnrollments: [],
+          totalActiveClasses: 0,
+          message: 'Student profile not found',
+        });
+      }
+
+      const accessSummary = await enrollmentService.getStudentAccessSummary(student.id);
+
+      sendSuccess(res, accessSummary);
+    } catch (error) {
+      console.error('Error fetching access summary:', error);
+      sendError(res, 'Failed to fetch access summary');
+    }
+  }
+);
+
+/**
+ * GET /api/v2/course-types/enrollments/check-access/:classId
+ * Check if current user has access to a specific class
+ */
+router.get(
+  '/enrollments/check-access/:classId',
+  requireAuth,
+  attachUser,
+  async (req: Request, res: Response) => {
+    try {
+      const { classId } = req.params;
+
+      if (!req.user || req.user.role !== 'student') {
+        return sendSuccess(res, {
+          hasAccess: false,
+          reason: 'Only students can access classes',
+        });
+      }
+
+      const student = await studentService.getByUserId(req.user.id);
+      if (!student) {
+        return sendSuccess(res, {
+          hasAccess: false,
+          reason: 'Student profile not found',
+        });
+      }
+
+      const result = await enrollmentService.checkClassAccess(student.id, classId);
+
+      sendSuccess(res, {
+        hasAccess: result.hasAccess,
+        reason: result.reason,
+        enrollment: result.enrollment
+          ? {
+              id: result.enrollment.id,
+              status: result.enrollment.status,
+              enrolledAt: result.enrollment.enrolled_at,
+              expiresAt: result.enrollment.expires_at,
+            }
+          : null,
+      });
+    } catch (error) {
+      console.error('Error checking class access:', error);
+      sendError(res, 'Failed to check access');
     }
   }
 );

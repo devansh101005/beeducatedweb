@@ -2,8 +2,9 @@
 // Uses Clerk for JWT verification and role-based access control
 
 import { Request, Response, NextFunction, RequestHandler } from 'express';
-import { ClerkExpressRequireAuth } from '@clerk/clerk-sdk-node';
+import { ClerkExpressRequireAuth, clerkClient } from '@clerk/clerk-sdk-node';
 import { userService, UserRole } from '../services/userService.js';
+import { env } from '../config/env.js';
 
 // Extend Express Request to include user data and auth
 declare global {
@@ -47,16 +48,48 @@ export const attachUser: RequestHandler = async (
       return;
     }
 
-    const user = await userService.getByClerkId(clerkId);
+    let user = await userService.getByClerkId(clerkId);
 
     if (!user) {
       // User exists in Clerk but not in our database
-      // This might happen if webhook hasn't fired yet
-      res.status(404).json({
-        error: 'User not found',
-        message: 'Please wait a moment and try again. Your account is being set up.',
-      });
-      return;
+      // Auto-create the user from Clerk data
+      console.log('User not found in DB, fetching from Clerk:', clerkId);
+
+      try {
+        const clerkUser = await clerkClient.users.getUser(clerkId);
+        const email = clerkUser.emailAddresses[0]?.emailAddress;
+
+        if (!email) {
+          res.status(400).json({
+            error: 'Invalid user',
+            message: 'User has no email address in Clerk.',
+          });
+          return;
+        }
+
+        // Check if this is an admin email
+        const adminEmails = env.ADMIN_EMAILS?.split(',').map(e => e.trim().toLowerCase()) || [];
+        const isAdmin = adminEmails.includes(email.toLowerCase());
+
+        // Create user in our database
+        user = await userService.create({
+          clerk_id: clerkId,
+          email,
+          first_name: clerkUser.firstName || undefined,
+          last_name: clerkUser.lastName || undefined,
+          phone: clerkUser.phoneNumbers[0]?.phoneNumber || undefined,
+          role: isAdmin ? 'admin' : 'student',
+        });
+
+        console.log('Auto-created user from Clerk:', user.id, 'role:', user.role);
+      } catch (clerkError) {
+        console.error('Failed to auto-create user from Clerk:', clerkError);
+        res.status(404).json({
+          error: 'User not found',
+          message: 'Please wait a moment and try again. Your account is being set up.',
+        });
+        return;
+      }
     }
 
     if (!user.is_active) {

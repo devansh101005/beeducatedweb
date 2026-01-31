@@ -4,7 +4,7 @@
 import { Router, Request, Response } from 'express';
 import multer from 'multer';
 import { requireAuth, attachUser, requireTeacherOrAdmin, requireAdmin } from '../../middleware/auth.js';
-import { contentService, ContentType } from '../../services/contentService.js';
+import { contentService, ContentType, MaterialType } from '../../services/contentService.js';
 import { storageService, BUCKETS } from '../../services/storageService.js';
 import { courseService } from '../../services/courseService.js';
 import { studentService } from '../../services/studentService.js';
@@ -48,6 +48,11 @@ router.get('/', requireAuth, attachUser, async (req: Request, res: Response) => 
     const courseId = req.query.courseId as string | undefined;
     const topicId = req.query.topicId as string | undefined;
     const batchId = req.query.batchId as string | undefined;
+    // New hierarchy filters
+    const classId = req.query.classId as string | undefined;
+    const subjectId = req.query.subjectId as string | undefined;
+    const materialType = req.query.materialType as MaterialType | undefined;
+    // Other filters
     const contentType = req.query.contentType as ContentType | undefined;
     const isPublished = req.query.isPublished === 'true' ? true : req.query.isPublished === 'false' ? false : undefined;
     const isFree = req.query.isFree === 'true' ? true : req.query.isFree === 'false' ? false : undefined;
@@ -63,6 +68,9 @@ router.get('/', requireAuth, attachUser, async (req: Request, res: Response) => 
       courseId,
       topicId,
       batchId,
+      classId,
+      subjectId,
+      materialType,
       contentType,
       isPublished: effectivePublished,
       isFree,
@@ -128,6 +136,11 @@ router.post('/', requireAuth, attachUser, requireTeacherOrAdmin, async (req: Req
       courseId,
       topicId,
       batchId,
+      // New hierarchy fields
+      classId,
+      subjectId,
+      materialType,
+      // Basic info
       title,
       description,
       contentType,
@@ -153,9 +166,8 @@ router.post('/', requireAuth, attachUser, requireTeacherOrAdmin, async (req: Req
       return sendBadRequest(res, 'contentType is required');
     }
 
-    if (!filePath && contentType !== 'link') {
-      return sendBadRequest(res, 'filePath is required for non-link content');
-    }
+    // Note: filePath is optional here because the file is uploaded separately via POST /:id/upload
+    // The file_path will be set when the file upload completes
 
     // Validate course exists if provided
     if (courseId) {
@@ -169,6 +181,11 @@ router.post('/', requireAuth, attachUser, requireTeacherOrAdmin, async (req: Req
       course_id: courseId,
       topic_id: topicId,
       batch_id: batchId,
+      // New hierarchy fields
+      class_id: classId,
+      subject_id: subjectId,
+      material_type: materialType,
+      // Basic info
       title,
       description,
       content_type: contentType,
@@ -204,6 +221,11 @@ router.put('/:id', requireAuth, attachUser, requireTeacherOrAdmin, async (req: R
     const {
       title,
       description,
+      // New hierarchy fields
+      classId,
+      subjectId,
+      materialType,
+      // File info
       filePath,
       fileName,
       fileSize,
@@ -226,6 +248,11 @@ router.put('/:id', requireAuth, attachUser, requireTeacherOrAdmin, async (req: R
     const content = await contentService.update(contentId, {
       title,
       description,
+      // New hierarchy fields
+      class_id: classId,
+      subject_id: subjectId,
+      material_type: materialType,
+      // File info
       file_path: filePath,
       file_name: fileName,
       file_size: fileSize,

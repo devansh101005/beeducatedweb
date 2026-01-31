@@ -14,6 +14,8 @@ import { userService, UserRole } from '../../services/userService.js';
 import { studentService } from '../../services/studentService.js';
 import { teacherService } from '../../services/teacherService.js';
 import { parentService } from '../../services/parentService.js';
+import { enrollmentService, PaymentType } from '../../services/enrollmentService.js';
+import { courseTypeService } from '../../services/courseTypeService.js';
 import {
   sendSuccess,
   sendCreated,
@@ -450,6 +452,200 @@ router.post('/students', async (req: Request, res: Response) => {
   }
 });
 
+/**
+ * POST /api/v2/admin/students/create-with-user
+ * Create a new user AND student profile in one request
+ * This avoids timing issues with separate API calls
+ */
+router.post('/students/create-with-user', async (req: Request, res: Response) => {
+  try {
+    const {
+      // User fields
+      email,
+      password,
+      firstName,
+      lastName,
+      phone,
+      // Student fields
+      studentId,
+      studentType,
+      classGrade,
+      board,
+      targetExam,
+      targetYear,
+      parentName,
+      parentPhone,
+      parentEmail,
+    } = req.body;
+
+    // Validate required fields
+    if (!email || !password || !firstName) {
+      return sendBadRequest(res, 'Email, password, and first name are required');
+    }
+    if (!studentId || !studentType) {
+      return sendBadRequest(res, 'Student ID and student type are required');
+    }
+
+    // Check if student ID is already taken
+    const existingStudent = await studentService.getByStudentId(studentId);
+    if (existingStudent) {
+      return sendBadRequest(res, 'Student ID is already in use');
+    }
+
+    // Check if email is already in use in our database
+    const existingUser = await userService.getByEmail(email);
+    if (existingUser) {
+      return sendBadRequest(res, 'A user with this email already exists');
+    }
+
+    // Check if email exists in Clerk (could be orphaned from previous attempt)
+    try {
+      const existingClerkUsers = await clerkClient.users.getUserList({
+        emailAddress: [email],
+      });
+      if (existingClerkUsers.data && existingClerkUsers.data.length > 0) {
+        // User exists in Clerk but not in our database - use existing Clerk user
+        const existingClerkUser = existingClerkUsers.data[0];
+        console.log('Found existing Clerk user, syncing to database:', existingClerkUser.id);
+
+        // Create user in our database with existing Clerk user
+        const user = await userService.create({
+          clerk_id: existingClerkUser.id,
+          email,
+          first_name: firstName || existingClerkUser.firstName || null,
+          last_name: lastName || existingClerkUser.lastName || null,
+          phone,
+          role: 'student' as UserRole,
+        });
+
+        // Create student profile
+        const student = await studentService.create({
+          user_id: user.id,
+          student_id: studentId,
+          student_type: studentType,
+          class_grade: classGrade,
+          board,
+          target_exam: targetExam,
+          target_year: targetYear,
+          parent_name: parentName,
+          parent_phone: parentPhone,
+          parent_email: parentEmail,
+          subscription_status: 'pending',
+        });
+
+        return sendCreated(res, { user, student }, 'Student created successfully (synced from existing account)');
+      }
+    } catch (clerkCheckError) {
+      console.log('Could not check Clerk for existing user, proceeding with creation:', clerkCheckError);
+    }
+
+    // Helper function to create Clerk user with retry
+    const createClerkUserWithRetry = async (retries = 3, delay = 2000): Promise<any> => {
+      for (let attempt = 1; attempt <= retries; attempt++) {
+        try {
+          const user = await clerkClient.users.createUser({
+            emailAddress: [email],
+            firstName,
+            lastName,
+            password,
+            // Skip email verification for admin-created users
+            skipPasswordChecks: true,
+            skipPasswordRequirement: false,
+          });
+          return user;
+        } catch (error: any) {
+          const isRetryableError = error?.errors?.some((e: any) =>
+            e.message?.includes('wait a moment') ||
+            e.message?.includes('being set up') ||
+            e.code === 'user_locked'
+          );
+
+          if (isRetryableError && attempt < retries) {
+            console.log(`Clerk user creation attempt ${attempt} failed, retrying in ${delay}ms...`);
+            await new Promise(resolve => setTimeout(resolve, delay));
+            continue;
+          }
+          throw error;
+        }
+      }
+    };
+
+    // Step 1: Create user in Clerk with retry logic
+    let clerkUser;
+    try {
+      clerkUser = await createClerkUserWithRetry();
+    } catch (clerkError: any) {
+      console.error('Clerk error after retries:', clerkError);
+      // Handle specific Clerk errors
+      if (clerkError?.errors) {
+        const messages = clerkError.errors.map((e: any) => e.message || e.longMessage).join(', ');
+        return sendBadRequest(res, messages);
+      }
+      return sendError(res, 'Failed to create user account. Please try again later.');
+    }
+
+    // Step 2: Create user in Supabase
+    let user;
+    try {
+      user = await userService.create({
+        clerk_id: clerkUser.id,
+        email,
+        first_name: firstName,
+        last_name: lastName,
+        phone,
+        role: 'student' as UserRole,
+      });
+    } catch (dbError) {
+      // If Supabase fails, try to delete the Clerk user to avoid orphaned accounts
+      console.error('Database error, cleaning up Clerk user:', dbError);
+      try {
+        await clerkClient.users.deleteUser(clerkUser.id);
+      } catch (cleanupError) {
+        console.error('Failed to cleanup Clerk user:', cleanupError);
+      }
+      return sendError(res, 'Failed to create user record');
+    }
+
+    // Step 3: Create student profile
+    let student;
+    try {
+      student = await studentService.create({
+        user_id: user.id,
+        student_id: studentId,
+        student_type: studentType,
+        class_grade: classGrade,
+        board,
+        target_exam: targetExam,
+        target_year: targetYear,
+        parent_name: parentName,
+        parent_phone: parentPhone,
+        parent_email: parentEmail,
+        subscription_status: 'pending',
+      });
+    } catch (studentError: any) {
+      // Log detailed error for debugging
+      console.error('Student creation error details:', {
+        message: studentError?.message,
+        code: studentError?.code,
+        details: studentError?.details,
+        hint: studentError?.hint,
+        fullError: studentError,
+      });
+
+      // Extract the actual error message from Supabase error
+      const errorMessage = studentError?.message || studentError?.details || 'Unknown error creating student profile';
+
+      // User is created but student profile failed - return error with details
+      return sendBadRequest(res, `User created but student profile failed: ${errorMessage}. Please check the student data and try again.`);
+    }
+
+    sendCreated(res, { user, student }, 'Student created successfully');
+  } catch (error: any) {
+    console.error('Error creating student with user:', error);
+    sendError(res, error.message || 'Failed to create student');
+  }
+});
+
 // ============================================
 // TEACHER MANAGEMENT
 // ============================================
@@ -537,6 +733,143 @@ router.get('/parents', async (req: Request, res: Response) => {
 });
 
 /**
+ * POST /api/v2/admin/parents
+ * Create a new parent account (user + parent profile)
+ */
+router.post('/parents', async (req: Request, res: Response) => {
+  try {
+    const {
+      email,
+      firstName,
+      lastName,
+      phone,
+      password,
+      occupation,
+      address,
+      city,
+      state,
+      pincode,
+      studentId,        // Optional: Link to a student immediately
+      relationship,     // Optional: Relationship type (father, mother, guardian)
+    } = req.body;
+
+    // Validate required fields
+    if (!email || !firstName || !lastName) {
+      return sendBadRequest(res, 'Email, firstName, and lastName are required');
+    }
+
+    // Check if email already exists
+    const existingUser = await userService.getByEmail(email);
+    if (existingUser) {
+      return sendBadRequest(res, 'A user with this email already exists');
+    }
+
+    // Create user in Clerk first
+    let clerkUser;
+    try {
+      clerkUser = await clerkClient.users.createUser({
+        emailAddress: [email],
+        firstName,
+        lastName,
+        password: password || `Parent@${Date.now()}`, // Generate temp password if not provided
+        publicMetadata: { role: 'parent' },
+      });
+    } catch (clerkError: any) {
+      console.error('Clerk user creation error:', clerkError);
+      return sendBadRequest(res, `Failed to create user in Clerk: ${clerkError.message}`);
+    }
+
+    // Create user in our database
+    const user = await userService.create({
+      clerk_id: clerkUser.id,
+      email,
+      first_name: firstName,
+      last_name: lastName,
+      phone: phone || null,
+      role: 'parent',
+    });
+
+    // Create parent profile
+    const parent = await parentService.create({
+      user_id: user.id,
+      occupation: occupation || null,
+      address: address || null,
+      city: city || null,
+      state: state || null,
+      pincode: pincode || null,
+    });
+
+    // If studentId is provided, link the parent to the student
+    let linkedStudent = null;
+    if (studentId) {
+      const student = await studentService.getById(studentId);
+      if (student) {
+        await parentService.linkChild(parent.id, studentId, relationship || 'parent', true);
+        linkedStudent = student;
+      }
+    }
+
+    sendCreated(res, {
+      user,
+      parent,
+      linkedStudent,
+      tempPassword: password ? undefined : 'A temporary password was generated. Ask parent to reset via forgot password.',
+    }, 'Parent account created successfully');
+  } catch (error: any) {
+    console.error('Error creating parent:', error);
+    sendError(res, error.message || 'Failed to create parent');
+  }
+});
+
+/**
+ * GET /api/v2/admin/parents/:id
+ * Get a specific parent with user details
+ */
+router.get('/parents/:id', async (req: Request, res: Response) => {
+  try {
+    const parentId = getParam(req.params.id);
+
+    const result = await parentService.getWithUser(parentId);
+    if (!result) {
+      return sendNotFound(res, 'Parent');
+    }
+
+    // Also get linked children
+    const children = await parentService.getChildren(parentId);
+
+    sendSuccess(res, {
+      ...result.parent,
+      user: result.user,
+      children,
+    });
+  } catch (error) {
+    console.error('Error fetching parent:', error);
+    sendError(res, 'Failed to fetch parent');
+  }
+});
+
+/**
+ * GET /api/v2/admin/parents/:id/children
+ * Get parent's linked children (students)
+ */
+router.get('/parents/:id/children', async (req: Request, res: Response) => {
+  try {
+    const parentId = getParam(req.params.id);
+
+    const parent = await parentService.getById(parentId);
+    if (!parent) {
+      return sendNotFound(res, 'Parent');
+    }
+
+    const children = await parentService.getChildren(parentId);
+    sendSuccess(res, children);
+  } catch (error) {
+    console.error('Error fetching parent children:', error);
+    sendError(res, 'Failed to fetch children');
+  }
+});
+
+/**
  * POST /api/v2/admin/parents/:id/link-child
  * Link a parent to a student
  */
@@ -565,6 +898,207 @@ router.post('/parents/:id/link-child', async (req: Request, res: Response) => {
   } catch (error) {
     console.error('Error linking parent to student:', error);
     sendError(res, 'Failed to link parent to student');
+  }
+});
+
+/**
+ * DELETE /api/v2/admin/parents/:id/children/:studentId
+ * Unlink a parent from a student
+ */
+router.delete('/parents/:id/children/:studentId', async (req: Request, res: Response) => {
+  try {
+    const parentId = getParam(req.params.id);
+    const studentId = getParam(req.params.studentId);
+
+    const parent = await parentService.getById(parentId);
+    if (!parent) {
+      return sendNotFound(res, 'Parent');
+    }
+
+    await parentService.unlinkChild(parentId, studentId);
+
+    sendSuccess(res, null, 'Parent unlinked from student successfully');
+  } catch (error) {
+    console.error('Error unlinking parent from student:', error);
+    sendError(res, 'Failed to unlink parent from student');
+  }
+});
+
+/**
+ * GET /api/v2/admin/students-for-linking
+ * Get list of students available for linking to parents
+ */
+router.get('/students-for-linking', async (req: Request, res: Response) => {
+  try {
+    const search = req.query.search as string | undefined;
+    const limit = parseInt(req.query.limit as string) || 50;
+
+    const result = await studentService.list({ limit, search, isActive: true });
+
+    // Return simplified list for dropdown/search
+    const students = result.students.map((s: any) => ({
+      id: s.id,
+      studentId: s.student_id,
+      name: s.user ? `${s.user.first_name} ${s.user.last_name}` : 'Unknown',
+      email: s.user?.email,
+      classGrade: s.class_grade,
+    }));
+
+    sendSuccess(res, students);
+  } catch (error) {
+    console.error('Error fetching students for linking:', error);
+    sendError(res, 'Failed to fetch students');
+  }
+});
+
+// ============================================
+// ENROLLMENT MANAGEMENT
+// ============================================
+
+/**
+ * GET /api/v2/admin/enrollments
+ * List all enrollments with pagination
+ */
+router.get('/enrollments', async (req: Request, res: Response) => {
+  try {
+    const page = parseInt(req.query.page as string) || 1;
+    const limit = parseInt(req.query.limit as string) || 20;
+    const status = req.query.status as string | undefined;
+    const classId = req.query.classId as string | undefined;
+
+    const result = await enrollmentService.listAllEnrollments({
+      page,
+      limit,
+      status: status as any,
+      classId,
+    });
+
+    sendPaginated(res, result.enrollments, result.total, page, limit);
+  } catch (error) {
+    console.error('Error listing enrollments:', error);
+    sendError(res, 'Failed to list enrollments');
+  }
+});
+
+/**
+ * POST /api/v2/admin/enrollments/manual
+ * Create manual enrollment for cash/offline payments
+ */
+router.post('/enrollments/manual', async (req: Request, res: Response) => {
+  try {
+    const {
+      studentId,
+      classId,
+      feePlanId,
+      paymentType,
+      amountReceived,
+      receiptNumber,
+      notes,
+    } = req.body;
+
+    // Validate required fields
+    if (!studentId || !classId || !feePlanId || !paymentType || !amountReceived) {
+      return sendBadRequest(res, 'studentId, classId, feePlanId, paymentType, and amountReceived are required');
+    }
+
+    // Validate payment type (must not be razorpay for manual enrollment)
+    const validPaymentTypes: PaymentType[] = ['cash', 'bank_transfer', 'cheque', 'upi_direct'];
+    if (!validPaymentTypes.includes(paymentType)) {
+      return sendBadRequest(res, `Invalid payment type. Must be one of: ${validPaymentTypes.join(', ')}`);
+    }
+
+    // Validate amount
+    const amount = parseFloat(amountReceived);
+    if (isNaN(amount) || amount <= 0) {
+      return sendBadRequest(res, 'Amount received must be a positive number');
+    }
+
+    // Get admin user ID from request (set by auth middleware)
+    const adminUserId = (req as any).user?.id;
+    if (!adminUserId) {
+      return sendBadRequest(res, 'Admin user not found');
+    }
+
+    const result = await enrollmentService.createManualEnrollment({
+      studentId,
+      classId,
+      feePlanId,
+      paymentType,
+      amountReceived: amount,
+      receivedBy: adminUserId,
+      receiptNumber,
+      notes,
+    });
+
+    sendCreated(res, {
+      enrollment: result.enrollment,
+      payment: result.payment,
+      message: `Student enrolled successfully. Receipt: ${result.payment.receipt_number}`,
+    }, 'Manual enrollment created successfully');
+  } catch (error: any) {
+    console.error('Error creating manual enrollment:', error);
+    sendError(res, error.message || 'Failed to create manual enrollment');
+  }
+});
+
+/**
+ * GET /api/v2/admin/enrollments/classes
+ * Get all classes available for enrollment (with fee plans)
+ */
+router.get('/enrollments/classes', async (req: Request, res: Response) => {
+  try {
+    const courseTypeSlug = req.query.courseType as string | undefined;
+
+    const classes = await courseTypeService.getClassesWithFeePlans(courseTypeSlug);
+
+    sendSuccess(res, classes);
+  } catch (error) {
+    console.error('Error fetching classes:', error);
+    sendError(res, 'Failed to fetch classes');
+  }
+});
+
+/**
+ * GET /api/v2/admin/enrollments/students/search
+ * Search students for enrollment (returns students without active enrollment in specified class)
+ */
+router.get('/enrollments/students/search', async (req: Request, res: Response) => {
+  try {
+    const search = req.query.search as string;
+    const classId = req.query.classId as string | undefined;
+    const limit = parseInt(req.query.limit as string) || 10;
+
+    if (!search || search.length < 2) {
+      return sendSuccess(res, []);
+    }
+
+    // Get students matching search
+    const { students } = await studentService.list({ search, limit: 50 });
+
+    // If classId provided, filter out students already enrolled
+    let eligibleStudents = students;
+    if (classId) {
+      const enrollmentChecks = await Promise.all(
+        students.map(async (student: any) => {
+          const enrollment = await enrollmentService.getEnrollmentByStudentAndClass(student.id, classId);
+          return {
+            student,
+            hasActiveEnrollment: enrollment?.status === 'active',
+          };
+        })
+      );
+      eligibleStudents = enrollmentChecks
+        .filter(({ hasActiveEnrollment }) => !hasActiveEnrollment)
+        .map(({ student }) => student)
+        .slice(0, limit);
+    } else {
+      eligibleStudents = students.slice(0, limit);
+    }
+
+    sendSuccess(res, eligibleStudents);
+  } catch (error) {
+    console.error('Error searching students:', error);
+    sendError(res, 'Failed to search students');
   }
 });
 
@@ -599,6 +1133,29 @@ router.get('/stats', async (_req: Request, res: Response) => {
   } catch (error) {
     console.error('Error fetching stats:', error);
     sendError(res, 'Failed to fetch statistics');
+  }
+});
+
+// ============================================
+// ENROLLMENT MAINTENANCE
+// ============================================
+
+/**
+ * POST /api/v2/admin/enrollments/process-expired
+ * Process and mark expired enrollments
+ * Can be called manually or via cron job
+ */
+router.post('/enrollments/process-expired', async (_req: Request, res: Response) => {
+  try {
+    const result = await enrollmentService.processExpiredEnrollments();
+
+    sendSuccess(res, {
+      expiredCount: result.expiredCount,
+      message: `Processed ${result.expiredCount} expired enrollments`,
+    });
+  } catch (error) {
+    console.error('Error processing expired enrollments:', error);
+    sendError(res, 'Failed to process expired enrollments');
   }
 });
 

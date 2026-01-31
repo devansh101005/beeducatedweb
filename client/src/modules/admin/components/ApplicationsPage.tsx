@@ -12,10 +12,9 @@ import {
   Mail,
   Phone,
   Calendar,
-  Search,
-  Filter,
   RefreshCw,
   UserPlus,
+  GraduationCap,
 } from 'lucide-react';
 import {
   Card,
@@ -29,8 +28,8 @@ import {
 } from '@shared/components/ui';
 import { Stagger, StaggerItem, fadeInUp } from '@shared/components/ui/motion';
 import { ApproveStudentModal } from './ApproveStudentModal';
+import { ManualEnrollmentModal } from './ManualEnrollmentModal';
 import { format, parseISO } from 'date-fns';
-import clsx from 'clsx';
 
 // ============================================
 // TYPES
@@ -73,6 +72,7 @@ export function ApplicationsPage() {
   // Modal state
   const [selectedApplication, setSelectedApplication] = useState<User | null>(null);
   const [rejectingId, setRejectingId] = useState<string | null>(null);
+  const [showEnrollmentModal, setShowEnrollmentModal] = useState(false);
 
   // Fetch applications
   const fetchApplications = async (showLoader = true) => {
@@ -175,20 +175,29 @@ export function ApplicationsPage() {
             Review and approve pending student applications
           </p>
         </div>
-        <Button
-          variant="outline"
-          onClick={handleRefresh}
-          disabled={refreshing}
-          leftIcon={
-            refreshing ? (
-              <Spinner size="sm" />
-            ) : (
-              <RefreshCw className="w-4 h-4" />
-            )
-          }
-        >
-          Refresh
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="primary"
+            onClick={() => setShowEnrollmentModal(true)}
+            leftIcon={<GraduationCap className="w-4 h-4" />}
+          >
+            Manual Enrollment
+          </Button>
+          <Button
+            variant="outline"
+            onClick={handleRefresh}
+            disabled={refreshing}
+            leftIcon={
+              refreshing ? (
+                <Spinner size="sm" />
+              ) : (
+                <RefreshCw className="w-4 h-4" />
+              )
+            }
+          >
+            Refresh
+          </Button>
+        </div>
       </motion.div>
 
       {/* Stats Cards */}
@@ -378,6 +387,17 @@ export function ApplicationsPage() {
           application={selectedApplication}
           onClose={() => setSelectedApplication(null)}
           onSuccess={handleApproveSuccess}
+        />
+      )}
+
+      {/* Manual Enrollment Modal */}
+      {showEnrollmentModal && (
+        <ManualEnrollmentModal
+          onClose={() => setShowEnrollmentModal(false)}
+          onSuccess={() => {
+            setShowEnrollmentModal(false);
+            // Optionally refresh applications list
+          }}
         />
       )}
     </div>

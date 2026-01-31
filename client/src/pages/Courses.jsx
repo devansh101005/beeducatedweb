@@ -1,8 +1,26 @@
 import { useState } from 'react';
+import { useAuth } from '@clerk/clerk-react';
+import { useNavigate } from 'react-router-dom';
 import Footer from '../components/Footer';
 
 const Courses = () => {
+  const { isSignedIn } = useAuth();
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('school');
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [selectedCourse, setSelectedCourse] = useState(null);
+
+  const handleEnrollClick = (course) => {
+    if (isSignedIn) {
+      // User is signed in, proceed to enrollment/payment
+      // For now, navigate to dashboard or enrollment page
+      navigate('/dashboard');
+    } else {
+      // User is not signed in, show the auth modal
+      setSelectedCourse(course);
+      setShowAuthModal(true);
+    }
+  };
 
   const schoolCourses = [
     { id: 1, name: 'Class Nursery', subjects: ['English', 'Math', 'EVS', 'Hindi'], color: 'bg-red-400' },
@@ -126,7 +144,10 @@ const Courses = () => {
                     <button className="flex-1 py-2 text-sm font-medium text-blue-600 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors">
                       View Details
                     </button>
-                    <button className="flex-1 py-2 text-sm font-medium text-white bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg hover:shadow-md transition-all">
+                    <button
+                      onClick={() => handleEnrollClick(course)}
+                      className="flex-1 py-2 text-sm font-medium text-white bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg hover:shadow-md transition-all"
+                    >
                       Enroll Now
                     </button>
                   </div>
@@ -171,7 +192,10 @@ const Courses = () => {
                     <button className="flex-1 py-2 text-sm font-medium text-blue-600 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors">
                       View Details
                     </button>
-                    <button className="flex-1 py-2 text-sm font-medium text-white bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg hover:shadow-md transition-all">
+                    <button
+                      onClick={() => handleEnrollClick(course)}
+                      className="flex-1 py-2 text-sm font-medium text-white bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg hover:shadow-md transition-all"
+                    >
                       Enroll Now
                     </button>
                   </div>
@@ -181,6 +205,64 @@ const Courses = () => {
           </div>
         )}
       </div>
+
+      {/* Auth Required Modal */}
+      {showAuthModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-8 relative animate-fade-in">
+            {/* Close button */}
+            <button
+              onClick={() => setShowAuthModal(false)}
+              className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors"
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+
+            {/* Icon */}
+            <div className="flex justify-center mb-6">
+              <div className="w-16 h-16 bg-gradient-to-br from-blue-100 to-purple-100 rounded-full flex items-center justify-center">
+                <svg className="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                </svg>
+              </div>
+            </div>
+
+            {/* Content */}
+            <h3 className="text-2xl font-bold text-gray-800 text-center mb-3">
+              Sign Up Required
+            </h3>
+            <p className="text-gray-600 text-center mb-2">
+              To enroll in <span className="font-semibold text-blue-600">{selectedCourse?.name}</span>, you need to create an account first.
+            </p>
+            <p className="text-gray-500 text-sm text-center mb-8">
+              Join thousands of students already learning with us!
+            </p>
+
+            {/* Buttons */}
+            <div className="space-y-3">
+              <button
+                onClick={() => navigate('/sign-up')}
+                className="w-full py-3 text-white font-semibold bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl hover:shadow-lg hover:opacity-95 transition-all"
+              >
+                Create Account
+              </button>
+              <button
+                onClick={() => navigate('/sign-in')}
+                className="w-full py-3 text-gray-700 font-semibold bg-gray-100 rounded-xl hover:bg-gray-200 transition-all"
+              >
+                Already have an account? Sign In
+              </button>
+            </div>
+
+            {/* Footer text */}
+            <p className="text-xs text-gray-400 text-center mt-6">
+              By signing up, you agree to our Terms of Service and Privacy Policy
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* Footer */}
       <Footer />

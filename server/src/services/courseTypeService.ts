@@ -78,6 +78,29 @@ export interface ClassWithFees extends AcademicClass {
   enrollment_status?: string;
 }
 
+export interface Subject {
+  id: string;
+  code: string;
+  name: string;
+  description: string | null;
+  target_exams: string[] | null;
+  icon: string | null;
+  color: string | null;
+  display_order: number;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ClassSubject {
+  id: string;
+  class_id: string;
+  subject_id: string;
+  display_order: number;
+  is_active: boolean;
+  subject?: Subject;
+}
+
 class CourseTypeService {
   /**
    * Get all course types
@@ -282,6 +305,109 @@ class CourseTypeService {
     }
 
     return data;
+  }
+
+  /**
+   * Get all classes with fee plans (for admin enrollment selection)
+   * Optionally filter by course type slug
+   */
+  async getClassesWithFeePlans(courseTypeSlug?: string): Promise<ClassWithFees[]> {
+    let query = getSupabase()
+      .from('academic_classes')
+      .select(`
+        *,
+        course_types (*),
+        class_fee_plans (*)
+      `)
+      .eq('is_active', true)
+      .order('display_order', { ascending: true });
+
+    // Filter by course type if provided
+    if (courseTypeSlug) {
+      const courseType = await this.getBySlug(courseTypeSlug);
+      if (courseType) {
+        query = query.eq('course_type_id', courseType.id);
+      }
+    }
+
+    const { data, error } = await query;
+
+    if (error) {
+      if (error.code === '42P01' || error.message?.includes('does not exist')) {
+        console.warn('academic_classes table does not exist. Please run the migration.');
+        return [];
+      }
+      console.error('Error fetching classes with fee plans:', error);
+      throw new Error('Failed to fetch classes');
+    }
+
+    // Transform data to include course type and default fee plan
+    return (data || []).map((classItem: any) => {
+      const feePlans = classItem.class_fee_plans as ClassFeePlan[] || [];
+      const defaultFeePlan = feePlans.find(fp => fp.is_default && fp.is_active) || feePlans[0];
+
+      return {
+        ...classItem,
+        course_type: classItem.course_types,
+        fee_plan: defaultFeePlan,
+        fee_plans: feePlans.filter(fp => fp.is_active), // Include all active fee plans
+        class_fee_plans: undefined,
+        course_types: undefined,
+      };
+    });
+  }
+
+  /**
+   * Get subjects for a class
+   */
+  async getClassSubjects(classId: string): Promise<ClassSubject[]> {
+    const { data, error } = await getSupabase()
+      .from('class_subjects')
+      .select(`
+        *,
+        subjects (*)
+      `)
+      .eq('class_id', classId)
+      .eq('is_active', true)
+      .order('display_order', { ascending: true });
+
+    if (error) {
+      if (error.code === '42P01' || error.message?.includes('does not exist')) {
+        console.warn('class_subjects table does not exist. Please run the migration.');
+        return [];
+      }
+      console.error('Error fetching class subjects:', error);
+      throw new Error('Failed to fetch class subjects');
+    }
+
+    // Transform to include subject info
+    return (data || []).map((item: any) => ({
+      ...item,
+      subject: item.subjects,
+      subjects: undefined,
+    }));
+  }
+
+  /**
+   * Get all subjects
+   */
+  async getAllSubjects(): Promise<Subject[]> {
+    const { data, error } = await getSupabase()
+      .from('subjects')
+      .select('*')
+      .eq('is_active', true)
+      .order('display_order', { ascending: true });
+
+    if (error) {
+      if (error.code === '42P01' || error.message?.includes('does not exist')) {
+        console.warn('subjects table does not exist. Please run the migration.');
+        return [];
+      }
+      console.error('Error fetching subjects:', error);
+      throw new Error('Failed to fetch subjects');
+    }
+
+    return data || [];
   }
 }
 

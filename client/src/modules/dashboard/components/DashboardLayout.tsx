@@ -130,15 +130,24 @@ const navigationByRole: Record<UserRole, NavSection[]> = {
   ],
   student: [
     {
+      title: 'Learning',
       items: [
         { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
         { name: 'My Enrollments', href: '/dashboard/my-enrollments', icon: GraduationCap },
-        { name: 'My Courses', href: '/dashboard/courses', icon: BookOpen },
-        { name: 'Exams', href: '/dashboard/exams', icon: ClipboardList },
-        { name: 'Materials', href: '/dashboard/materials', icon: FolderOpen },
-        { name: 'Results', href: '/dashboard/results', icon: Trophy },
-        { name: 'Schedule', href: '/dashboard/schedule', icon: Calendar },
-        { name: 'Fees & Payments', href: '/dashboard/fees', icon: CreditCard },
+        { name: 'Study Materials', href: '/dashboard/study-materials', icon: FolderOpen },
+      ],
+    },
+    {
+      title: 'Exams & Progress',
+      items: [
+        { name: 'My Exams', href: '/dashboard/my-exams', icon: ClipboardList },
+        { name: 'My Results', href: '/dashboard/my-results', icon: Trophy },
+      ],
+    },
+    {
+      title: 'Account',
+      items: [
+        { name: 'Fee & Payments', href: '/dashboard/my-fees', icon: CreditCard },
         { name: 'Announcements', href: '/dashboard/announcements', icon: Megaphone },
       ],
     },

@@ -6,12 +6,18 @@ import { storageService, BUCKETS } from './storageService.js';
 
 // Types
 export type ContentType = 'video' | 'pdf' | 'document' | 'image' | 'audio' | 'link';
+export type MaterialType = 'lecture' | 'notes' | 'dpp' | 'dpp_solution' | 'ncert' | 'pyq';
 
 export interface Content {
   id: string;
   course_id: string | null;
   topic_id: string | null;
   batch_id: string | null;
+  // New hierarchy fields
+  class_id: string | null;
+  subject_id: string | null;
+  material_type: MaterialType | null;
+  // Basic info
   title: string;
   description: string | null;
   content_type: ContentType;
@@ -54,10 +60,15 @@ export interface CreateContentInput {
   course_id?: string;
   topic_id?: string;
   batch_id?: string;
+  // New hierarchy fields
+  class_id?: string;
+  subject_id?: string;
+  material_type?: MaterialType;
+  // Basic info
   title: string;
   description?: string;
   content_type: ContentType;
-  file_path: string;
+  file_path?: string;  // Optional - file uploaded separately
   file_name?: string;
   file_size?: number;
   mime_type?: string;
@@ -75,6 +86,11 @@ export interface CreateContentInput {
 export interface UpdateContentInput {
   title?: string;
   description?: string;
+  // New hierarchy fields
+  class_id?: string;
+  subject_id?: string;
+  material_type?: MaterialType;
+  // File info
   file_path?: string;
   file_name?: string;
   file_size?: number;
@@ -96,6 +112,11 @@ export interface ContentListOptions {
   courseId?: string;
   topicId?: string;
   batchId?: string;
+  // New hierarchy filters
+  classId?: string;
+  subjectId?: string;
+  materialType?: MaterialType;
+  // Other filters
   contentType?: ContentType;
   isPublished?: boolean;
   isFree?: boolean;
@@ -219,6 +240,9 @@ class ContentService {
       courseId,
       topicId,
       batchId,
+      classId,
+      subjectId,
+      materialType,
       contentType,
       isPublished,
       isFree,
@@ -240,6 +264,19 @@ class ContentService {
 
     if (batchId) {
       query = query.eq('batch_id', batchId);
+    }
+
+    // New hierarchy filters
+    if (classId) {
+      query = query.eq('class_id', classId);
+    }
+
+    if (subjectId) {
+      query = query.eq('subject_id', subjectId);
+    }
+
+    if (materialType) {
+      query = query.eq('material_type', materialType);
     }
 
     if (contentType) {
@@ -525,6 +562,9 @@ class ContentService {
       course_id: newCourseId || original.course_id || undefined,
       topic_id: original.topic_id || undefined,
       batch_id: original.batch_id || undefined,
+      class_id: original.class_id || undefined,
+      subject_id: original.subject_id || undefined,
+      material_type: original.material_type || undefined,
       title: `${original.title} (Copy)`,
       description: original.description || undefined,
       content_type: original.content_type,
@@ -542,6 +582,167 @@ class ContentService {
       metadata: original.metadata,
       created_by: original.created_by || undefined,
     });
+  }
+
+  /**
+   * Get content by class ID with optional filters
+   */
+  async getByClass(
+    classId: string,
+    options: { subjectId?: string; materialType?: MaterialType; publishedOnly?: boolean } = {}
+  ): Promise<Content[]> {
+    let query = this.supabase
+      .from('content')
+      .select('*')
+      .eq('class_id', classId);
+
+    if (options.subjectId) {
+      query = query.eq('subject_id', options.subjectId);
+    }
+
+    if (options.materialType) {
+      query = query.eq('material_type', options.materialType);
+    }
+
+    if (options.publishedOnly !== false) {
+      query = query.eq('is_published', true);
+    }
+
+    const { data, error } = await query.order('sequence_order', { ascending: true });
+
+    if (error) {
+      throw new Error(`Failed to get class content: ${error.message}`);
+    }
+
+    return data as Content[];
+  }
+
+  /**
+   * Get content with full hierarchy details (using view)
+   */
+  async getWithHierarchy(id: string): Promise<Record<string, unknown> | null> {
+    const { data, error } = await this.supabase
+      .from('content_with_hierarchy')
+      .select('*')
+      .eq('id', id)
+      .single();
+
+    if (error) {
+      if (error.code === 'PGRST116') return null;
+      throw new Error(`Failed to get content with hierarchy: ${error.message}`);
+    }
+
+    return data;
+  }
+
+  /**
+   * List content with hierarchy details
+   */
+  async listWithHierarchy(options: ContentListOptions = {}): Promise<{ content: Record<string, unknown>[]; total: number }> {
+    const {
+      page = 1,
+      limit = 20,
+      classId,
+      subjectId,
+      materialType,
+      contentType,
+      isPublished,
+      search,
+    } = options;
+    const offset = (page - 1) * limit;
+
+    let query = this.supabase
+      .from('content_with_hierarchy')
+      .select('*', { count: 'exact' });
+
+    if (classId) {
+      query = query.eq('class_id', classId);
+    }
+
+    if (subjectId) {
+      query = query.eq('subject_id', subjectId);
+    }
+
+    if (materialType) {
+      query = query.eq('material_type', materialType);
+    }
+
+    if (contentType) {
+      query = query.eq('content_type', contentType);
+    }
+
+    if (isPublished !== undefined) {
+      query = query.eq('is_published', isPublished);
+    }
+
+    if (search) {
+      query = query.or(`title.ilike.%${search}%,description.ilike.%${search}%`);
+    }
+
+    const { data, error, count } = await query
+      .order('sequence_order', { ascending: true })
+      .order('created_at', { ascending: false })
+      .range(offset, offset + limit - 1);
+
+    if (error) {
+      throw new Error(`Failed to list content with hierarchy: ${error.message}`);
+    }
+
+    return {
+      content: data || [],
+      total: count || 0,
+    };
+  }
+
+  /**
+   * Get content accessible to a student based on their class enrollment
+   */
+  async getStudentClassContent(
+    studentId: string,
+    options: { classId?: string; subjectId?: string; materialType?: MaterialType } = {}
+  ): Promise<Content[]> {
+    // First, get the student's enrolled classes
+    const { data: enrollments, error: enrollError } = await this.supabase
+      .from('class_enrollments')
+      .select('class_id')
+      .eq('student_id', studentId)
+      .eq('status', 'active');
+
+    if (enrollError) {
+      throw new Error(`Failed to get student enrollments: ${enrollError.message}`);
+    }
+
+    if (!enrollments || enrollments.length === 0) {
+      return [];
+    }
+
+    const enrolledClassIds = enrollments.map(e => e.class_id);
+
+    let query = this.supabase
+      .from('content')
+      .select('*')
+      .in('class_id', enrolledClassIds)
+      .eq('is_published', true);
+
+    if (options.classId && enrolledClassIds.includes(options.classId)) {
+      query = query.eq('class_id', options.classId);
+    }
+
+    if (options.subjectId) {
+      query = query.eq('subject_id', options.subjectId);
+    }
+
+    if (options.materialType) {
+      query = query.eq('material_type', options.materialType);
+    }
+
+    const { data, error } = await query.order('sequence_order', { ascending: true });
+
+    if (error) {
+      throw new Error(`Failed to get student content: ${error.message}`);
+    }
+
+    return data as Content[];
   }
 }
 

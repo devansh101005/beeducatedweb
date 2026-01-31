@@ -5,7 +5,7 @@ import crypto from 'crypto';
 import Razorpay from 'razorpay';
 import { getSupabase } from '../config/supabase.js';
 import { env } from '../config/env.js';
-import { courseTypeService, ClassFeePlan } from './courseTypeService.js';
+import { courseTypeService } from './courseTypeService.js';
 
 // Lazy initialize Razorpay to avoid crash if env vars not set
 let razorpayInstance: Razorpay | null = null;
@@ -25,6 +25,7 @@ function getRazorpay(): Razorpay {
 
 export type EnrollmentStatus = 'pending' | 'active' | 'expired' | 'cancelled' | 'refunded';
 export type PaymentStatus = 'pending' | 'processing' | 'paid' | 'failed' | 'refunded' | 'partially_refunded';
+export type PaymentType = 'razorpay' | 'cash' | 'bank_transfer' | 'cheque' | 'upi_direct';
 
 export interface ClassEnrollment {
   id: string;
@@ -48,7 +49,8 @@ export interface ClassEnrollment {
 export interface EnrollmentPayment {
   id: string;
   enrollment_id: string;
-  razorpay_order_id: string;
+  payment_type: PaymentType;
+  razorpay_order_id: string | null;
   razorpay_payment_id: string | null;
   razorpay_signature: string | null;
   amount: number;
@@ -71,6 +73,11 @@ export interface EnrollmentPayment {
   refund_status: string | null;
   refunded_at: string | null;
   paid_at: string | null;
+  // Manual payment fields
+  receipt_number: string | null;
+  received_by: string | null;
+  received_at: string | null;
+  payment_notes: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -113,6 +120,28 @@ export interface EnrollmentWithDetails extends ClassEnrollment {
   payment?: EnrollmentPayment;
 }
 
+export interface ManualEnrollmentInput {
+  studentId: string;
+  classId: string;
+  feePlanId: string;
+  paymentType: Exclude<PaymentType, 'razorpay'>;
+  amountReceived: number;
+  receivedBy: string; // Admin user ID
+  receiptNumber?: string; // Optional - will be auto-generated if not provided
+  notes?: string;
+}
+
+export interface ManualEnrollmentResult {
+  enrollment: ClassEnrollment;
+  payment: {
+    id: string;
+    receipt_number: string;
+    amount: number;
+    payment_type: PaymentType;
+    status: PaymentStatus;
+  };
+}
+
 class EnrollmentService {
   /**
    * Initiate enrollment - creates enrollment record and Razorpay order
@@ -129,7 +158,7 @@ class EnrollmentService {
       if (existingEnrollment.status === 'pending') {
         // Return existing pending enrollment's order
         const existingPayment = await this.getPaymentByEnrollmentId(existingEnrollment.id);
-        if (existingPayment && existingPayment.status === 'pending') {
+        if (existingPayment && existingPayment.status === 'pending' && existingPayment.razorpay_order_id) {
           return {
             enrollmentId: existingEnrollment.id,
             orderId: existingPayment.razorpay_order_id,
@@ -523,6 +552,555 @@ class EnrollmentService {
       academic_classes: undefined,
       class_fee_plans: undefined,
       enrollment_payments: undefined,
+    };
+  }
+
+  /**
+   * Manual enrollment by admin (for cash/offline payments)
+   * Creates enrollment directly as 'active' without Razorpay
+   */
+  async createManualEnrollment(input: ManualEnrollmentInput): Promise<ManualEnrollmentResult> {
+    const { studentId, classId, feePlanId, paymentType, amountReceived, receivedBy, receiptNumber, notes } = input;
+
+    // 1. Check if student is already enrolled
+    const existingEnrollment = await this.getEnrollmentByStudentAndClass(studentId, classId);
+    if (existingEnrollment) {
+      if (existingEnrollment.status === 'active') {
+        throw new Error('Student is already enrolled in this class');
+      }
+      // If pending, we'll update it to active
+    }
+
+    // 2. Verify class exists and is active
+    const classInfo = await courseTypeService.getClassById(classId);
+    if (!classInfo) {
+      throw new Error('Class not found');
+    }
+    if (!classInfo.is_active) {
+      throw new Error('This class is not active');
+    }
+
+    // Check capacity
+    if (classInfo.max_students && classInfo.current_students >= classInfo.max_students) {
+      throw new Error('This class is full');
+    }
+
+    // 3. Verify fee plan
+    const feePlan = await courseTypeService.getFeePlanById(feePlanId);
+    if (!feePlan || feePlan.class_id !== classId) {
+      throw new Error('Invalid fee plan');
+    }
+
+    // 4. Validate amount (allow partial payments but warn)
+    if (amountReceived <= 0) {
+      throw new Error('Amount received must be greater than 0');
+    }
+
+    // Calculate expiry date
+    const validityMonths = feePlan.validity_months || 12;
+    const expiresAt = new Date();
+    expiresAt.setMonth(expiresAt.getMonth() + validityMonths);
+
+    const now = new Date().toISOString();
+    let enrollment: ClassEnrollment;
+
+    // 5. Create or update enrollment
+    if (existingEnrollment && existingEnrollment.status === 'pending') {
+      // Update existing pending enrollment to active
+      const { data, error } = await getSupabase()
+        .from('class_enrollments')
+        .update({
+          fee_plan_id: feePlanId,
+          status: 'active',
+          enrolled_at: now,
+          expires_at: expiresAt.toISOString(),
+          amount_paid: amountReceived,
+          notes: notes || null,
+          updated_at: now,
+        })
+        .eq('id', existingEnrollment.id)
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Error updating enrollment:', error);
+        throw new Error('Failed to update enrollment');
+      }
+      enrollment = data;
+    } else {
+      // Create new enrollment directly as active
+      const { data, error } = await getSupabase()
+        .from('class_enrollments')
+        .insert({
+          student_id: studentId,
+          class_id: classId,
+          fee_plan_id: feePlanId,
+          status: 'active',
+          initiated_at: now,
+          enrolled_at: now,
+          expires_at: expiresAt.toISOString(),
+          amount_paid: amountReceived,
+          notes: notes || null,
+        })
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Error creating enrollment:', error);
+        throw new Error('Failed to create enrollment');
+      }
+      enrollment = data;
+    }
+
+    // 6. Generate receipt number if not provided
+    const finalReceiptNumber = receiptNumber || await this.generateReceiptNumber(paymentType);
+
+    // 7. Create payment record (without Razorpay fields)
+    const amountPaise = Math.round(amountReceived * 100);
+    const { data: payment, error: paymentError } = await getSupabase()
+      .from('enrollment_payments')
+      .insert({
+        enrollment_id: enrollment.id,
+        payment_type: paymentType,
+        razorpay_order_id: null,
+        razorpay_payment_id: null,
+        razorpay_signature: null,
+        amount: amountReceived,
+        amount_paise: amountPaise,
+        currency: 'INR',
+        status: 'paid',
+        payment_method: paymentType,
+        receipt_number: finalReceiptNumber,
+        received_by: receivedBy,
+        received_at: now,
+        paid_at: now,
+        payment_notes: notes || null,
+      })
+      .select()
+      .single();
+
+    if (paymentError) {
+      console.error('Error creating payment record:', paymentError);
+      // Rollback enrollment status
+      await getSupabase()
+        .from('class_enrollments')
+        .update({ status: 'pending', enrolled_at: null })
+        .eq('id', enrollment.id);
+      throw new Error('Failed to create payment record');
+    }
+
+    return {
+      enrollment,
+      payment: {
+        id: payment.id,
+        receipt_number: finalReceiptNumber,
+        amount: amountReceived,
+        payment_type: paymentType,
+        status: 'paid',
+      },
+    };
+  }
+
+  /**
+   * Generate receipt number for manual payments
+   * Format: CASH-2026-000001, BANK-2026-000001, etc.
+   */
+  private async generateReceiptNumber(paymentType: PaymentType): Promise<string> {
+    const year = new Date().getFullYear();
+    const prefixMap: Record<PaymentType, string> = {
+      razorpay: 'RZP',
+      cash: 'CASH',
+      bank_transfer: 'BANK',
+      cheque: 'CHQ',
+      upi_direct: 'UPI',
+    };
+    const prefix = prefixMap[paymentType] || 'RCP';
+    const pattern = `${prefix}-${year}-%`;
+
+    // Find the highest existing receipt number for this type and year
+    const { data } = await getSupabase()
+      .from('enrollment_payments')
+      .select('receipt_number')
+      .like('receipt_number', pattern)
+      .order('receipt_number', { ascending: false })
+      .limit(1);
+
+    let nextNum = 1;
+    if (data && data.length > 0 && data[0].receipt_number) {
+      const match = data[0].receipt_number.match(/-(\d+)$/);
+      if (match) {
+        nextNum = parseInt(match[1], 10) + 1;
+      }
+    }
+
+    return `${prefix}-${year}-${nextNum.toString().padStart(6, '0')}`;
+  }
+
+  /**
+   * List all enrollments (admin)
+   */
+  async listAllEnrollments(options: {
+    page?: number;
+    limit?: number;
+    status?: EnrollmentStatus;
+    classId?: string;
+  }): Promise<{ enrollments: EnrollmentWithDetails[]; total: number }> {
+    const { page = 1, limit = 20, status, classId } = options;
+    const offset = (page - 1) * limit;
+
+    let query = getSupabase()
+      .from('class_enrollments')
+      .select(`
+        *,
+        students (
+          id,
+          student_id,
+          users (
+            first_name,
+            last_name,
+            email
+          )
+        ),
+        academic_classes (
+          name,
+          course_types (name)
+        ),
+        class_fee_plans (
+          name,
+          total_amount
+        ),
+        enrollment_payments (*)
+      `, { count: 'exact' });
+
+    if (status) {
+      query = query.eq('status', status);
+    }
+
+    if (classId) {
+      query = query.eq('class_id', classId);
+    }
+
+    const { data, error, count } = await query
+      .order('created_at', { ascending: false })
+      .range(offset, offset + limit - 1);
+
+    if (error) {
+      console.error('Error listing enrollments:', error);
+      throw new Error('Failed to list enrollments');
+    }
+
+    const enrollments = (data || []).map((enrollment: any) => ({
+      ...enrollment,
+      student_name: enrollment.students?.users
+        ? `${enrollment.students.users.first_name || ''} ${enrollment.students.users.last_name || ''}`.trim()
+        : null,
+      student_code: enrollment.students?.student_id,
+      student_email: enrollment.students?.users?.email,
+      class_name: enrollment.academic_classes?.name,
+      course_type_name: enrollment.academic_classes?.course_types?.name,
+      fee_plan_name: enrollment.class_fee_plans?.name,
+      total_amount: enrollment.class_fee_plans?.total_amount,
+      payment: enrollment.enrollment_payments?.find((p: any) => p.status === 'paid') ||
+               enrollment.enrollment_payments?.[0],
+      students: undefined,
+      academic_classes: undefined,
+      class_fee_plans: undefined,
+      enrollment_payments: undefined,
+    }));
+
+    return { enrollments, total: count || 0 };
+  }
+
+  /**
+   * Check if a student has active access to a specific class
+   */
+  async checkClassAccess(studentId: string, classId: string): Promise<{
+    hasAccess: boolean;
+    enrollment: ClassEnrollment | null;
+    reason: string;
+  }> {
+    const enrollment = await this.getEnrollmentByStudentAndClass(studentId, classId);
+
+    if (!enrollment) {
+      return {
+        hasAccess: false,
+        enrollment: null,
+        reason: 'Not enrolled in this class',
+      };
+    }
+
+    // Check status
+    if (enrollment.status !== 'active') {
+      return {
+        hasAccess: false,
+        enrollment,
+        reason: `Enrollment is ${enrollment.status}`,
+      };
+    }
+
+    // Check expiry
+    if (enrollment.expires_at) {
+      const expiryDate = new Date(enrollment.expires_at);
+      if (expiryDate < new Date()) {
+        // Auto-update status to expired
+        await this.markEnrollmentExpired(enrollment.id);
+        return {
+          hasAccess: false,
+          enrollment: { ...enrollment, status: 'expired' },
+          reason: 'Enrollment has expired',
+        };
+      }
+    }
+
+    return {
+      hasAccess: true,
+      enrollment,
+      reason: 'Active enrollment',
+    };
+  }
+
+  /**
+   * Get all active class IDs for a student
+   */
+  async getStudentActiveClassIds(studentId: string): Promise<string[]> {
+    const { data, error } = await getSupabase()
+      .from('class_enrollments')
+      .select('class_id, expires_at')
+      .eq('student_id', studentId)
+      .eq('status', 'active');
+
+    if (error) {
+      console.error('Error fetching student active classes:', error);
+      return [];
+    }
+
+    const now = new Date();
+    const activeClassIds: string[] = [];
+
+    for (const enrollment of data || []) {
+      // Check if expired
+      if (enrollment.expires_at && new Date(enrollment.expires_at) < now) {
+        // Mark as expired (async, don't await)
+        this.markEnrollmentExpired(enrollment.class_id).catch(() => {});
+      } else {
+        activeClassIds.push(enrollment.class_id);
+      }
+    }
+
+    return activeClassIds;
+  }
+
+  /**
+   * Get student's full access summary
+   */
+  async getStudentAccessSummary(studentId: string): Promise<{
+    activeEnrollments: Array<{
+      classId: string;
+      className: string;
+      courseTypeName: string;
+      enrolledAt: string;
+      expiresAt: string | null;
+      daysRemaining: number | null;
+    }>;
+    totalActiveClasses: number;
+  }> {
+    const { data, error } = await getSupabase()
+      .from('class_enrollments')
+      .select(`
+        id,
+        class_id,
+        enrolled_at,
+        expires_at,
+        academic_classes (
+          name,
+          course_types (name)
+        )
+      `)
+      .eq('student_id', studentId)
+      .eq('status', 'active');
+
+    if (error) {
+      console.error('Error fetching student access summary:', error);
+      throw new Error('Failed to fetch access summary');
+    }
+
+    const now = new Date();
+    const activeEnrollments = (data || [])
+      .filter((e: any) => {
+        if (!e.expires_at) return true;
+        return new Date(e.expires_at) >= now;
+      })
+      .map((e: any) => {
+        let daysRemaining: number | null = null;
+        if (e.expires_at) {
+          const diffTime = new Date(e.expires_at).getTime() - now.getTime();
+          daysRemaining = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        }
+
+        return {
+          classId: e.class_id,
+          className: e.academic_classes?.name || 'Unknown',
+          courseTypeName: e.academic_classes?.course_types?.name || 'Unknown',
+          enrolledAt: e.enrolled_at,
+          expiresAt: e.expires_at,
+          daysRemaining,
+        };
+      });
+
+    return {
+      activeEnrollments,
+      totalActiveClasses: activeEnrollments.length,
+    };
+  }
+
+  /**
+   * Mark an enrollment as expired
+   */
+  private async markEnrollmentExpired(enrollmentId: string): Promise<void> {
+    await getSupabase()
+      .from('class_enrollments')
+      .update({
+        status: 'expired',
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', enrollmentId)
+      .eq('status', 'active');
+  }
+
+  /**
+   * Batch check and update expired enrollments
+   * Call this periodically (e.g., daily cron job)
+   */
+  async processExpiredEnrollments(): Promise<{ expiredCount: number }> {
+    const now = new Date().toISOString();
+
+    const { data, error } = await getSupabase()
+      .from('class_enrollments')
+      .update({
+        status: 'expired',
+        updated_at: now,
+      })
+      .eq('status', 'active')
+      .lt('expires_at', now)
+      .select('id');
+
+    if (error) {
+      console.error('Error processing expired enrollments:', error);
+      throw new Error('Failed to process expired enrollments');
+    }
+
+    return { expiredCount: data?.length || 0 };
+  }
+
+  /**
+   * Get recent enrollments for dashboard display
+   */
+  async getRecentEnrollments(limit: number = 10): Promise<{
+    id: string;
+    enrollmentNumber: string;
+    studentName: string;
+    studentEmail: string;
+    className: string;
+    courseTypeName: string;
+    status: EnrollmentStatus;
+    amount: number;
+    paymentType: PaymentType | null;
+    enrolledAt: string | null;
+    createdAt: string;
+  }[]> {
+    const { data, error } = await getSupabase()
+      .from('class_enrollments')
+      .select(`
+        id,
+        enrollment_number,
+        status,
+        amount_paid,
+        enrolled_at,
+        created_at,
+        students (
+          users (
+            first_name,
+            last_name,
+            email
+          )
+        ),
+        academic_classes (
+          name,
+          course_types (name)
+        ),
+        enrollment_payments (
+          payment_type,
+          amount
+        )
+      `)
+      .order('created_at', { ascending: false })
+      .limit(limit);
+
+    if (error) {
+      console.error('Error fetching recent enrollments:', error);
+      return [];
+    }
+
+    return (data || []).map((enrollment: any) => {
+      const user = enrollment.students?.users;
+      const firstName = user?.first_name || '';
+      const lastName = user?.last_name || '';
+      const payment = enrollment.enrollment_payments?.[0];
+
+      return {
+        id: enrollment.id,
+        enrollmentNumber: enrollment.enrollment_number,
+        studentName: [firstName, lastName].filter(Boolean).join(' ') || 'Unknown',
+        studentEmail: user?.email || '',
+        className: enrollment.academic_classes?.name || 'Unknown Class',
+        courseTypeName: enrollment.academic_classes?.course_types?.name || 'Unknown',
+        status: enrollment.status,
+        amount: enrollment.amount_paid || payment?.amount || 0,
+        paymentType: payment?.payment_type || null,
+        enrolledAt: enrollment.enrolled_at,
+        createdAt: enrollment.created_at,
+      };
+    });
+  }
+
+  /**
+   * Get enrollment statistics for dashboard
+   */
+  async getEnrollmentStats(): Promise<{
+    totalEnrollments: number;
+    activeEnrollments: number;
+    pendingEnrollments: number;
+    totalRevenue: number;
+    thisMonthEnrollments: number;
+    thisMonthRevenue: number;
+  }> {
+    const now = new Date();
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+
+    const [
+      totalResult,
+      activeResult,
+      pendingResult,
+      revenueResult,
+      thisMonthResult,
+    ] = await Promise.all([
+      getSupabase().from('class_enrollments').select('id', { count: 'exact', head: true }),
+      getSupabase().from('class_enrollments').select('id', { count: 'exact', head: true }).eq('status', 'active'),
+      getSupabase().from('class_enrollments').select('id', { count: 'exact', head: true }).eq('status', 'pending'),
+      getSupabase().from('class_enrollments').select('amount_paid').eq('status', 'active'),
+      getSupabase().from('class_enrollments').select('amount_paid').gte('enrolled_at', startOfMonth).eq('status', 'active'),
+    ]);
+
+    const totalRevenue = (revenueResult.data || []).reduce((sum: number, e: any) => sum + (e.amount_paid || 0), 0);
+    const thisMonthRevenue = (thisMonthResult.data || []).reduce((sum: number, e: any) => sum + (e.amount_paid || 0), 0);
+
+    return {
+      totalEnrollments: totalResult.count || 0,
+      activeEnrollments: activeResult.count || 0,
+      pendingEnrollments: pendingResult.count || 0,
+      totalRevenue,
+      thisMonthEnrollments: thisMonthResult.data?.length || 0,
+      thisMonthRevenue,
     };
   }
 }

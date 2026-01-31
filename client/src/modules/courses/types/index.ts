@@ -72,6 +72,8 @@ export interface EnrollmentInitiateResponse {
   notes: Record<string, string>;
 }
 
+export type PaymentType = 'razorpay' | 'cash' | 'bank_transfer' | 'cheque' | 'upi_direct';
+
 export interface Enrollment {
   id: string;
   enrollmentNumber: string;
@@ -85,7 +87,9 @@ export interface Enrollment {
   amountPaid: number | null;
   payment: {
     id: string;
+    paymentType: PaymentType;
     razorpayPaymentId: string | null;
+    receiptNumber: string | null;
     amount: number;
     status: string;
     paidAt: string | null;
