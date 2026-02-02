@@ -9,4 +9,5 @@ export { ApplicationsPage } from './components/ApplicationsPage';
 export { ApproveStudentModal } from './components/ApproveStudentModal';
 export { ManualEnrollmentModal } from './components/ManualEnrollmentModal';
 export { StudentsPage } from './components/StudentsPage';
+export { ParentsPage } from './components/ParentsPage';
 export { ContentManagementPage } from './components/ContentManagementPage';

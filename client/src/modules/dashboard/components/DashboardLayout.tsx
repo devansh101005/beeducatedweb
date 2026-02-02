@@ -83,6 +83,7 @@ const navigationByRole: Record<UserRole, NavSection[]> = {
         { name: 'All Users', href: '/dashboard/users', icon: Users },
         { name: 'Students', href: '/dashboard/students', icon: GraduationCap },
         { name: 'Teachers', href: '/dashboard/teachers', icon: UserCog },
+        { name: 'Parents', href: '/dashboard/parents', icon: Users2 },
         { name: 'Applications', href: '/dashboard/applications', icon: FileText },
       ],
     },

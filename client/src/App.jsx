@@ -56,7 +56,7 @@ import { PaymentPage, PaymentSuccessPage, PaymentHistoryPage } from "@modules/pa
 import { AnnouncementsFeed } from "@modules/announcements";
 
 // Admin Management
-import { UsersPage, BatchesPage, CoursesPage, ExamsPage, ApplicationsPage, StudentsPage, ContentManagementPage } from "@modules/admin";
+import { UsersPage, BatchesPage, CoursesPage, ExamsPage, ApplicationsPage, StudentsPage, ParentsPage, ContentManagementPage } from "@modules/admin";
 
 // Student Pages
 import { MyCoursesPage, StudyMaterialsPage, MyExamsPage, MyResultsPage } from "@modules/student";
@@ -117,6 +117,7 @@ function App() {
           <Route path="applications" element={<ApplicationsPage />} />
           <Route path="users" element={<UsersPage />} />
           <Route path="students" element={<StudentsPage />} />
+          <Route path="parents" element={<ParentsPage />} />
           <Route path="batches" element={<BatchesPage />} />
           <Route path="courses" element={<CoursesPage />} />
           <Route path="exams" element={<ExamsPage />} />
