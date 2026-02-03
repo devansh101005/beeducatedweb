@@ -1,7 +1,7 @@
 // Student Study Materials Page
-// Premium study materials library with organized categories
+// Premium study materials library organized by subject and content type
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useAuth } from '@clerk/clerk-react';
 import { motion } from 'framer-motion';
@@ -17,16 +17,25 @@ import {
   Clock,
   Eye,
   Play,
+  Brain,
+  Calculator,
+  Beaker,
+  Globe,
+  BookMarked,
+  Lightbulb,
+  ClipboardCheck,
+  ChevronRight,
 } from 'lucide-react';
 import {
   Card,
   Button,
   SearchInput,
-  Select,
   EmptyState,
   Skeleton,
+  Badge,
 } from '@shared/components/ui';
-import { Stagger, StaggerItem, fadeInUp } from '@shared/components/ui/motion';
+import { fadeInUp } from '@shared/components/ui/motion';
+import clsx from 'clsx';
 
 // ============================================
 // TYPES
@@ -37,11 +46,12 @@ interface Material {
   title: string;
   description?: string;
   type: 'pdf' | 'video' | 'document' | 'image' | 'link' | 'audio';
-  materialType?: 'lecture' | 'notes' | 'dpp' | 'dpp_solution' | 'ncert' | 'pyq';
+  materialType?: 'lecture' | 'notes' | 'dpp' | 'dpp_pdf' | 'dpp_video' | 'quiz';
   classId: string;
   className: string;
   subjectId?: string;
   subjectName?: string;
+  subjectCode?: string;
   fileUrl?: string;
   fileSize?: number;
   duration?: number;
@@ -60,8 +70,17 @@ interface EnrolledClass {
   daysRemaining: number | null;
 }
 
+interface Subject {
+  id: string;
+  code: string;
+  name: string;
+  color: string | null;
+  icon: string | null;
+}
+
 const API_URL = import.meta.env.VITE_API_URL || '/api';
 
+// Icon mapping for content types
 const typeIcons: Record<string, React.ReactElement> = {
   pdf: <FileText className="w-5 h-5 text-rose-500" />,
   video: <Video className="w-5 h-5 text-sky-500" />,
@@ -71,22 +90,31 @@ const typeIcons: Record<string, React.ReactElement> = {
   audio: <BookOpen className="w-5 h-5 text-violet-500" />,
 };
 
-const materialTypeLabels: Record<string, string> = {
-  lecture: 'Lecture',
-  notes: 'Notes',
-  dpp: 'DPP',
-  dpp_solution: 'DPP Solution',
-  ncert: 'NCERT',
-  pyq: 'PYQ',
+// Subject icon mapping
+const subjectIcons: Record<string, React.ReactElement> = {
+  MATH: <Calculator className="w-5 h-5" />,
+  PHY: <Lightbulb className="w-5 h-5" />,
+  CHEM: <Beaker className="w-5 h-5" />,
+  BIO: <Brain className="w-5 h-5" />,
+  ENG: <BookMarked className="w-5 h-5" />,
+  SCI: <Beaker className="w-5 h-5" />,
+  SST: <Globe className="w-5 h-5" />,
+  GK: <Brain className="w-5 h-5" />,
+  MM: <Calculator className="w-5 h-5" />,
+  HIST: <BookOpen className="w-5 h-5" />,
+  GEO: <Globe className="w-5 h-5" />,
+  POL: <BookMarked className="w-5 h-5" />,
+  ECO: <ClipboardCheck className="w-5 h-5" />,
 };
 
-const materialTypeColors: Record<string, string> = {
-  lecture: 'bg-sky-100 text-sky-700',
-  notes: 'bg-amber-100 text-amber-700',
-  dpp: 'bg-violet-100 text-violet-700',
-  dpp_solution: 'bg-emerald-100 text-emerald-700',
-  ncert: 'bg-rose-100 text-rose-700',
-  pyq: 'bg-blue-100 text-blue-700',
+// Material type labels and colors
+const materialTypeConfig: Record<string, { label: string; color: string; icon: React.ReactElement }> = {
+  lecture: { label: 'Lectures', color: 'bg-sky-100 text-sky-700', icon: <Video className="w-4 h-4" /> },
+  notes: { label: 'Notes', color: 'bg-amber-100 text-amber-700', icon: <FileText className="w-4 h-4" /> },
+  dpp: { label: 'DPP', color: 'bg-violet-100 text-violet-700', icon: <ClipboardCheck className="w-4 h-4" /> },
+  dpp_pdf: { label: 'DPP PDF', color: 'bg-rose-100 text-rose-700', icon: <FileText className="w-4 h-4" /> },
+  dpp_video: { label: 'DPP Video', color: 'bg-emerald-100 text-emerald-700', icon: <Video className="w-4 h-4" /> },
+  quiz: { label: 'Quiz', color: 'bg-blue-100 text-blue-700', icon: <ClipboardCheck className="w-4 h-4" /> },
 };
 
 // ============================================
@@ -100,13 +128,14 @@ export function StudyMaterialsPage() {
   // State
   const [materials, setMaterials] = useState<Material[]>([]);
   const [enrolledClasses, setEnrolledClasses] = useState<EnrolledClass[]>([]);
+  const [classSubjects, setClassSubjects] = useState<Subject[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
   // Filters
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedClass, setSelectedClass] = useState<string>(searchParams.get('classId') || 'all');
-  const [selectedType, setSelectedType] = useState<string>('all');
+  const [selectedClass, setSelectedClass] = useState<string>(searchParams.get('classId') || '');
+  const [selectedSubject, setSelectedSubject] = useState<string>('');
   const [selectedMaterialType, setSelectedMaterialType] = useState<string>('all');
 
   // Fetch materials
@@ -119,8 +148,8 @@ export function StudyMaterialsPage() {
         const token = await getToken();
         const params = new URLSearchParams();
 
-        if (selectedClass !== 'all') params.append('classId', selectedClass);
-        if (selectedType !== 'all') params.append('type', selectedType);
+        if (selectedClass) params.append('classId', selectedClass);
+        if (selectedSubject) params.append('subjectId', selectedSubject);
         if (selectedMaterialType !== 'all') params.append('materialType', selectedMaterialType);
 
         const response = await fetch(`${API_URL}/v2/student/materials?${params}`, {
@@ -132,6 +161,12 @@ export function StudyMaterialsPage() {
         if (data.success) {
           setMaterials(data.data?.materials || []);
           setEnrolledClasses(data.data?.enrolledClasses || []);
+          setError(''); // Clear error on success - empty state will be handled by UI
+
+          // Auto-select first class if not already selected
+          if (!selectedClass && data.data?.enrolledClasses?.length > 0) {
+            setSelectedClass(data.data.enrolledClasses[0].classId);
+          }
         } else {
           setError(data.message || 'Failed to load materials');
         }
@@ -144,11 +179,38 @@ export function StudyMaterialsPage() {
     };
 
     fetchMaterials();
-  }, [selectedClass, selectedType, selectedMaterialType, getToken]);
+  }, [selectedClass, selectedSubject, selectedMaterialType, getToken]);
+
+  // Fetch subjects when class changes
+  useEffect(() => {
+    const fetchSubjects = async () => {
+      if (!selectedClass) {
+        setClassSubjects([]);
+        return;
+      }
+
+      try {
+        const token = await getToken();
+        const response = await fetch(`${API_URL}/v2/course-types/classes/${selectedClass}/subjects`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+
+        const data = await response.json();
+        if (data.success) {
+          setClassSubjects(data.data?.map((cs: any) => cs.subject) || []);
+        }
+      } catch (err) {
+        console.error('Failed to fetch subjects:', err);
+      }
+    };
+
+    fetchSubjects();
+    setSelectedSubject(''); // Reset subject when class changes
+  }, [selectedClass, getToken]);
 
   // Update URL when class filter changes
   useEffect(() => {
-    if (selectedClass !== 'all') {
+    if (selectedClass) {
       searchParams.set('classId', selectedClass);
     } else {
       searchParams.delete('classId');
@@ -166,6 +228,28 @@ export function StudyMaterialsPage() {
       m.subjectName?.toLowerCase().includes(query)
     );
   });
+
+  // Group materials by subject
+  const materialsBySubject = useMemo(() => {
+    const grouped: Record<string, Material[]> = {};
+    filteredMaterials.forEach((m) => {
+      const key = m.subjectId || 'other';
+      if (!grouped[key]) grouped[key] = [];
+      grouped[key].push(m);
+    });
+    return grouped;
+  }, [filteredMaterials]);
+
+  // Group materials by material type
+  const materialsByType = useMemo(() => {
+    const grouped: Record<string, Material[]> = {};
+    filteredMaterials.forEach((m) => {
+      const key = m.materialType || 'other';
+      if (!grouped[key]) grouped[key] = [];
+      grouped[key].push(m);
+    });
+    return grouped;
+  }, [filteredMaterials]);
 
   const formatFileSize = (bytes?: number) => {
     if (!bytes) return '';
@@ -206,66 +290,27 @@ export function StudyMaterialsPage() {
         </p>
       </motion.div>
 
-      {/* Filters */}
-      <Card className="p-4">
-        <div className="flex flex-col md:flex-row gap-4">
-          <div className="flex-1">
-            <SearchInput
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search by title, subject..."
-            />
-          </div>
-          <div className="flex flex-wrap gap-3">
-            <Select
-              value={selectedClass}
-              onChange={(e) => setSelectedClass(e.target.value)}
-              className="w-40"
-              options={[
-                { value: 'all', label: 'All Classes' },
-                ...enrolledClasses.map((c) => ({ value: c.classId, label: c.className })),
-              ]}
-            />
-            <Select
-              value={selectedMaterialType}
-              onChange={(e) => setSelectedMaterialType(e.target.value)}
-              className="w-36"
-              options={[
-                { value: 'all', label: 'All Types' },
-                { value: 'lecture', label: 'Lectures' },
-                { value: 'notes', label: 'Notes' },
-                { value: 'dpp', label: 'DPP' },
-                { value: 'dpp_solution', label: 'DPP Solutions' },
-                { value: 'ncert', label: 'NCERT' },
-                { value: 'pyq', label: 'PYQ' },
-              ]}
-            />
-            <Select
-              value={selectedType}
-              onChange={(e) => setSelectedType(e.target.value)}
-              className="w-32"
-              options={[
-                { value: 'all', label: 'All' },
-                { value: 'video', label: 'Videos' },
-                { value: 'pdf', label: 'PDFs' },
-                { value: 'document', label: 'Docs' },
-              ]}
-            />
-          </div>
-        </div>
-      </Card>
-
-      {/* Enrolled Classes Summary */}
-      {enrolledClasses.length > 0 && selectedClass === 'all' && (
+      {/* Class Selection Cards */}
+      {enrolledClasses.length > 0 && (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           {enrolledClasses.map((cls) => (
             <button
               key={cls.classId}
               onClick={() => setSelectedClass(cls.classId)}
-              className="p-4 bg-white rounded-xl border border-slate-200 hover:border-amber-300 hover:shadow-sm transition-all text-left"
+              className={clsx(
+                'p-4 rounded-xl border-2 transition-all text-left',
+                selectedClass === cls.classId
+                  ? 'border-amber-500 bg-amber-50 shadow-sm'
+                  : 'border-slate-200 bg-white hover:border-amber-300 hover:shadow-sm'
+              )}
             >
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center text-white font-bold text-sm">
+                <div className={clsx(
+                  'w-10 h-10 rounded-lg flex items-center justify-center text-white font-bold text-sm',
+                  selectedClass === cls.classId
+                    ? 'bg-gradient-to-br from-amber-500 to-orange-500'
+                    : 'bg-gradient-to-br from-slate-400 to-slate-500'
+                )}>
                   {cls.className.replace(/[^0-9]/g, '') || cls.className.charAt(0)}
                 </div>
                 <div>
@@ -277,6 +322,86 @@ export function StudyMaterialsPage() {
           ))}
         </div>
       )}
+
+      {/* Subject Pills */}
+      {selectedClass && classSubjects.length > 0 && (
+        <Card className="p-4">
+          <div className="flex items-center gap-2 mb-3">
+            <BookOpen className="w-4 h-4 text-slate-500" />
+            <span className="text-sm font-medium text-slate-700">Subjects</span>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <button
+              onClick={() => setSelectedSubject('')}
+              className={clsx(
+                'px-4 py-2 rounded-full text-sm font-medium transition-all',
+                !selectedSubject
+                  ? 'bg-amber-500 text-white'
+                  : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+              )}
+            >
+              All Subjects
+            </button>
+            {classSubjects.map((subject) => (
+              <button
+                key={subject.id}
+                onClick={() => setSelectedSubject(subject.id)}
+                className={clsx(
+                  'px-4 py-2 rounded-full text-sm font-medium transition-all flex items-center gap-2',
+                  selectedSubject === subject.id
+                    ? 'text-white'
+                    : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                )}
+                style={selectedSubject === subject.id ? { backgroundColor: subject.color || '#F59E0B' } : {}}
+              >
+                {subjectIcons[subject.code] || <BookOpen className="w-4 h-4" />}
+                {subject.name}
+              </button>
+            ))}
+          </div>
+        </Card>
+      )}
+
+      {/* Content Type Tabs & Search */}
+      <Card className="p-4">
+        <div className="flex flex-col md:flex-row gap-4">
+          <div className="flex-1">
+            <SearchInput
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search by title, subject..."
+            />
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <button
+              onClick={() => setSelectedMaterialType('all')}
+              className={clsx(
+                'px-3 py-1.5 rounded-lg text-sm font-medium transition-all',
+                selectedMaterialType === 'all'
+                  ? 'bg-slate-900 text-white'
+                  : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+              )}
+            >
+              All Types
+            </button>
+            {Object.entries(materialTypeConfig).map(([key, config]) => (
+              <button
+                key={key}
+                onClick={() => setSelectedMaterialType(key)}
+                className={clsx(
+                  'px-3 py-1.5 rounded-lg text-sm font-medium transition-all flex items-center gap-1.5',
+                  selectedMaterialType === key
+                    ? config.color
+                    : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                )}
+              >
+                {config.icon}
+                {config.label}
+              </button>
+            ))}
+          </div>
+        </div>
+      </Card>
 
       {/* Materials List */}
       {loading ? (
@@ -301,40 +426,127 @@ export function StudyMaterialsPage() {
             Try Again
           </Button>
         </Card>
+      ) : enrolledClasses.length === 0 ? (
+        <EmptyState
+          title="No Active Enrollments"
+          description="You need to enroll in a class to access study materials."
+          icon={<FolderOpen className="w-12 h-12" />}
+          action={{
+            label: 'Browse Classes',
+            onClick: () => (window.location.href = '/courses'),
+            variant: 'primary' as const,
+          }}
+        />
       ) : filteredMaterials.length === 0 ? (
         <EmptyState
-          title={enrolledClasses.length === 0 ? 'No Active Enrollments' : 'No Materials Found'}
+          title="No Materials Found"
           description={
-            enrolledClasses.length === 0
-              ? 'You need to enroll in a class to access study materials.'
-              : searchQuery
+            searchQuery
               ? 'Try adjusting your search or filters.'
               : 'Materials will appear here once your teacher uploads them.'
           }
           icon={<FolderOpen className="w-12 h-12" />}
-          action={
-            enrolledClasses.length === 0
-              ? {
-                  label: 'Browse Classes',
-                  onClick: () => (window.location.href = '/courses'),
-                  variant: 'primary' as const,
-                }
-              : undefined
-          }
         />
+      ) : selectedSubject ? (
+        // Show materials grouped by type when subject is selected
+        <div className="space-y-6">
+          {Object.entries(materialTypeConfig).map(([type, config]) => {
+            const typeMaterials = materialsByType[type] || [];
+            if (typeMaterials.length === 0) return null;
+
+            return (
+              <div key={type}>
+                <div className="flex items-center gap-2 mb-4">
+                  <div className={clsx('p-2 rounded-lg', config.color)}>
+                    {config.icon}
+                  </div>
+                  <h3 className="font-semibold text-slate-900">{config.label}</h3>
+                  <Badge size="sm">{typeMaterials.length}</Badge>
+                </div>
+                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {typeMaterials.map((material) => (
+                    <MaterialCard
+                      key={material.id}
+                      material={material}
+                      onView={() => handleMaterialClick(material)}
+                      formatFileSize={formatFileSize}
+                      formatDuration={formatDuration}
+                    />
+                  ))}
+                </div>
+              </div>
+            );
+          })}
+        </div>
       ) : (
-        <Stagger className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {filteredMaterials.map((material) => (
-            <StaggerItem key={material.id}>
-              <MaterialCard
-                material={material}
-                onView={() => handleMaterialClick(material)}
-                formatFileSize={formatFileSize}
-                formatDuration={formatDuration}
-              />
-            </StaggerItem>
-          ))}
-        </Stagger>
+        // Show materials grouped by subject when no subject selected
+        <div className="space-y-6">
+          {classSubjects.map((subject) => {
+            const subjectMaterials = materialsBySubject[subject.id] || [];
+            if (subjectMaterials.length === 0) return null;
+
+            return (
+              <div key={subject.id}>
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-2">
+                    <div
+                      className="p-2 rounded-lg text-white"
+                      style={{ backgroundColor: subject.color || '#6366F1' }}
+                    >
+                      {subjectIcons[subject.code] || <BookOpen className="w-5 h-5" />}
+                    </div>
+                    <h3 className="font-semibold text-slate-900">{subject.name}</h3>
+                    <Badge size="sm">{subjectMaterials.length}</Badge>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setSelectedSubject(subject.id)}
+                    className="text-amber-600"
+                  >
+                    View All
+                    <ChevronRight className="w-4 h-4 ml-1" />
+                  </Button>
+                </div>
+                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {subjectMaterials.slice(0, 3).map((material) => (
+                    <MaterialCard
+                      key={material.id}
+                      material={material}
+                      onView={() => handleMaterialClick(material)}
+                      formatFileSize={formatFileSize}
+                      formatDuration={formatDuration}
+                    />
+                  ))}
+                </div>
+              </div>
+            );
+          })}
+
+          {/* Materials without subject */}
+          {materialsBySubject['other']?.length > 0 && (
+            <div>
+              <div className="flex items-center gap-2 mb-4">
+                <div className="p-2 rounded-lg bg-slate-200 text-slate-600">
+                  <FolderOpen className="w-5 h-5" />
+                </div>
+                <h3 className="font-semibold text-slate-900">Other Materials</h3>
+                <Badge size="sm">{materialsBySubject['other'].length}</Badge>
+              </div>
+              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {materialsBySubject['other'].map((material) => (
+                  <MaterialCard
+                    key={material.id}
+                    material={material}
+                    onView={() => handleMaterialClick(material)}
+                    formatFileSize={formatFileSize}
+                    formatDuration={formatDuration}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
       )}
     </div>
   );
@@ -352,6 +564,8 @@ interface MaterialCardProps {
 }
 
 function MaterialCard({ material, onView, formatFileSize, formatDuration }: MaterialCardProps) {
+  const config = material.materialType ? materialTypeConfig[material.materialType] : null;
+
   return (
     <Card className="h-full hover:shadow-md transition-shadow">
       <div className="p-4">
@@ -367,24 +581,19 @@ function MaterialCard({ material, onView, formatFileSize, formatDuration }: Mate
 
             {/* Subject & Class */}
             <div className="flex items-center gap-2 mt-1 text-sm text-slate-500">
-              <span>{material.className}</span>
               {material.subjectName && (
-                <>
-                  <span className="text-slate-300">•</span>
-                  <span>{material.subjectName}</span>
-                </>
+                <span className="flex items-center gap-1">
+                  {subjectIcons[material.subjectCode || ''] || null}
+                  {material.subjectName}
+                </span>
               )}
             </div>
 
             {/* Meta info */}
             <div className="flex flex-wrap items-center gap-2 mt-2">
-              {material.materialType && (
-                <span
-                  className={`text-xs px-2 py-0.5 rounded-full ${
-                    materialTypeColors[material.materialType] || 'bg-slate-100 text-slate-600'
-                  }`}
-                >
-                  {materialTypeLabels[material.materialType] || material.materialType}
+              {config && (
+                <span className={`text-xs px-2 py-0.5 rounded-full ${config.color}`}>
+                  {config.label}
                 </span>
               )}
               {material.fileSize && (

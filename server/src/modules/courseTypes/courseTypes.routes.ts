@@ -52,6 +52,30 @@ router.get('/', async (_req: Request, res: Response) => {
 });
 
 /**
+ * GET /api/v2/course-types/material-types
+ * Get all material types
+ * NOTE: This MUST be before /:slug route to avoid being caught by dynamic route
+ */
+router.get('/material-types', async (_req: Request, res: Response) => {
+  try {
+    // Return the available material types
+    const materialTypes = [
+      { value: 'lecture', label: 'Lectures', description: 'Video lectures and recorded classes' },
+      { value: 'notes', label: 'Notes', description: 'Written notes and study materials' },
+      { value: 'dpp', label: 'DPP', description: 'Daily Practice Problems' },
+      { value: 'dpp_pdf', label: 'DPP PDF', description: 'DPP in PDF format' },
+      { value: 'dpp_video', label: 'DPP Video', description: 'DPP solutions in video format' },
+      { value: 'quiz', label: 'Quiz', description: 'Interactive quizzes and tests' },
+    ];
+
+    sendSuccess(res, materialTypes);
+  } catch (error) {
+    console.error('Error fetching material types:', error);
+    sendError(res, 'Failed to fetch material types');
+  }
+});
+
+/**
  * GET /api/v2/course-types/:slug
  * Get course type by slug with classes
  */
@@ -272,29 +296,6 @@ router.get('/subjects/all', async (_req: Request, res: Response) => {
   } catch (error) {
     console.error('Error fetching subjects:', error);
     sendError(res, 'Failed to fetch subjects');
-  }
-});
-
-/**
- * GET /api/v2/course-types/material-types
- * Get all material types
- */
-router.get('/material-types', async (_req: Request, res: Response) => {
-  try {
-    // Return the available material types
-    const materialTypes = [
-      { value: 'lecture', label: 'Lecture', description: 'Video lectures' },
-      { value: 'notes', label: 'Notes', description: 'Written notes and study materials' },
-      { value: 'dpp', label: 'DPP', description: 'Daily Practice Problems' },
-      { value: 'dpp_solution', label: 'DPP Solution', description: 'Solutions for DPPs' },
-      { value: 'ncert', label: 'NCERT', description: 'NCERT content and solutions' },
-      { value: 'pyq', label: 'PYQ', description: 'Previous Year Questions' },
-    ];
-
-    sendSuccess(res, materialTypes);
-  } catch (error) {
-    console.error('Error fetching material types:', error);
-    sendError(res, 'Failed to fetch material types');
   }
 });
 

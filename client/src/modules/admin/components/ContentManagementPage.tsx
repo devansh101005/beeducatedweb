@@ -51,7 +51,7 @@ interface Content {
   title: string;
   description: string | null;
   content_type: 'video' | 'pdf' | 'document' | 'image' | 'audio' | 'link';
-  material_type: 'lecture' | 'notes' | 'dpp' | 'dpp_solution' | 'ncert' | 'pyq' | null;
+  material_type: 'lecture' | 'notes' | 'dpp' | 'dpp_pdf' | 'dpp_video' | 'quiz' | null;
   course_id: string | null;
   class_id: string | null;
   subject_id: string | null;
@@ -692,6 +692,15 @@ export function ContentManagementPage() {
   // Data state
   const [content, setContent] = useState<Content[]>([]);
   const [courses, setCourses] = useState<Course[]>([]);
+  const [courseTypes, setCourseTypes] = useState<CourseType[]>([]);
+  const [academicClasses, setAcademicClasses] = useState<AcademicClass[]>([]);
+  const [stats, setStats] = useState<{
+    total: number;
+    published: number;
+    draft: number;
+    byType: Record<string, number>;
+    byMaterialType: Record<string, number>;
+  } | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
@@ -705,9 +714,31 @@ export function ContentManagementPage() {
   const [search, setSearch] = useState('');
   const [typeFilter, setTypeFilter] = useState('');
   const [publishedFilter, setPublishedFilter] = useState('');
+  const [courseTypeFilter, setCourseTypeFilter] = useState('');
+  const [classFilter, setClassFilter] = useState('');
 
   // Modal state
   const [showUploadModal, setShowUploadModal] = useState(false);
+
+  // Fetch content stats
+  const fetchStats = async () => {
+    try {
+      const token = await getToken();
+      const params = new URLSearchParams();
+      if (courseTypeFilter) params.append('courseTypeId', courseTypeFilter);
+      if (classFilter) params.append('classId', classFilter);
+
+      const res = await fetch(`${API_URL}/v2/content/stats?${params}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json();
+      if (data.success) {
+        setStats(data.data);
+      }
+    } catch (error) {
+      console.error('Error fetching stats:', error);
+    }
+  };
 
   // Fetch content
   const fetchContent = async (showLoader = true) => {
@@ -723,6 +754,7 @@ export function ContentManagementPage() {
       if (search) params.append('search', search);
       if (typeFilter) params.append('contentType', typeFilter);
       if (publishedFilter) params.append('isPublished', publishedFilter);
+      if (classFilter) params.append('classId', classFilter);
 
       const res = await fetch(`${API_URL}/v2/content?${params}`, {
         headers: { Authorization: `Bearer ${token}` },
@@ -743,7 +775,47 @@ export function ContentManagementPage() {
     }
   };
 
-  // Fetch courses for dropdown
+  // Fetch course types
+  const fetchCourseTypes = async () => {
+    try {
+      const token = await getToken();
+      const res = await fetch(`${API_URL}/v2/course-types`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json();
+      if (data.success) {
+        setCourseTypes(data.data || []);
+      }
+    } catch (error) {
+      console.error('Error fetching course types:', error);
+    }
+  };
+
+  // Fetch classes when course type changes
+  const fetchClasses = async () => {
+    if (!courseTypeFilter) {
+      setAcademicClasses([]);
+      return;
+    }
+
+    try {
+      const token = await getToken();
+      const courseType = courseTypes.find(ct => ct.id === courseTypeFilter);
+      if (!courseType) return;
+
+      const res = await fetch(`${API_URL}/v2/course-types/${courseType.slug}/classes`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json();
+      if (data.success) {
+        setAcademicClasses(data.data?.classes || []);
+      }
+    } catch (error) {
+      console.error('Error fetching classes:', error);
+    }
+  };
+
+  // Fetch courses for dropdown (legacy)
   const fetchCourses = async () => {
     try {
       const token = await getToken();
@@ -759,10 +831,24 @@ export function ContentManagementPage() {
     }
   };
 
+  // Initial data load
+  useEffect(() => {
+    fetchCourseTypes();
+    fetchCourses();
+    fetchStats();
+  }, []);
+
+  // Refetch content and stats when filters change
   useEffect(() => {
     fetchContent();
-    fetchCourses();
-  }, [page, typeFilter, publishedFilter]);
+    fetchStats();
+  }, [page, typeFilter, publishedFilter, classFilter]);
+
+  // Fetch classes when course type filter changes
+  useEffect(() => {
+    fetchClasses();
+    setClassFilter(''); // Reset class filter when course type changes
+  }, [courseTypeFilter, courseTypes]);
 
   // Debounced search
   useEffect(() => {
@@ -904,7 +990,7 @@ export function ContentManagementPage() {
               </div>
               <div>
                 <p className="text-2xl font-semibold text-slate-900">
-                  {loading ? '--' : totalItems}
+                  {loading ? '--' : (stats?.total ?? totalItems)}
                 </p>
                 <p className="text-xs text-slate-500">Total Content</p>
               </div>
@@ -919,7 +1005,7 @@ export function ContentManagementPage() {
               </div>
               <div>
                 <p className="text-2xl font-semibold text-slate-900">
-                  {loading ? '--' : (Array.isArray(content) ? content.filter(c => c.is_published).length : 0)}
+                  {loading ? '--' : (stats?.published ?? 0)}
                 </p>
                 <p className="text-xs text-slate-500">Published</p>
               </div>
@@ -934,7 +1020,7 @@ export function ContentManagementPage() {
               </div>
               <div>
                 <p className="text-2xl font-semibold text-slate-900">
-                  {loading ? '--' : (Array.isArray(content) ? content.filter(c => c.content_type === 'video').length : 0)}
+                  {loading ? '--' : (stats?.byType?.video ?? 0)}
                 </p>
                 <p className="text-xs text-slate-500">Videos</p>
               </div>
@@ -949,7 +1035,7 @@ export function ContentManagementPage() {
               </div>
               <div>
                 <p className="text-2xl font-semibold text-slate-900">
-                  {loading ? '--' : (Array.isArray(content) ? content.filter(c => c.content_type === 'pdf').length : 0)}
+                  {loading ? '--' : (stats?.byType?.pdf ?? 0)}
                 </p>
                 <p className="text-xs text-slate-500">PDFs</p>
               </div>
@@ -960,31 +1046,59 @@ export function ContentManagementPage() {
 
       {/* Filters */}
       <Card className="p-4">
-        <div className="flex flex-col sm:flex-row gap-3">
-          <div className="flex-1">
-            <SearchInput
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search by title..."
-            />
+        <div className="flex flex-col gap-3">
+          {/* Top row: Course Type and Class filters */}
+          <div className="flex flex-col sm:flex-row gap-3">
+            <div className="w-full sm:w-48">
+              <Select
+                value={courseTypeFilter}
+                onChange={(e) => setCourseTypeFilter(e.target.value)}
+                options={[
+                  { value: '', label: 'All Course Types' },
+                  ...courseTypes.map(ct => ({ value: ct.id, label: ct.name })),
+                ]}
+              />
+            </div>
+            <div className="w-full sm:w-48">
+              <Select
+                value={classFilter}
+                onChange={(e) => setClassFilter(e.target.value)}
+                disabled={!courseTypeFilter}
+                options={[
+                  { value: '', label: courseTypeFilter ? 'All Classes' : 'Select Course Type First' },
+                  ...academicClasses.map(c => ({ value: c.id, label: c.name })),
+                ]}
+              />
+            </div>
           </div>
-          <div className="w-full sm:w-40">
-            <Select
-              value={typeFilter}
-              onChange={(e) => setTypeFilter(e.target.value)}
-              options={contentTypes}
-            />
-          </div>
-          <div className="w-full sm:w-40">
-            <Select
-              value={publishedFilter}
-              onChange={(e) => setPublishedFilter(e.target.value)}
-              options={[
-                { value: '', label: 'All Status' },
-                { value: 'true', label: 'Published' },
-                { value: 'false', label: 'Draft' },
-              ]}
-            />
+
+          {/* Bottom row: Search and other filters */}
+          <div className="flex flex-col sm:flex-row gap-3">
+            <div className="flex-1">
+              <SearchInput
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Search by title..."
+              />
+            </div>
+            <div className="w-full sm:w-40">
+              <Select
+                value={typeFilter}
+                onChange={(e) => setTypeFilter(e.target.value)}
+                options={contentTypes}
+              />
+            </div>
+            <div className="w-full sm:w-40">
+              <Select
+                value={publishedFilter}
+                onChange={(e) => setPublishedFilter(e.target.value)}
+                options={[
+                  { value: '', label: 'All Status' },
+                  { value: 'true', label: 'Published' },
+                  { value: 'false', label: 'Draft' },
+                ]}
+              />
+            </div>
           </div>
         </div>
       </Card>

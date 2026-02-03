@@ -212,13 +212,30 @@ router.get('/me', requireAuth, attachUser, async (req: Request, res: Response) =
 router.get('/materials', requireAuth, attachUser, async (req: Request, res: Response) => {
   try {
     if (!req.user) {
-      return sendBadRequest(res, 'User not authenticated');
+      return sendSuccess(res, {
+        materials: [],
+        total: 0,
+        enrolledClasses: [],
+        message: 'Please log in to access study materials.',
+      });
     }
 
+    console.log('[Materials] Looking up student for user ID:', req.user.id);
     const student = await studentService.getByUserId(req.user.id);
+
     if (!student) {
-      return sendBadRequest(res, 'Student profile not found');
+      console.log('[Materials] No student found for user ID:', req.user.id);
+      // Return empty result instead of error - student profile may not exist yet
+      return sendSuccess(res, {
+        materials: [],
+        total: 0,
+        enrolledClasses: [],
+        message: 'Student profile not found. Please complete your profile setup.',
+        debug: { userId: req.user.id, studentFound: false },
+      });
     }
+
+    console.log('[Materials] Found student:', { id: student.id, studentId: student.student_id });
 
     // Get filters from query params
     const classId = req.query.classId as string | undefined;
@@ -233,27 +250,62 @@ router.get('/materials', requireAuth, attachUser, async (req: Request, res: Resp
     const accessSummary = await enrollmentService.getStudentAccessSummary(student.id);
     const enrolledClassIds = accessSummary.activeEnrollments.map(e => e.classId);
 
-    if (enrolledClassIds.length === 0) {
+    console.log('[Materials] Enrollment summary:', {
+      studentDbId: student.id,
+      activeEnrollments: accessSummary.activeEnrollments.length,
+      enrolledClassIds,
+      classGrade: student.class_grade,
+    });
+
+    // If no formal enrollments, check if student has class_grade set (fallback)
+    const hasClassGrade = !!student.class_grade;
+
+    if (enrolledClassIds.length === 0 && !hasClassGrade) {
       return sendSuccess(res, {
         materials: [],
         total: 0,
         enrolledClasses: [],
         message: 'No active enrollments found. Please enroll in a class to access study materials.',
+        debug: {
+          studentDbId: student.id,
+          studentId: student.student_id,
+          enrollmentsFound: 0,
+          classGrade: null,
+        },
       });
     }
 
-    // If a specific class is requested, verify the student is enrolled
-    if (classId && !enrolledClassIds.includes(classId)) {
-      return sendBadRequest(res, 'You are not enrolled in this class');
+    // If using class_grade fallback, log it
+    if (enrolledClassIds.length === 0 && hasClassGrade) {
+      console.log('[Materials] Using class_grade fallback:', student.class_grade);
+    }
+
+    // If a specific class is requested, verify the student has access
+    // (either through formal enrollment or class_grade fallback)
+    if (classId && !enrolledClassIds.includes(classId) && !hasClassGrade) {
+      return sendSuccess(res, {
+        materials: [],
+        total: 0,
+        enrolledClasses: accessSummary.activeEnrollments,
+        message: 'You are not enrolled in this class.',
+      });
     }
 
     // Get content for enrolled classes using the new hierarchy
-    // Use getStudentClassContent for class-based content filtering
-    const content = await contentService.getStudentClassContent(student.id, {
-      classId: classId || undefined,
-      subjectId: subjectId || undefined,
-      materialType: materialType as any || undefined,
-    });
+    // Pass classGrade as fallback for students without formal enrollments
+    let content: any[] = [];
+    try {
+      content = await contentService.getStudentClassContent(student.id, {
+        classId: classId || undefined,
+        subjectId: subjectId || undefined,
+        materialType: materialType as any || undefined,
+        classGrade: student.class_grade || undefined,
+      });
+    } catch (contentError) {
+      console.error('Error fetching content:', contentError);
+      // Return empty array if content fetch fails (e.g., view doesn't exist)
+      content = [];
+    }
 
     // Apply additional filters (search, content type)
     let filteredContent = content;
@@ -297,12 +349,37 @@ router.get('/materials', requireAuth, attachUser, async (req: Request, res: Resp
       updatedAt: content.updated_at,
     }));
 
+    // Build enrolled classes info - include class_grade fallback if used
+    let enrolledClassesInfo = accessSummary.activeEnrollments;
+
+    // If no formal enrollments but content was returned (via class_grade fallback),
+    // create a pseudo-enrollment entry for UI display
+    if (enrolledClassesInfo.length === 0 && hasClassGrade && content.length > 0) {
+      // Get unique classes from the content
+      const classesFromContent = content.reduce((acc: any[], c: any) => {
+        if (c.class_id && !acc.find(x => x.classId === c.class_id)) {
+          acc.push({
+            classId: c.class_id,
+            className: c.class_name || `Class ${student.class_grade}`,
+            courseTypeName: c.course_type_name || 'General',
+            enrolledAt: null,
+            expiresAt: null,
+            daysRemaining: null,
+            isClassGradeFallback: true,
+          });
+        }
+        return acc;
+      }, []);
+      enrolledClassesInfo = classesFromContent;
+    }
+
     sendSuccess(res, {
       materials,
       total,
       page,
       limit,
-      enrolledClasses: accessSummary.activeEnrollments,
+      enrolledClasses: enrolledClassesInfo,
+      usingClassGradeFallback: enrolledClassIds.length === 0 && hasClassGrade,
     });
   } catch (error) {
     console.error('Error fetching student materials:', error);

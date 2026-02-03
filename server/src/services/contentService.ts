@@ -6,7 +6,7 @@ import { storageService, BUCKETS } from './storageService.js';
 
 // Types
 export type ContentType = 'video' | 'pdf' | 'document' | 'image' | 'audio' | 'link';
-export type MaterialType = 'lecture' | 'notes' | 'dpp' | 'dpp_solution' | 'ncert' | 'pyq';
+export type MaterialType = 'lecture' | 'notes' | 'dpp' | 'dpp_pdf' | 'dpp_video' | 'quiz';
 
 export interface Content {
   id: string;
@@ -308,6 +308,72 @@ class ContentService {
       content: data as Content[],
       total: count || 0,
     };
+  }
+
+  /**
+   * Get content statistics (for admin dashboard)
+   */
+  async getStats(options: { courseTypeId?: string; classId?: string } = {}): Promise<{
+    total: number;
+    published: number;
+    draft: number;
+    byType: Record<string, number>;
+    byMaterialType: Record<string, number>;
+  }> {
+    const { courseTypeId, classId } = options;
+
+    // Build base query
+    let query = this.supabase.from('content').select('id, content_type, material_type, is_published, class_id');
+
+    // Filter by class if specified
+    if (classId) {
+      query = query.eq('class_id', classId);
+    }
+
+    // If courseTypeId is specified, need to filter by classes belonging to that course type
+    if (courseTypeId && !classId) {
+      // Get classes for this course type first
+      const { data: classes } = await this.supabase
+        .from('academic_classes')
+        .select('id')
+        .eq('course_type_id', courseTypeId);
+
+      if (classes && classes.length > 0) {
+        const classIds = classes.map(c => c.id);
+        query = query.in('class_id', classIds);
+      }
+    }
+
+    const { data, error } = await query;
+
+    if (error) {
+      throw new Error(`Failed to get content stats: ${error.message}`);
+    }
+
+    const content = data || [];
+
+    // Calculate stats
+    const stats = {
+      total: content.length,
+      published: content.filter(c => c.is_published).length,
+      draft: content.filter(c => !c.is_published).length,
+      byType: {} as Record<string, number>,
+      byMaterialType: {} as Record<string, number>,
+    };
+
+    // Count by content type
+    content.forEach(c => {
+      const type = c.content_type || 'unknown';
+      stats.byType[type] = (stats.byType[type] || 0) + 1;
+    });
+
+    // Count by material type
+    content.forEach(c => {
+      const type = c.material_type || 'unknown';
+      stats.byMaterialType[type] = (stats.byMaterialType[type] || 0) + 1;
+    });
+
+    return stats;
   }
 
   /**
@@ -696,12 +762,16 @@ class ContentService {
 
   /**
    * Get content accessible to a student based on their class enrollment
+   * Uses the content_with_hierarchy view to include class and subject info
+   * Falls back to using class_grade from student profile if no formal enrollments exist
    */
   async getStudentClassContent(
     studentId: string,
-    options: { classId?: string; subjectId?: string; materialType?: MaterialType } = {}
-  ): Promise<Content[]> {
-    // First, get the student's enrolled classes
+    options: { classId?: string; subjectId?: string; materialType?: MaterialType; classGrade?: string } = {}
+  ): Promise<any[]> {
+    let enrolledClassIds: string[] = [];
+
+    // First, try to get the student's enrolled classes from class_enrollments
     const { data: enrollments, error: enrollError } = await this.supabase
       .from('class_enrollments')
       .select('class_id')
@@ -709,17 +779,61 @@ class ContentService {
       .eq('status', 'active');
 
     if (enrollError) {
-      throw new Error(`Failed to get student enrollments: ${enrollError.message}`);
+      console.error('Error fetching enrollments:', enrollError.message);
+      // Don't throw - try fallback
     }
 
-    if (!enrollments || enrollments.length === 0) {
+    if (enrollments && enrollments.length > 0) {
+      enrolledClassIds = enrollments.map(e => e.class_id);
+      console.log('[Content] Found formal enrollments:', enrolledClassIds.length);
+    }
+
+    // Fallback: If no formal enrollments, try to find class based on class_grade
+    if (enrolledClassIds.length === 0 && options.classGrade) {
+      console.log('[Content] No formal enrollments, using class_grade fallback:', options.classGrade);
+
+      // Normalize the grade - extract just the number
+      // Handles: "10th", "10", "Class 10", "Grade 10", "10th Grade", etc.
+      const gradeMatch = options.classGrade.match(/(\d+)/);
+      const gradeNumber = gradeMatch ? gradeMatch[1] : options.classGrade;
+
+      console.log('[Content] Normalized grade number:', gradeNumber);
+
+      // Try to find academic class by grade number
+      const { data: matchingClasses } = await this.supabase
+        .from('academic_classes')
+        .select('id, name, slug')
+        .or(`name.ilike.%${gradeNumber}%,slug.ilike.%${gradeNumber}%`)
+        .eq('is_active', true);
+
+      console.log('[Content] Matching classes query result:', matchingClasses);
+
+      if (matchingClasses && matchingClasses.length > 0) {
+        // Filter to exact grade match (e.g., "Class 10" not "Class 100" or "Class 1")
+        const exactMatches = matchingClasses.filter(c => {
+          const classMatch = c.name?.match(/(\d+)/) || c.slug?.match(/(\d+)/);
+          return classMatch && classMatch[1] === gradeNumber;
+        });
+
+        if (exactMatches.length > 0) {
+          enrolledClassIds = exactMatches.map(c => c.id);
+          console.log('[Content] Found classes by grade fallback:', enrolledClassIds, exactMatches.map(c => c.name));
+        } else {
+          // Fallback to all matches if no exact match
+          enrolledClassIds = matchingClasses.map(c => c.id);
+          console.log('[Content] Found classes (partial match):', enrolledClassIds);
+        }
+      }
+    }
+
+    if (enrolledClassIds.length === 0) {
+      console.log('[Content] No classes found for student');
       return [];
     }
 
-    const enrolledClassIds = enrollments.map(e => e.class_id);
-
+    // Use content_with_hierarchy view to get class and subject names
     let query = this.supabase
-      .from('content')
+      .from('content_with_hierarchy')
       .select('*')
       .in('class_id', enrolledClassIds)
       .eq('is_published', true);
@@ -742,7 +856,7 @@ class ContentService {
       throw new Error(`Failed to get student content: ${error.message}`);
     }
 
-    return data as Content[];
+    return data || [];
   }
 }
 

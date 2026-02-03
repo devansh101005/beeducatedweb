@@ -85,6 +85,25 @@ router.get('/', requireAuth, attachUser, async (req: Request, res: Response) => 
 });
 
 /**
+ * GET /api/v2/content/stats
+ * Get content statistics (admin/teacher only)
+ * MUST be before /:id route
+ */
+router.get('/stats', requireAuth, attachUser, requireTeacherOrAdmin, async (req: Request, res: Response) => {
+  try {
+    // Optional filters
+    const courseTypeId = req.query.courseTypeId as string | undefined;
+    const classId = req.query.classId as string | undefined;
+
+    const stats = await contentService.getStats({ courseTypeId, classId });
+    sendSuccess(res, stats);
+  } catch (error) {
+    console.error('Error fetching content stats:', error);
+    sendError(res, 'Failed to fetch content stats');
+  }
+});
+
+/**
  * GET /api/v2/content/:id
  * Get content by ID
  */
