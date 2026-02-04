@@ -1,13 +1,14 @@
 -- BeEducated Dashboard & Reports Schema
 -- Phase 6: Analytics, reports, and dashboard support
 -- Run this in Supabase SQL Editor AFTER migrations 001-005
+-- CORRECTED VERSION: Fixed table/column names to match actual schema
 
 -- =============================================
 -- ANALYTICS TABLES
 -- =============================================
 
 -- Daily aggregated statistics (pre-computed for performance)
-CREATE TABLE daily_stats (
+CREATE TABLE IF NOT EXISTS daily_stats (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   stat_date DATE NOT NULL,
 
@@ -47,7 +48,7 @@ CREATE TABLE daily_stats (
 );
 
 -- Student performance tracking (for detailed analytics)
-CREATE TABLE student_performance (
+CREATE TABLE IF NOT EXISTS student_performance (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   student_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
 
@@ -85,7 +86,7 @@ CREATE TABLE student_performance (
 );
 
 -- Activity log for detailed tracking
-CREATE TABLE activity_logs (
+CREATE TABLE IF NOT EXISTS activity_logs (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID REFERENCES users(id) ON DELETE SET NULL,
 
@@ -105,7 +106,7 @@ CREATE TABLE activity_logs (
 );
 
 -- Report generation tracking
-CREATE TABLE generated_reports (
+CREATE TABLE IF NOT EXISTS generated_reports (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
 
   -- Report info
@@ -140,16 +141,16 @@ CREATE TABLE generated_reports (
 -- INDEXES
 -- =============================================
 
-CREATE INDEX idx_daily_stats_date ON daily_stats(stat_date DESC);
-CREATE INDEX idx_student_performance_student ON student_performance(student_id);
-CREATE INDEX idx_student_performance_avg_score ON student_performance(average_score DESC);
-CREATE INDEX idx_activity_logs_user ON activity_logs(user_id);
-CREATE INDEX idx_activity_logs_type ON activity_logs(activity_type);
-CREATE INDEX idx_activity_logs_created ON activity_logs(created_at DESC);
-CREATE INDEX idx_activity_logs_entity ON activity_logs(entity_type, entity_id);
-CREATE INDEX idx_generated_reports_type ON generated_reports(report_type);
-CREATE INDEX idx_generated_reports_user ON generated_reports(generated_by);
-CREATE INDEX idx_generated_reports_status ON generated_reports(status);
+CREATE INDEX IF NOT EXISTS idx_daily_stats_date ON daily_stats(stat_date DESC);
+CREATE INDEX IF NOT EXISTS idx_student_performance_student ON student_performance(student_id);
+CREATE INDEX IF NOT EXISTS idx_student_performance_avg_score ON student_performance(average_score DESC);
+CREATE INDEX IF NOT EXISTS idx_activity_logs_user ON activity_logs(user_id);
+CREATE INDEX IF NOT EXISTS idx_activity_logs_type ON activity_logs(activity_type);
+CREATE INDEX IF NOT EXISTS idx_activity_logs_created ON activity_logs(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_activity_logs_entity ON activity_logs(entity_type, entity_id);
+CREATE INDEX IF NOT EXISTS idx_generated_reports_type ON generated_reports(report_type);
+CREATE INDEX IF NOT EXISTS idx_generated_reports_user ON generated_reports(generated_by);
+CREATE INDEX IF NOT EXISTS idx_generated_reports_status ON generated_reports(status);
 
 -- =============================================
 -- RLS POLICIES
@@ -161,6 +162,7 @@ ALTER TABLE activity_logs ENABLE ROW LEVEL SECURITY;
 ALTER TABLE generated_reports ENABLE ROW LEVEL SECURITY;
 
 -- Daily stats - Admin only
+DROP POLICY IF EXISTS "Admins can view daily stats" ON daily_stats;
 CREATE POLICY "Admins can view daily stats" ON daily_stats
   FOR SELECT USING (
     EXISTS (
@@ -168,13 +170,16 @@ CREATE POLICY "Admins can view daily stats" ON daily_stats
     )
   );
 
+DROP POLICY IF EXISTS "System can manage daily stats" ON daily_stats;
 CREATE POLICY "System can manage daily stats" ON daily_stats
   FOR ALL USING (true);
 
 -- Student performance - Students see own, teachers see their students, admins see all
+DROP POLICY IF EXISTS "Students view own performance" ON student_performance;
 CREATE POLICY "Students view own performance" ON student_performance
   FOR SELECT USING (student_id = auth.uid());
 
+DROP POLICY IF EXISTS "Teachers view student performance" ON student_performance;
 CREATE POLICY "Teachers view student performance" ON student_performance
   FOR SELECT USING (
     EXISTS (
@@ -182,13 +187,16 @@ CREATE POLICY "Teachers view student performance" ON student_performance
     )
   );
 
+DROP POLICY IF EXISTS "System can manage student performance" ON student_performance;
 CREATE POLICY "System can manage student performance" ON student_performance
   FOR ALL USING (true);
 
 -- Activity logs - Users see own, admins see all
+DROP POLICY IF EXISTS "Users view own activity" ON activity_logs;
 CREATE POLICY "Users view own activity" ON activity_logs
   FOR SELECT USING (user_id = auth.uid());
 
+DROP POLICY IF EXISTS "Admins view all activity" ON activity_logs;
 CREATE POLICY "Admins view all activity" ON activity_logs
   FOR SELECT USING (
     EXISTS (
@@ -196,13 +204,16 @@ CREATE POLICY "Admins view all activity" ON activity_logs
     )
   );
 
+DROP POLICY IF EXISTS "System can insert activity logs" ON activity_logs;
 CREATE POLICY "System can insert activity logs" ON activity_logs
   FOR INSERT WITH CHECK (true);
 
 -- Generated reports - Only creator and admins
+DROP POLICY IF EXISTS "Users view own reports" ON generated_reports;
 CREATE POLICY "Users view own reports" ON generated_reports
   FOR SELECT USING (generated_by = auth.uid());
 
+DROP POLICY IF EXISTS "Admins view all reports" ON generated_reports;
 CREATE POLICY "Admins view all reports" ON generated_reports
   FOR SELECT USING (
     EXISTS (
@@ -210,6 +221,7 @@ CREATE POLICY "Admins view all reports" ON generated_reports
     )
   );
 
+DROP POLICY IF EXISTS "System can manage reports" ON generated_reports;
 CREATE POLICY "System can manage reports" ON generated_reports
   FOR ALL USING (true);
 
@@ -218,6 +230,9 @@ CREATE POLICY "System can manage reports" ON generated_reports
 -- =============================================
 
 -- Function to update daily stats
+-- FIXED: Uses student_courses instead of course_enrollments
+-- FIXED: Uses best_percentage instead of percentage_score
+-- FIXED: Uses created_at instead of calculated_at
 CREATE OR REPLACE FUNCTION update_daily_stats(p_date DATE DEFAULT CURRENT_DATE)
 RETURNS void AS $$
 DECLARE
@@ -247,11 +262,11 @@ BEGIN
   SELECT COUNT(*) INTO v_new_students
   FROM users WHERE role = 'student' AND DATE(created_at) = p_date;
 
-  -- Count enrollments
+  -- Count enrollments (using student_courses table from migration 003)
   SELECT COUNT(*) INTO v_new_enrollments
-  FROM course_enrollments WHERE DATE(enrolled_at) = p_date;
+  FROM student_courses WHERE DATE(enrolled_at) = p_date;
 
-  SELECT COUNT(*) INTO v_total_enrollments FROM course_enrollments;
+  SELECT COUNT(*) INTO v_total_enrollments FROM student_courses;
 
   -- Count exams conducted
   SELECT COUNT(*) INTO v_exams_conducted
@@ -261,14 +276,14 @@ BEGIN
   SELECT COUNT(*) INTO v_exam_attempts
   FROM exam_attempts WHERE DATE(started_at) = p_date;
 
-  -- Count passed exams
+  -- Count passed exams (FIXED: using created_at instead of calculated_at)
   SELECT COUNT(*) INTO v_exams_passed
   FROM exam_results
-  WHERE DATE(calculated_at) = p_date AND is_passed = true;
+  WHERE DATE(created_at) = p_date AND is_passed = true;
 
-  -- Calculate average score
-  SELECT COALESCE(AVG(percentage_score), 0) INTO v_avg_score
-  FROM exam_results WHERE DATE(calculated_at) = p_date;
+  -- Calculate average score (FIXED: using best_percentage instead of percentage_score)
+  SELECT COALESCE(AVG(best_percentage), 0) INTO v_avg_score
+  FROM exam_results WHERE DATE(created_at) = p_date;
 
   -- Upsert daily stats
   INSERT INTO daily_stats (
@@ -302,6 +317,7 @@ END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
 -- Function to update student performance after exam
+-- FIXED: Uses best_percentage instead of percentage_score
 CREATE OR REPLACE FUNCTION update_student_performance_on_result()
 RETURNS TRIGGER AS $$
 DECLARE
@@ -323,22 +339,22 @@ BEGIN
   VALUES (v_student_id)
   ON CONFLICT (student_id) DO NOTHING;
 
-  -- Update aggregate stats
+  -- Update aggregate stats (FIXED: using best_percentage)
   UPDATE student_performance
   SET
     total_exams_attempted = total_exams_attempted + 1,
     total_exams_passed = total_exams_passed + CASE WHEN NEW.is_passed THEN 1 ELSE 0 END,
     total_exams_failed = total_exams_failed + CASE WHEN NOT NEW.is_passed THEN 1 ELSE 0 END,
     average_score = (
-      SELECT AVG(percentage_score)
+      SELECT AVG(best_percentage)
       FROM exam_results er
       JOIN exam_attempts ea ON er.attempt_id = ea.id
       WHERE ea.student_id = v_student_id
     ),
-    highest_score = GREATEST(highest_score, NEW.percentage_score),
+    highest_score = GREATEST(highest_score, COALESCE(NEW.best_percentage, 0)),
     lowest_score = CASE
-      WHEN lowest_score = 0 THEN NEW.percentage_score
-      ELSE LEAST(lowest_score, NEW.percentage_score)
+      WHEN lowest_score = 0 THEN COALESCE(NEW.best_percentage, 0)
+      ELSE LEAST(lowest_score, COALESCE(NEW.best_percentage, 0))
     END,
     last_active_date = CURRENT_DATE,
     updated_at = NOW()
@@ -380,10 +396,11 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 -- =============================================
 
 -- Top performing students view
+-- FIXED: Uses CONCAT(first_name, last_name) instead of full_name
 CREATE OR REPLACE VIEW top_students AS
 SELECT
   sp.student_id,
-  u.full_name,
+  CONCAT(u.first_name, ' ', u.last_name) AS full_name,
   u.email,
   sp.total_exams_attempted,
   sp.total_exams_passed,
@@ -401,34 +418,38 @@ WHERE u.is_active = true
 ORDER BY sp.average_score DESC;
 
 -- Batch performance summary view
+-- FIXED: Uses batch_students instead of batch_members
+-- FIXED: Uses best_percentage instead of percentage_score
 CREATE OR REPLACE VIEW batch_performance_summary AS
 SELECT
   b.id AS batch_id,
   b.name AS batch_name,
-  COUNT(DISTINCT bm.student_id) AS total_students,
+  COUNT(DISTINCT bs.student_id) AS total_students,
   COUNT(DISTINCT ea.id) AS total_exam_attempts,
-  COALESCE(AVG(er.percentage_score), 0) AS avg_score,
+  COALESCE(AVG(er.best_percentage), 0) AS avg_score,
   COUNT(CASE WHEN er.is_passed THEN 1 END) AS passed_count,
   COUNT(CASE WHEN er.is_passed = false THEN 1 END) AS failed_count
 FROM batches b
-LEFT JOIN batch_members bm ON b.id = bm.batch_id AND bm.status = 'active'
-LEFT JOIN exam_attempts ea ON bm.student_id = ea.student_id
+LEFT JOIN batch_students bs ON b.id = bs.batch_id
+LEFT JOIN exam_attempts ea ON bs.student_id = ea.student_id
 LEFT JOIN exam_results er ON ea.id = er.attempt_id
 WHERE b.is_active = true
 GROUP BY b.id, b.name;
 
 -- Course enrollment summary view
+-- FIXED: Uses student_courses instead of course_enrollments
+-- FIXED: Uses progress_percent instead of progress
 CREATE OR REPLACE VIEW course_enrollment_summary AS
 SELECT
   c.id AS course_id,
   c.name AS course_name,
   c.code AS course_code,
-  COUNT(DISTINCT ce.student_id) AS enrolled_students,
-  COUNT(DISTINCT CASE WHEN ce.status = 'active' THEN ce.student_id END) AS active_students,
-  COUNT(DISTINCT CASE WHEN ce.status = 'completed' THEN ce.student_id END) AS completed_students,
-  COALESCE(AVG(ce.progress), 0) AS avg_progress
+  COUNT(DISTINCT sc.student_id) AS enrolled_students,
+  COUNT(DISTINCT CASE WHEN sc.status = 'active' THEN sc.student_id END) AS active_students,
+  COUNT(DISTINCT CASE WHEN sc.status = 'completed' THEN sc.student_id END) AS completed_students,
+  COALESCE(AVG(sc.progress_percent), 0) AS avg_progress
 FROM courses c
-LEFT JOIN course_enrollments ce ON c.id = ce.course_id
+LEFT JOIN student_courses sc ON c.id = sc.course_id
 WHERE c.is_active = true
 GROUP BY c.id, c.name, c.code;
 
