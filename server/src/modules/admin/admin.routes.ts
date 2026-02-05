@@ -409,7 +409,30 @@ router.get('/students', async (req: Request, res: Response) => {
 
     const result = await studentService.list({ page, limit, studentType, isActive, search });
 
-    sendPaginated(res, result.students, result.total, page, limit);
+    // Fetch manual enrollment info for all students
+    const studentIds = result.students.map((s: any) => s.id);
+    let enrollmentMap: Record<string, { id: string; status: string; class_name: string; payment_type: string }> = {};
+
+    if (studentIds.length > 0) {
+      const enrollments = await enrollmentService.getManualEnrollmentsForStudents(studentIds);
+      enrollmentMap = enrollments.reduce((acc: Record<string, any>, e: any) => {
+        acc[e.student_id] = {
+          id: e.id,
+          status: e.status,
+          class_name: e.class_name,
+          payment_type: e.payment_type,
+        };
+        return acc;
+      }, {});
+    }
+
+    // Add enrollment info to each student
+    const studentsWithEnrollment = result.students.map((s: any) => ({
+      ...s,
+      enrollment: enrollmentMap[s.id] || null,
+    }));
+
+    sendPaginated(res, studentsWithEnrollment, result.total, page, limit);
   } catch (error) {
     console.error('Error listing students:', error);
     sendError(res, 'Failed to list students');
@@ -476,6 +499,8 @@ router.post('/students/create-with-user', async (req: Request, res: Response) =>
       parentName,
       parentPhone,
       parentEmail,
+      // Enrollment fields (optional - for manual enrollment)
+      classId,
     } = req.body;
 
     // Validate required fields
@@ -639,7 +664,37 @@ router.post('/students/create-with-user', async (req: Request, res: Response) =>
       return sendBadRequest(res, `User created but student profile failed: ${errorMessage}. Please check the student data and try again.`);
     }
 
-    sendCreated(res, { user, student }, 'Student created successfully');
+    // Step 4: Create manual enrollment if classId is provided
+    let enrollment = null;
+    if (classId) {
+      try {
+        // Get the manual fee plan for this class
+        const manualFeePlan = await courseTypeService.getManualFeePlanByClassId(classId);
+
+        if (manualFeePlan) {
+          // Create manual enrollment with ₹0 amount
+          const enrollmentResult = await enrollmentService.createManualEnrollment({
+            studentId: student.id,
+            classId,
+            feePlanId: manualFeePlan.id,
+            paymentType: 'cash' as Exclude<PaymentType, 'razorpay'>,
+            amountReceived: 0,
+            receivedBy: req.user?.id || 'admin',
+            notes: 'Manual enrollment created by admin during student registration',
+          });
+          enrollment = enrollmentResult.enrollment;
+          console.log('Manual enrollment created:', enrollment.id);
+        } else {
+          console.warn(`No manual fee plan found for class ${classId}. Skipping enrollment creation.`);
+        }
+      } catch (enrollmentError: any) {
+        // Log but don't fail the whole request - student is already created
+        console.error('Failed to create manual enrollment:', enrollmentError?.message);
+        // Continue without enrollment - admin can create it later
+      }
+    }
+
+    sendCreated(res, { user, student, enrollment }, 'Student created successfully');
   } catch (error: any) {
     console.error('Error creating student with user:', error);
     sendError(res, error.message || 'Failed to create student');

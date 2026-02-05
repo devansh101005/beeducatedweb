@@ -59,6 +59,25 @@ interface Student {
     email: string;
     phone: string | null;
   };
+  // Enrollment info for manual enrollment badge
+  enrollment?: {
+    id: string;
+    status: string;
+    class_name?: string;
+  } | null;
+}
+
+interface CourseType {
+  id: string;
+  slug: string;
+  name: string;
+  isActive: boolean;
+}
+
+interface AcademicClass {
+  id: string;
+  name: string;
+  enrollmentOpen: boolean;
 }
 
 const API_URL = import.meta.env.VITE_API_URL || '/api';
@@ -112,6 +131,14 @@ function AddStudentModal({ onClose, onSuccess }: AddStudentModalProps) {
   const [targetYear, setTargetYear] = useState(new Date().getFullYear());
   const [parentName, setParentName] = useState('');
   const [parentPhone, setParentPhone] = useState('');
+
+  // Enrollment fields (for manual enrollment)
+  const [courseTypes, setCourseTypes] = useState<CourseType[]>([]);
+  const [academicClasses, setAcademicClasses] = useState<AcademicClass[]>([]);
+  const [selectedCourseType, setSelectedCourseType] = useState('');
+  const [selectedClassId, setSelectedClassId] = useState('');
+  const [loadingCourseTypes, setLoadingCourseTypes] = useState(false);
+  const [loadingClasses, setLoadingClasses] = useState(false);
 
   // UI state
   const [step, setStep] = useState(1); // 1 = user info, 2 = student info
@@ -178,6 +205,62 @@ function AddStudentModal({ onClose, onSuccess }: AddStudentModalProps) {
     }
   }, [step]);
 
+  // Fetch course types on mount
+  useEffect(() => {
+    const fetchCourseTypes = async () => {
+      setLoadingCourseTypes(true);
+      try {
+        const token = await getToken();
+        const res = await fetch(`${API_URL}/v2/course-types`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (res.ok) {
+          const data = await res.json();
+          const activeCourseTypes = (data.data || []).filter((ct: CourseType) => ct.isActive);
+          setCourseTypes(activeCourseTypes);
+        }
+      } catch (err) {
+        console.error('Failed to fetch course types:', err);
+      } finally {
+        setLoadingCourseTypes(false);
+      }
+    };
+    fetchCourseTypes();
+  }, []);
+
+  // Fetch classes when course type changes
+  useEffect(() => {
+    if (!selectedCourseType) {
+      setAcademicClasses([]);
+      setSelectedClassId('');
+      return;
+    }
+
+    const fetchClasses = async () => {
+      setLoadingClasses(true);
+      try {
+        const token = await getToken();
+        const res = await fetch(`${API_URL}/v2/course-types/${selectedCourseType}/classes`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (res.ok) {
+          const data = await res.json();
+          const classes = (data.data?.classes || []).filter((c: AcademicClass) => c.enrollmentOpen);
+          setAcademicClasses(classes);
+          // Auto-select first class if available
+          if (classes.length > 0 && !selectedClassId) {
+            setSelectedClassId(classes[0].id);
+          }
+        }
+      } catch (err) {
+        console.error('Failed to fetch classes:', err);
+      } finally {
+        setLoadingClasses(false);
+      }
+    };
+    fetchClasses();
+  }, [selectedCourseType]);
+
   const handleCreateStudent = async () => {
     if (!email || !password || !firstName || !studentId || !studentType) {
       setError('Please fill in all required fields');
@@ -218,6 +301,8 @@ function AddStudentModal({ onClose, onSuccess }: AddStudentModalProps) {
           targetYear,
           parentName,
           parentPhone,
+          // Enrollment field (for manual enrollment)
+          classId: selectedClassId || undefined,
         }),
       });
 
@@ -376,6 +461,46 @@ function AddStudentModal({ onClose, onSuccess }: AddStudentModalProps) {
                 <p className="text-sm text-slate-600 mb-4">
                   Enter the student's academic information and assign a Student ID.
                 </p>
+
+                {/* Course Type & Class for Manual Enrollment */}
+                <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-lg">
+                  <p className="text-xs font-medium text-emerald-700 mb-2 flex items-center gap-1">
+                    <GraduationCap className="w-3.5 h-3.5" />
+                    Manual Enrollment (Optional)
+                  </p>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs font-medium text-slate-600 mb-1">Course Type</label>
+                      <Select
+                        value={selectedCourseType}
+                        onChange={(e) => {
+                          setSelectedCourseType(e.target.value);
+                          setSelectedClassId('');
+                        }}
+                        options={[
+                          { value: '', label: loadingCourseTypes ? 'Loading...' : 'Select course type' },
+                          ...courseTypes.map(ct => ({ value: ct.slug, label: ct.name })),
+                        ]}
+                        disabled={loadingCourseTypes}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-slate-600 mb-1">Class</label>
+                      <Select
+                        value={selectedClassId}
+                        onChange={(e) => setSelectedClassId(e.target.value)}
+                        options={[
+                          { value: '', label: loadingClasses ? 'Loading...' : (selectedCourseType ? 'Select class' : 'Select course first') },
+                          ...academicClasses.map(c => ({ value: c.id, label: c.name })),
+                        ]}
+                        disabled={!selectedCourseType || loadingClasses}
+                      />
+                    </div>
+                  </div>
+                  <p className="text-xs text-slate-500 mt-2">
+                    Select a course type and class to auto-enroll the student with a free manual enrollment.
+                  </p>
+                </div>
 
                 {/* Student ID */}
                 <div>
@@ -833,10 +958,15 @@ export function StudentsPage() {
 
                       {/* Details */}
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-1">
+                        <div className="flex items-center gap-2 mb-1 flex-wrap">
                           <p className="font-semibold text-slate-900">{fullName}</p>
                           <Badge variant="default" size="sm">{student.student_id}</Badge>
                           {getStudentTypeBadge(student.student_type)}
+                          {student.enrollment && (
+                            <Badge variant="success" size="sm" className="bg-emerald-100 text-emerald-700 border-emerald-200">
+                              Manual Enrollment
+                            </Badge>
+                          )}
                         </div>
                         <div className="flex flex-wrap items-center gap-3 text-sm text-slate-500">
                           <span className="flex items-center gap-1">

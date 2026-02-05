@@ -389,6 +389,32 @@ class CourseTypeService {
   }
 
   /**
+   * Get manual fee plan for a class
+   * Used for admin-created enrollments
+   */
+  async getManualFeePlanByClassId(classId: string): Promise<ClassFeePlan | null> {
+    const { data, error } = await getSupabase()
+      .from('class_fee_plans')
+      .select('*')
+      .eq('class_id', classId)
+      .eq('plan_type', 'manual')
+      .eq('is_active', true)
+      .single();
+
+    if (error) {
+      if (error.code === '42P01' || error.message?.includes('does not exist')) {
+        console.warn('class_fee_plans table does not exist. Please run the migration.');
+        return null;
+      }
+      if (error.code === 'PGRST116') return null; // No rows found
+      console.error('Error fetching manual fee plan:', error);
+      return null;
+    }
+
+    return data;
+  }
+
+  /**
    * Get all subjects
    */
   async getAllSubjects(): Promise<Subject[]> {

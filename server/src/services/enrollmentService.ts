@@ -1103,6 +1103,43 @@ class EnrollmentService {
       thisMonthRevenue,
     };
   }
+
+  /**
+   * Get manual enrollments for multiple students (for admin list view)
+   * Returns enrollments with payment_type from manual fee plans
+   */
+  async getManualEnrollmentsForStudents(studentIds: string[]): Promise<any[]> {
+    if (studentIds.length === 0) return [];
+
+    const { data, error } = await getSupabase()
+      .from('class_enrollments')
+      .select(`
+        id,
+        student_id,
+        status,
+        academic_classes!inner (name),
+        class_fee_plans!inner (plan_type),
+        enrollment_payments (payment_type)
+      `)
+      .in('student_id', studentIds)
+      .in('status', ['active', 'pending']);
+
+    if (error) {
+      console.error('Error fetching manual enrollments:', error);
+      return [];
+    }
+
+    // Transform and filter for manual enrollments
+    return (data || [])
+      .filter((e: any) => e.class_fee_plans?.plan_type === 'manual')
+      .map((e: any) => ({
+        id: e.id,
+        student_id: e.student_id,
+        status: e.status,
+        class_name: e.academic_classes?.name || 'Unknown Class',
+        payment_type: e.enrollment_payments?.[0]?.payment_type || 'manual',
+      }));
+  }
 }
 
 // Export singleton instance
