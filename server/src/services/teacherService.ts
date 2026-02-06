@@ -194,7 +194,7 @@ class TeacherService {
 
     let query = this.supabase
       .from('teachers')
-      .select('*', { count: 'exact' });
+      .select('*, user:users(id, email, first_name, last_name, phone, avatar_url)', { count: 'exact' });
 
     if (isActive !== undefined) {
       query = query.eq('is_active', isActive);

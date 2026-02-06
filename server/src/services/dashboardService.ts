@@ -218,7 +218,7 @@ class DashboardService {
         entity_id,
         metadata,
         created_at,
-        users:user_id (full_name)
+        users:user_id (first_name, last_name)
       `)
       .order('created_at', { ascending: false })
       .limit(limit);
@@ -229,12 +229,13 @@ class DashboardService {
     }
 
     return (data || []).map((a) => {
-      const userArr = a.users as { full_name: string }[] | null;
+      const userArr = a.users as { first_name: string | null; last_name: string | null }[] | null;
       const user = Array.isArray(userArr) ? userArr[0] : userArr;
+      const fullName = user ? `${user.first_name || ''} ${user.last_name || ''}`.trim() : null;
       return {
         id: a.id,
         userId: a.user_id,
-        userName: user?.full_name || null,
+        userName: fullName || null,
         activityType: a.activity_type,
         entityType: a.entity_type,
         entityId: a.entity_id,
@@ -256,7 +257,7 @@ class DashboardService {
         total_exams_passed,
         average_score,
         highest_score,
-        users:student_id (full_name, email)
+        users:student_id (first_name, last_name, email)
       `)
       .gt('total_exams_attempted', 0)
       .order('average_score', { ascending: false })
@@ -268,11 +269,12 @@ class DashboardService {
     }
 
     return (data || []).map((s) => {
-      const userArr = s.users as { full_name: string; email: string }[] | null;
+      const userArr = s.users as { first_name: string | null; last_name: string | null; email: string }[] | null;
       const user = Array.isArray(userArr) ? userArr[0] : userArr;
+      const fullName = user ? `${user.first_name || ''} ${user.last_name || ''}`.trim() : '';
       return {
         studentId: s.student_id,
-        fullName: user?.full_name || '',
+        fullName,
         email: user?.email || '',
         totalExamsAttempted: s.total_exams_attempted,
         totalExamsPassed: s.total_exams_passed,

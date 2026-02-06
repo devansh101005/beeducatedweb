@@ -24,6 +24,7 @@ import { feeRoutes } from './modules/fees/index.js';
 import { paymentRoutes } from './modules/payments/index.js';
 import { contactRoutes } from './modules/contact/index.js';
 import { courseTypesRoutes } from './modules/courseTypes/index.js';
+import { teacherRoutes } from './modules/teacher/index.js';
 import clerkWebhook from './webhooks/clerk.js';
 import razorpayWebhook from './webhooks/razorpay.js';
 
@@ -142,6 +143,9 @@ app.use('/api/v2/contact', contactRoutes);
 // Course Types routes (Courses & Enrollment)
 app.use('/api/v2/course-types', courseTypesRoutes);
 
+// Teacher routes (Teacher dashboard features)
+app.use('/api/v2/teacher', teacherRoutes);
+
 // ============================================
 // Root endpoint
 // ============================================
@@ -167,6 +171,7 @@ const apiInfo = {
     payments: '/api/v2/payments',
     contact: '/api/v2/contact',
     courseTypes: '/api/v2/course-types',
+    teacher: '/api/v2/teacher',
   },
 };
 

@@ -1105,6 +1105,31 @@ class EnrollmentService {
   }
 
   /**
+   * Cancel all active enrollments for a student
+   * Used when deleting/unenrolling a student
+   */
+  async cancelAllEnrollmentsForStudent(studentId: string, reason: string): Promise<number> {
+    const { data, error } = await getSupabase()
+      .from('class_enrollments')
+      .update({
+        status: 'cancelled',
+        cancelled_at: new Date().toISOString(),
+        cancellation_reason: reason,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('student_id', studentId)
+      .in('status', ['active', 'pending'])
+      .select('id');
+
+    if (error) {
+      console.error('Error cancelling enrollments:', error);
+      throw new Error('Failed to cancel enrollments');
+    }
+
+    return data?.length || 0;
+  }
+
+  /**
    * Get manual enrollments for multiple students (for admin list view)
    * Returns enrollments with payment_type from manual fee plans
    */

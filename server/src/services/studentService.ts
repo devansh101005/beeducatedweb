@@ -301,13 +301,23 @@ class StudentService {
     search?: string;
     targetExam?: string;
     subscriptionStatus?: SubscriptionStatus;
-  } = {}): Promise<{ students: Student[]; total: number }> {
+  } = {}): Promise<{ students: any[]; total: number }> {
     const { page = 1, limit = 20, studentType, isActive, search, targetExam, subscriptionStatus } = options;
     const offset = (page - 1) * limit;
 
+    // Include users relation for display
+    // Using 'users' as alias to match frontend expectations
     let query = this.supabase
       .from('students')
-      .select('*', { count: 'exact' });
+      .select(`
+        *,
+        users:users (
+          first_name,
+          last_name,
+          email,
+          phone
+        )
+      `, { count: 'exact' });
 
     if (studentType) {
       query = query.eq('student_type', studentType);
@@ -335,10 +345,16 @@ class StudentService {
       .order('created_at', { ascending: false })
       .range(offset, offset + limit - 1);
 
-    if (error) throw error;
+    if (error) {
+      console.error('Error listing students:', error);
+      console.error('Error details:', JSON.stringify(error, null, 2));
+      throw error;
+    }
+
+    console.log(`Found ${count} students, returning ${data?.length || 0} records`);
 
     return {
-      students: data as Student[],
+      students: data || [],
       total: count || 0,
     };
   }
@@ -435,6 +451,21 @@ class StudentService {
     if (endDate) updateData.subscription_end_date = endDate;
 
     return this.update(id, updateData);
+  }
+
+  /**
+   * Delete a student profile
+   */
+  async delete(id: string): Promise<void> {
+    const { error } = await this.supabase
+      .from('students')
+      .delete()
+      .eq('id', id);
+
+    if (error) {
+      console.error('Error deleting student:', error);
+      throw new Error('Failed to delete student');
+    }
   }
 }
 

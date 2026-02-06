@@ -11,3 +11,6 @@ export { ManualEnrollmentModal } from './components/ManualEnrollmentModal';
 export { StudentsPage } from './components/StudentsPage';
 export { ParentsPage } from './components/ParentsPage';
 export { ContentManagementPage } from './components/ContentManagementPage';
+export { TeachersPage } from './components/TeachersPage';
+export { AdminPaymentsPage } from './components/AdminPaymentsPage';
+export { ExamEditorPage } from './components/ExamEditorPage';

@@ -91,9 +91,9 @@ export function ApplicationsPage() {
       const data = await res.json();
 
       if (data.success) {
-        setApplications(data.data || []);
-        setTotalPages(data.pagination?.totalPages || 1);
-        setTotalItems(data.pagination?.total || 0);
+        setApplications(data.data?.items || []);
+        setTotalPages(data.data?.totalPages || 1);
+        setTotalItems(data.data?.total || 0);
       }
     } catch (error) {
       console.error('Error fetching applications:', error);

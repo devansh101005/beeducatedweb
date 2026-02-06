@@ -409,21 +409,26 @@ router.get('/students', async (req: Request, res: Response) => {
 
     const result = await studentService.list({ page, limit, studentType, isActive, search });
 
-    // Fetch manual enrollment info for all students
+    // Fetch manual enrollment info for all students (with error handling)
     const studentIds = result.students.map((s: any) => s.id);
     let enrollmentMap: Record<string, { id: string; status: string; class_name: string; payment_type: string }> = {};
 
     if (studentIds.length > 0) {
-      const enrollments = await enrollmentService.getManualEnrollmentsForStudents(studentIds);
-      enrollmentMap = enrollments.reduce((acc: Record<string, any>, e: any) => {
-        acc[e.student_id] = {
-          id: e.id,
-          status: e.status,
-          class_name: e.class_name,
-          payment_type: e.payment_type,
-        };
-        return acc;
-      }, {});
+      try {
+        const enrollments = await enrollmentService.getManualEnrollmentsForStudents(studentIds);
+        enrollmentMap = enrollments.reduce((acc: Record<string, any>, e: any) => {
+          acc[e.student_id] = {
+            id: e.id,
+            status: e.status,
+            class_name: e.class_name,
+            payment_type: e.payment_type,
+          };
+          return acc;
+        }, {});
+      } catch (enrollmentError) {
+        // Log but don't fail - enrollment data is optional
+        console.warn('Failed to fetch enrollment info:', enrollmentError);
+      }
     }
 
     // Add enrollment info to each student
@@ -472,6 +477,75 @@ router.post('/students', async (req: Request, res: Response) => {
   } catch (error) {
     console.error('Error creating student:', error);
     sendError(res, 'Failed to create student profile');
+  }
+});
+
+/**
+ * DELETE /api/v2/admin/students/:id
+ * Delete a student and optionally their user account
+ */
+router.delete('/students/:id', async (req: Request, res: Response) => {
+  try {
+    const studentId = getParam(req.params.id);
+    const deleteUser = req.query.deleteUser === 'true';
+
+    // Get student to find user_id
+    const student = await studentService.getById(studentId);
+    if (!student) {
+      return sendNotFound(res, 'Student');
+    }
+
+    // Cancel any active enrollments first
+    try {
+      await enrollmentService.cancelAllEnrollmentsForStudent(studentId, 'Student deleted by admin');
+    } catch (enrollmentError) {
+      console.warn('Failed to cancel enrollments:', enrollmentError);
+    }
+
+    // Delete student profile
+    await studentService.delete(studentId);
+
+    // Optionally delete user account as well
+    if (deleteUser && student.user_id) {
+      try {
+        // Delete from Clerk
+        await clerkClient.users.deleteUser(student.user_id);
+      } catch (clerkError) {
+        console.warn('Failed to delete Clerk user:', clerkError);
+      }
+
+      // Delete from database
+      await userService.delete(student.user_id);
+    }
+
+    sendSuccess(res, { deleted: true }, 'Student deleted successfully');
+  } catch (error) {
+    console.error('Error deleting student:', error);
+    sendError(res, 'Failed to delete student');
+  }
+});
+
+/**
+ * DELETE /api/v2/admin/students/:id/enrollment
+ * Unenroll a student (cancel their enrollment without deleting the student)
+ */
+router.delete('/students/:id/enrollment', async (req: Request, res: Response) => {
+  try {
+    const studentId = getParam(req.params.id);
+
+    // Get student
+    const student = await studentService.getById(studentId);
+    if (!student) {
+      return sendNotFound(res, 'Student');
+    }
+
+    // Cancel all active enrollments
+    const cancelled = await enrollmentService.cancelAllEnrollmentsForStudent(studentId, 'Unenrolled by admin');
+
+    sendSuccess(res, { cancelled }, 'Student unenrolled successfully');
+  } catch (error) {
+    console.error('Error unenrolling student:', error);
+    sendError(res, 'Failed to unenroll student');
   }
 });
 
@@ -1172,11 +1246,13 @@ router.get('/stats', async (_req: Request, res: Response) => {
       { total: totalStudents },
       { total: totalTeachers },
       { total: totalParents },
+      { total: totalAdmins },
     ] = await Promise.all([
       userService.list({ limit: 1 }),
       studentService.list({ limit: 1 }),
       teacherService.list({ limit: 1 }),
       parentService.list({ limit: 1 }),
+      userService.list({ limit: 1, role: 'admin' }),
     ]);
 
     sendSuccess(res, {
@@ -1184,6 +1260,7 @@ router.get('/stats', async (_req: Request, res: Response) => {
       students: totalStudents,
       teachers: totalTeachers,
       parents: totalParents,
+      admins: totalAdmins,
     });
   } catch (error) {
     console.error('Error fetching stats:', error);

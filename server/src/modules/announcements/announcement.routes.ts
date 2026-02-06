@@ -8,7 +8,9 @@ import { announcementService, AnnouncementPriority, AnnouncementTarget, UserRole
 import { storageService, BUCKETS } from '../../services/storageService.js';
 import { batchService } from '../../services/batchService.js';
 import { courseService } from '../../services/courseService.js';
+import { courseTypeService } from '../../services/courseTypeService.js';
 import { studentService } from '../../services/studentService.js';
+import { enrollmentService } from '../../services/enrollmentService.js';
 import {
   sendSuccess,
   sendCreated,
@@ -35,6 +37,63 @@ const upload = multer({
 const router = Router();
 
 // ============================================
+// ADMIN/TEACHER ENDPOINTS (must be before /:id routes)
+// ============================================
+
+/**
+ * GET /api/v2/announcements/admin/targeting-options
+ * Get academic classes for announcement targeting dropdowns
+ */
+router.get('/admin/targeting-options', requireAuth, attachUser, requireTeacherOrAdmin, async (req: Request, res: Response) => {
+  try {
+    const classes = await courseTypeService.getClassesWithFeePlans();
+
+    sendSuccess(res, {
+      classes: (classes || []).map((c) => ({ id: c.id, name: c.name })),
+    });
+  } catch (error) {
+    console.error('Error fetching targeting options:', error);
+    sendError(res, 'Failed to fetch targeting options');
+  }
+});
+
+/**
+ * GET /api/v2/announcements/admin/list
+ * List all announcements for admin (includes unpublished)
+ */
+router.get('/admin/list', requireAuth, attachUser, requireTeacherOrAdmin, async (req: Request, res: Response) => {
+  try {
+    const page = parseInt(req.query.page as string) || 1;
+    const limit = parseInt(req.query.limit as string) || 20;
+    const targetType = req.query.targetType as AnnouncementTarget | undefined;
+    const batchId = req.query.batchId as string | undefined;
+    const courseId = req.query.courseId as string | undefined;
+    const priority = req.query.priority as AnnouncementPriority | undefined;
+    const isPublished = req.query.isPublished === 'true' ? true : req.query.isPublished === 'false' ? false : undefined;
+    const isPinned = req.query.isPinned === 'true' ? true : undefined;
+    const search = req.query.search as string | undefined;
+
+    const result = await announcementService.list({
+      page,
+      limit,
+      targetType,
+      batchId,
+      courseId,
+      priority,
+      isPublished,
+      isPinned,
+      excludeExpired: false, // Admins can see expired
+      search,
+    });
+
+    sendPaginated(res, result.announcements, result.total, page, limit);
+  } catch (error) {
+    console.error('Error listing announcements:', error);
+    sendError(res, 'Failed to list announcements');
+  }
+});
+
+// ============================================
 // USER-FACING ENDPOINTS
 // ============================================
 
@@ -51,9 +110,10 @@ router.get('/', requireAuth, attachUser, async (req: Request, res: Response) => 
     const userId = req.user!.id;
     const userRole = req.user!.role as UserRole;
 
-    // Get user's batch and course enrollments for targeting
+    // Get user's batch, course, and class enrollments for targeting
     let batchIds: string[] = [];
     let courseIds: string[] = [];
+    let classIds: string[] = [];
 
     if (userRole === 'student') {
       const student = await studentService.getByUserId(userId);
@@ -65,6 +125,9 @@ router.get('/', requireAuth, attachUser, async (req: Request, res: Response) => 
         // Get course enrollments
         const courses = await courseService.getStudentCourses(student.id);
         courseIds = courses.map((c) => c.enrollment.course_id);
+
+        // Get class enrollments
+        classIds = await enrollmentService.getStudentActiveClassIds(student.id);
       }
     }
 
@@ -73,6 +136,7 @@ router.get('/', requireAuth, attachUser, async (req: Request, res: Response) => 
       limit,
       batchIds,
       courseIds,
+      classIds,
       unreadOnly,
     });
 
@@ -92,9 +156,10 @@ router.get('/unread-count', requireAuth, attachUser, async (req: Request, res: R
     const userId = req.user!.id;
     const userRole = req.user!.role as UserRole;
 
-    // Get user's batch and course enrollments
+    // Get user's batch, course, and class enrollments
     let batchIds: string[] = [];
     let courseIds: string[] = [];
+    let classIds: string[] = [];
 
     if (userRole === 'student') {
       const student = await studentService.getByUserId(userId);
@@ -104,10 +169,12 @@ router.get('/unread-count', requireAuth, attachUser, async (req: Request, res: R
 
         const courses = await courseService.getStudentCourses(student.id);
         courseIds = courses.map((c) => c.enrollment.course_id);
+
+        classIds = await enrollmentService.getStudentActiveClassIds(student.id);
       }
     }
 
-    const count = await announcementService.getUnreadCount(userId, userRole, batchIds, courseIds);
+    const count = await announcementService.getUnreadCount(userId, userRole, batchIds, courseIds, classIds);
     sendSuccess(res, { count });
   } catch (error) {
     console.error('Error getting unread count:', error);
@@ -189,46 +256,6 @@ router.post('/mark-all-read', requireAuth, attachUser, async (req: Request, res:
   }
 });
 
-// ============================================
-// ADMIN/TEACHER ENDPOINTS
-// ============================================
-
-/**
- * GET /api/v2/announcements/admin/list
- * List all announcements for admin (includes unpublished)
- */
-router.get('/admin/list', requireAuth, attachUser, requireTeacherOrAdmin, async (req: Request, res: Response) => {
-  try {
-    const page = parseInt(req.query.page as string) || 1;
-    const limit = parseInt(req.query.limit as string) || 20;
-    const targetType = req.query.targetType as AnnouncementTarget | undefined;
-    const batchId = req.query.batchId as string | undefined;
-    const courseId = req.query.courseId as string | undefined;
-    const priority = req.query.priority as AnnouncementPriority | undefined;
-    const isPublished = req.query.isPublished === 'true' ? true : req.query.isPublished === 'false' ? false : undefined;
-    const isPinned = req.query.isPinned === 'true' ? true : undefined;
-    const search = req.query.search as string | undefined;
-
-    const result = await announcementService.list({
-      page,
-      limit,
-      targetType,
-      batchId,
-      courseId,
-      priority,
-      isPublished,
-      isPinned,
-      excludeExpired: false, // Admins can see expired
-      search,
-    });
-
-    sendPaginated(res, result.announcements, result.total, page, limit);
-  } catch (error) {
-    console.error('Error listing announcements:', error);
-    sendError(res, 'Failed to list announcements');
-  }
-});
-
 /**
  * POST /api/v2/announcements
  * Create new announcement (admin/teacher only)
@@ -241,6 +268,7 @@ router.post('/', requireAuth, attachUser, requireTeacherOrAdmin, async (req: Req
       targetType,
       targetBatchId,
       targetCourseId,
+      targetClassId,
       targetRoles,
       priority,
       isPinned,
@@ -266,8 +294,20 @@ router.post('/', requireAuth, attachUser, requireTeacherOrAdmin, async (req: Req
       return sendBadRequest(res, 'targetCourseId is required for course targeting');
     }
 
+    if (targetType === 'class' && !targetClassId) {
+      return sendBadRequest(res, 'targetClassId is required for class targeting');
+    }
+
     if (targetType === 'role' && (!targetRoles || targetRoles.length === 0)) {
       return sendBadRequest(res, 'targetRoles is required for role targeting');
+    }
+
+    // Validate class exists if provided
+    if (targetClassId) {
+      const classData = await courseTypeService.getClassById(targetClassId);
+      if (!classData) {
+        return sendNotFound(res, 'Class');
+      }
     }
 
     // Validate batch exists if provided
@@ -290,9 +330,10 @@ router.post('/', requireAuth, attachUser, requireTeacherOrAdmin, async (req: Req
       title,
       body,
       target_type: targetType || 'all',
-      target_batch_id: targetBatchId,
-      target_course_id: targetCourseId,
-      target_roles: targetRoles,
+      target_batch_id: targetType === 'batch' ? targetBatchId : null,
+      target_course_id: targetType === 'course' ? targetCourseId : null,
+      target_class_id: targetType === 'class' ? targetClassId : null,
+      target_roles: targetType === 'role' ? targetRoles : null,
       priority: priority || 'normal',
       is_pinned: isPinned || false,
       publish_at: publishAt,
@@ -321,6 +362,7 @@ router.put('/:id', requireAuth, attachUser, requireTeacherOrAdmin, async (req: R
       targetType,
       targetBatchId,
       targetCourseId,
+      targetClassId,
       targetRoles,
       priority,
       isPinned,
@@ -338,9 +380,10 @@ router.put('/:id', requireAuth, attachUser, requireTeacherOrAdmin, async (req: R
       title,
       body,
       target_type: targetType,
-      target_batch_id: targetBatchId,
-      target_course_id: targetCourseId,
-      target_roles: targetRoles,
+      target_batch_id: targetType === 'batch' ? targetBatchId : null,
+      target_course_id: targetType === 'course' ? targetCourseId : null,
+      target_class_id: targetType === 'class' ? targetClassId : null,
+      target_roles: targetType === 'role' ? targetRoles : null,
       priority,
       is_pinned: isPinned,
       publish_at: publishAt,

@@ -145,7 +145,8 @@ class ReportService {
         total_study_time_minutes,
         last_active_date,
         users:student_id (
-          full_name,
+          first_name,
+          last_name,
           email
         )
       `)
@@ -191,11 +192,12 @@ class ReportService {
     }
 
     return (data || []).map((s) => {
-      const userArr = s.users as { full_name: string; email: string }[] | { full_name: string; email: string } | null;
+      const userArr = s.users as { first_name: string | null; last_name: string | null; email: string }[] | { first_name: string | null; last_name: string | null; email: string } | null;
       const user = Array.isArray(userArr) ? userArr[0] : userArr;
+      const studentName = user ? `${user.first_name || ''} ${user.last_name || ''}`.trim() : '';
       return {
         studentId: s.student_id,
-        studentName: user?.full_name || '',
+        studentName,
         email: user?.email || '',
         batchName: batchMap.get(s.student_id) || null,
         totalExams: s.total_exams_attempted,
@@ -291,7 +293,7 @@ class ReportService {
       // Get top performer
       const { data: topStudent } = await this.supabase
         .from('student_performance')
-        .select('student_id, average_score, users:student_id (full_name)')
+        .select('student_id, average_score, users:student_id (first_name, last_name)')
         .in('student_id', studentIds)
         .order('average_score', { ascending: false })
         .limit(1)
@@ -306,9 +308,9 @@ class ReportService {
 
       let topPerformerName: string | null = null;
       if (topStudent) {
-        const userArr = topStudent.users as { full_name: string }[] | { full_name: string } | null;
+        const userArr = topStudent.users as { first_name: string | null; last_name: string | null }[] | { first_name: string | null; last_name: string | null } | null;
         const user = Array.isArray(userArr) ? userArr[0] : userArr;
-        topPerformerName = user?.full_name || null;
+        topPerformerName = user ? `${user.first_name || ''} ${user.last_name || ''}`.trim() || null : null;
       }
 
       reports.push({

@@ -271,6 +271,21 @@ class UserService {
 
     return { user, profile };
   }
+
+  /**
+   * Delete a user from the database
+   */
+  async delete(id: string): Promise<void> {
+    const { error } = await this.supabase
+      .from('users')
+      .delete()
+      .eq('id', id);
+
+    if (error) {
+      console.error('Error deleting user:', error);
+      throw new Error('Failed to delete user');
+    }
+  }
 }
 
 // Export singleton instance

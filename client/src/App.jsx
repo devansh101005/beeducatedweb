@@ -53,10 +53,10 @@ import { FeeListPage, MyFeesPage } from "@modules/fees";
 import { PaymentPage, PaymentSuccessPage, PaymentHistoryPage } from "@modules/payments";
 
 // Announcements
-import { AnnouncementsFeed } from "@modules/announcements";
+import { AnnouncementsPage } from "@modules/announcements";
 
 // Admin Management
-import { UsersPage, BatchesPage, CoursesPage, ExamsPage, ApplicationsPage, StudentsPage, ParentsPage, ContentManagementPage } from "@modules/admin";
+import { UsersPage, BatchesPage, CoursesPage, ExamsPage, ExamEditorPage, ApplicationsPage, StudentsPage, ParentsPage, ContentManagementPage, TeachersPage, AdminPaymentsPage } from "@modules/admin";
 
 // Student Pages
 import { MyCoursesPage, StudyMaterialsPage, MyExamsPage, MyResultsPage } from "@modules/student";
@@ -111,7 +111,7 @@ function App() {
           <Route path="payment-history" element={<PaymentHistoryPage />} />
 
           {/* Announcements */}
-          <Route path="announcements" element={<AnnouncementsFeed />} />
+          <Route path="announcements" element={<AnnouncementsPage />} />
 
           {/* Admin Management */}
           <Route path="applications" element={<ApplicationsPage />} />
@@ -121,7 +121,10 @@ function App() {
           <Route path="batches" element={<BatchesPage />} />
           <Route path="courses" element={<CoursesPage />} />
           <Route path="exams" element={<ExamsPage />} />
+          <Route path="exams/:examId/edit" element={<ExamEditorPage />} />
           <Route path="materials" element={<ContentManagementPage />} />
+          <Route path="teachers" element={<TeachersPage />} />
+          <Route path="payments" element={<AdminPaymentsPage />} />
 
           {/* Student Pages */}
           <Route path="my-courses" element={<MyCoursesPage />} />

@@ -576,7 +576,7 @@ class FeeService {
 
     let query = this.supabase
       .from('student_fees')
-      .select('*', { count: 'exact' });
+      .select('*, student:students(id, student_id, user:users(first_name, last_name, email))', { count: 'exact' });
 
     if (studentId) {
       query = query.eq('student_id', studentId);
@@ -614,6 +614,37 @@ class FeeService {
     return {
       fees: data as StudentFee[],
       total: count || 0,
+    };
+  }
+
+  /**
+   * Get admin-level fee summary across all students
+   */
+  async getAdminFeeSummary(): Promise<{
+    totalFees: number;
+    totalCollected: number;
+    totalPending: number;
+    totalOverdue: number;
+    overdueCount: number;
+  }> {
+    const { data, error } = await this.supabase
+      .from('student_fees')
+      .select('total_amount, amount_paid, amount_due, status, due_date');
+
+    if (error) {
+      throw new Error(`Failed to get admin fee summary: ${error.message}`);
+    }
+
+    const today = new Date().toISOString().split('T')[0];
+    const pending = data.filter((f) => f.status === 'pending');
+    const overdueFees = pending.filter((f) => f.due_date < today);
+
+    return {
+      totalFees: data.reduce((sum, f) => sum + Number(f.total_amount), 0),
+      totalCollected: data.reduce((sum, f) => sum + Number(f.amount_paid), 0),
+      totalPending: pending.reduce((sum, f) => sum + Number(f.amount_due), 0),
+      totalOverdue: overdueFees.reduce((sum, f) => sum + Number(f.amount_due), 0),
+      overdueCount: overdueFees.length,
     };
   }
 

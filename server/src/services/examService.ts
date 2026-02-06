@@ -316,11 +316,16 @@ class ExamService {
       .from('exams')
       .select('*')
       .in('status', ['scheduled', 'live'])
-      .or(`start_time.is.null,start_time.lte.${now}`)
       .or(`end_time.is.null,end_time.gt.${now}`);
 
     // Filter by batch or course access
-    const accessFilters: string[] = ['is_free.eq.true'];
+    // - is_free exams are visible to all
+    // - exams with matching batch_id or course_id
+    // - exams with no batch_id AND no course_id are general (visible to all)
+    const accessFilters: string[] = [
+      'is_free.eq.true',
+      'and(batch_id.is.null,course_id.is.null)',
+    ];
 
     if (batchIds.length > 0) {
       accessFilters.push(`batch_id.in.(${batchIds.join(',')})`);
@@ -332,7 +337,7 @@ class ExamService {
 
     query = query.or(accessFilters.join(','));
 
-    const { data, error } = await query.order('start_time', { ascending: true });
+    const { data, error } = await query.order('start_time', { ascending: true, nullsFirst: false });
 
     if (error) {
       throw new Error(`Failed to get available exams: ${error.message}`);

@@ -20,6 +20,9 @@ import {
   School,
   Target,
   User,
+  Trash2,
+  UserX,
+  MoreVertical,
 } from 'lucide-react';
 import {
   Card,
@@ -228,13 +231,17 @@ function AddStudentModal({ onClose, onSuccess }: AddStudentModalProps) {
     fetchCourseTypes();
   }, []);
 
-  // Fetch classes when course type changes
+  // Fetch classes when course type changes & auto-set studentType
   useEffect(() => {
     if (!selectedCourseType) {
       setAcademicClasses([]);
       setSelectedClassId('');
       return;
     }
+
+    // Auto-set studentType based on course type slug (they map directly)
+    // Course type slugs: coaching_offline, coaching_online, test_series, home_tuition
+    setStudentType(selectedCourseType.replace(/-/g, '_'));
 
     const fetchClasses = async () => {
       setLoadingClasses(true);
@@ -466,11 +473,11 @@ function AddStudentModal({ onClose, onSuccess }: AddStudentModalProps) {
                 <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-lg">
                   <p className="text-xs font-medium text-emerald-700 mb-2 flex items-center gap-1">
                     <GraduationCap className="w-3.5 h-3.5" />
-                    Manual Enrollment (Optional)
+                    Enroll Student (Optional)
                   </p>
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <label className="block text-xs font-medium text-slate-600 mb-1">Course Type</label>
+                      <label className="block text-xs font-medium text-slate-600 mb-1">Program</label>
                       <Select
                         value={selectedCourseType}
                         onChange={(e) => {
@@ -485,12 +492,27 @@ function AddStudentModal({ onClose, onSuccess }: AddStudentModalProps) {
                       />
                     </div>
                     <div>
-                      <label className="block text-xs font-medium text-slate-600 mb-1">Class</label>
+                      <label className="block text-xs font-medium text-slate-600 mb-1">Enroll In</label>
                       <Select
                         value={selectedClassId}
-                        onChange={(e) => setSelectedClassId(e.target.value)}
+                        onChange={(e) => {
+                          setSelectedClassId(e.target.value);
+                          // Auto-detect grade from class name (e.g., "Class 12 JEE" → "12th")
+                          const selectedClass = academicClasses.find(c => c.id === e.target.value);
+                          if (selectedClass) {
+                            const match = selectedClass.name.match(/(?:class\s*)?(\d{1,2})(?:th|st|nd|rd)?/i);
+                            if (match) {
+                              const grade = match[1] + 'th';
+                              if (['9th', '10th', '11th', '12th'].includes(grade)) {
+                                setClassGrade(grade);
+                              }
+                            } else if (selectedClass.name.toLowerCase().includes('dropper')) {
+                              setClassGrade('dropper');
+                            }
+                          }
+                        }}
                         options={[
-                          { value: '', label: loadingClasses ? 'Loading...' : (selectedCourseType ? 'Select class' : 'Select course first') },
+                          { value: '', label: loadingClasses ? 'Loading...' : (selectedCourseType ? 'Select class' : 'Select program first') },
                           ...academicClasses.map(c => ({ value: c.id, label: c.name })),
                         ]}
                         disabled={!selectedCourseType || loadingClasses}
@@ -498,7 +520,7 @@ function AddStudentModal({ onClose, onSuccess }: AddStudentModalProps) {
                     </div>
                   </div>
                   <p className="text-xs text-slate-500 mt-2">
-                    Select a course type and class to auto-enroll the student with a free manual enrollment.
+                    Select a program and class to auto-enroll the student with a free enrollment.
                   </p>
                 </div>
 
@@ -547,27 +569,48 @@ function AddStudentModal({ onClose, onSuccess }: AddStudentModalProps) {
                   )}
                 </div>
 
-                {/* Student Type */}
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">
-                    Student Type <span className="text-rose-500">*</span>
-                  </label>
-                  <Select
-                    value={studentType}
-                    onChange={(e) => setStudentType(e.target.value)}
-                    options={studentTypes}
-                  />
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
+                {/* Student Type - only show if no course type selected for enrollment */}
+                {!selectedCourseType ? (
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Class</label>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">
+                      Student Type <span className="text-rose-500">*</span>
+                    </label>
                     <Select
-                      value={classGrade}
-                      onChange={(e) => setClassGrade(e.target.value)}
-                      options={classes}
+                      value={studentType}
+                      onChange={(e) => setStudentType(e.target.value)}
+                      options={studentTypes}
                     />
                   </div>
+                ) : (
+                  <div className="p-2 bg-slate-50 rounded-lg border border-slate-200">
+                    <p className="text-xs text-slate-500">
+                      Student Type: <span className="font-medium text-slate-700">{studentTypes.find(t => t.value === studentType)?.label || studentType}</span>
+                      <span className="text-emerald-600 ml-1">(auto-set from Course Type)</span>
+                    </p>
+                  </div>
+                )}
+
+                <div className="grid grid-cols-2 gap-4">
+                  {/* Grade - only show if no enrollment class selected */}
+                  {!selectedClassId ? (
+                    <div>
+                      <label className="block text-sm font-medium text-slate-700 mb-1">Grade</label>
+                      <Select
+                        value={classGrade}
+                        onChange={(e) => setClassGrade(e.target.value)}
+                        options={classes}
+                      />
+                    </div>
+                  ) : (
+                    <div className="flex items-center">
+                      <div className="p-2 bg-slate-50 rounded-lg border border-slate-200 w-full">
+                        <p className="text-xs text-slate-500">
+                          Grade: <span className="font-medium text-slate-700">{classes.find(c => c.value === classGrade)?.label || classGrade}</span>
+                          <span className="text-emerald-600 ml-1">(from class)</span>
+                        </p>
+                      </div>
+                    </div>
+                  )}
                   <div>
                     <label className="block text-sm font-medium text-slate-700 mb-1">Board</label>
                     <Select
@@ -692,6 +735,11 @@ export function StudentsPage() {
   // Modal state - check if action=add in URL
   const [showAddModal, setShowAddModal] = useState(searchParams.get('action') === 'add');
 
+  // Delete/Unenroll state
+  const [studentToDelete, setStudentToDelete] = useState<Student | null>(null);
+  const [deleteAction, setDeleteAction] = useState<'delete' | 'unenroll' | null>(null);
+  const [deleting, setDeleting] = useState(false);
+
   // Clear action param when modal closes
   const handleCloseAddModal = () => {
     setShowAddModal(false);
@@ -720,11 +768,14 @@ export function StudentsPage() {
       });
 
       const data = await res.json();
+      console.log('Students API response:', data);
 
       if (data.success) {
-        setStudents(Array.isArray(data.data) ? data.data : []);
-        setTotalPages(data.pagination?.totalPages || 1);
-        setTotalItems(data.pagination?.total || 0);
+        // sendPaginated returns { items, total, page, pageSize, totalPages } in data
+        const items = data.data?.items || data.data || [];
+        setStudents(Array.isArray(items) ? items : []);
+        setTotalPages(data.data?.totalPages || data.pagination?.totalPages || 1);
+        setTotalItems(data.data?.total || data.pagination?.total || 0);
       }
     } catch (error) {
       console.error('Error fetching students:', error);
@@ -757,6 +808,64 @@ export function StudentsPage() {
   const handleAddSuccess = () => {
     setShowAddModal(false);
     fetchStudents(false);
+  };
+
+  // Delete student handler
+  const handleDeleteStudent = async () => {
+    if (!studentToDelete) return;
+
+    setDeleting(true);
+    try {
+      const token = await getToken();
+      const res = await fetch(`${API_URL}/v2/admin/students/${studentToDelete.id}?deleteUser=true`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.message || 'Failed to delete student');
+      }
+
+      // Refresh list
+      fetchStudents(false);
+    } catch (err: any) {
+      console.error('Error deleting student:', err);
+      alert(err.message || 'Failed to delete student');
+    } finally {
+      setDeleting(false);
+      setStudentToDelete(null);
+      setDeleteAction(null);
+    }
+  };
+
+  // Unenroll student handler
+  const handleUnenrollStudent = async () => {
+    if (!studentToDelete) return;
+
+    setDeleting(true);
+    try {
+      const token = await getToken();
+      const res = await fetch(`${API_URL}/v2/admin/students/${studentToDelete.id}/enrollment`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.message || 'Failed to unenroll student');
+      }
+
+      // Refresh list
+      fetchStudents(false);
+    } catch (err: any) {
+      console.error('Error unenrolling student:', err);
+      alert(err.message || 'Failed to unenroll student');
+    } finally {
+      setDeleting(false);
+      setStudentToDelete(null);
+      setDeleteAction(null);
+    }
   };
 
   const getStudentTypeBadge = (type: string) => {
@@ -995,9 +1104,35 @@ export function StudentsPage() {
                       </div>
 
                       {/* Actions */}
-                      <div className="flex items-center gap-2 shrink-0">
-                        <Button variant="ghost" size="sm">
+                      <div className="flex items-center gap-1 shrink-0">
+                        <Button variant="ghost" size="sm" title="View">
                           <Eye className="w-4 h-4" />
+                        </Button>
+                        {student.enrollment && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            title="Unenroll"
+                            onClick={() => {
+                              setStudentToDelete(student);
+                              setDeleteAction('unenroll');
+                            }}
+                            className="text-amber-600 hover:text-amber-700 hover:bg-amber-50"
+                          >
+                            <UserX className="w-4 h-4" />
+                          </Button>
+                        )}
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          title="Delete Student"
+                          onClick={() => {
+                            setStudentToDelete(student);
+                            setDeleteAction('delete');
+                          }}
+                          className="text-rose-600 hover:text-rose-700 hover:bg-rose-50"
+                        >
+                          <Trash2 className="w-4 h-4" />
                         </Button>
                       </div>
                     </div>
@@ -1028,6 +1163,104 @@ export function StudentsPage() {
           onClose={handleCloseAddModal}
           onSuccess={handleAddSuccess}
         />
+      )}
+
+      {/* Delete/Unenroll Confirmation Modal */}
+      {studentToDelete && deleteAction && (
+        <AnimatePresence>
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+            onClick={() => {
+              setStudentToDelete(null);
+              setDeleteAction(null);
+            }}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Header */}
+              <div className={clsx(
+                'px-6 py-4 flex items-center gap-3',
+                deleteAction === 'delete' ? 'bg-rose-50' : 'bg-amber-50'
+              )}>
+                <div className={clsx(
+                  'w-10 h-10 rounded-xl flex items-center justify-center',
+                  deleteAction === 'delete' ? 'bg-rose-100' : 'bg-amber-100'
+                )}>
+                  {deleteAction === 'delete' ? (
+                    <Trash2 className="w-5 h-5 text-rose-600" />
+                  ) : (
+                    <UserX className="w-5 h-5 text-amber-600" />
+                  )}
+                </div>
+                <div>
+                  <h2 className="text-lg font-heading font-semibold text-slate-900">
+                    {deleteAction === 'delete' ? 'Delete Student' : 'Unenroll Student'}
+                  </h2>
+                  <p className="text-sm text-slate-500">
+                    {deleteAction === 'delete' ? 'This action cannot be undone' : 'Remove enrollment but keep profile'}
+                  </p>
+                </div>
+              </div>
+
+              {/* Content */}
+              <div className="p-6">
+                <p className="text-slate-600">
+                  {deleteAction === 'delete' ? (
+                    <>
+                      Are you sure you want to delete <span className="font-semibold">{studentToDelete.users?.first_name} {studentToDelete.users?.last_name}</span>?
+                      This will permanently remove their account and all associated data.
+                    </>
+                  ) : (
+                    <>
+                      Are you sure you want to unenroll <span className="font-semibold">{studentToDelete.users?.first_name} {studentToDelete.users?.last_name}</span>?
+                      This will cancel their enrollment but keep their student profile.
+                    </>
+                  )}
+                </p>
+
+                {studentToDelete.enrollment && deleteAction === 'delete' && (
+                  <div className="mt-3 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                    <p className="text-sm text-amber-700">
+                      This student has an active enrollment in <span className="font-medium">{studentToDelete.enrollment.class_name}</span>.
+                      It will be cancelled automatically.
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              {/* Footer */}
+              <div className="px-6 py-4 border-t border-slate-100 flex justify-end gap-3">
+                <Button
+                  variant="ghost"
+                  onClick={() => {
+                    setStudentToDelete(null);
+                    setDeleteAction(null);
+                  }}
+                  disabled={deleting}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  variant={deleteAction === 'delete' ? 'danger' : 'primary'}
+                  onClick={deleteAction === 'delete' ? handleDeleteStudent : handleUnenrollStudent}
+                  disabled={deleting}
+                  leftIcon={deleting ? <Spinner size="sm" /> : deleteAction === 'delete' ? <Trash2 className="w-4 h-4" /> : <UserX className="w-4 h-4" />}
+                  className={deleteAction === 'unenroll' ? 'bg-amber-500 hover:bg-amber-600' : ''}
+                >
+                  {deleting ? 'Processing...' : deleteAction === 'delete' ? 'Delete Student' : 'Unenroll'}
+                </Button>
+              </div>
+            </motion.div>
+          </motion.div>
+        </AnimatePresence>
       )}
     </div>
   );

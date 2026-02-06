@@ -72,10 +72,12 @@ interface StudentFee {
   created_at: string;
   student?: {
     id: string;
-    first_name: string;
-    last_name: string;
-    email: string;
     student_id: string;
+    user?: {
+      first_name: string | null;
+      last_name: string | null;
+      email: string;
+    };
   };
 }
 
@@ -174,15 +176,16 @@ export function FeeListPage() {
   const fetchSummary = async () => {
     try {
       const token = await getToken();
-      // Note: We'd need a summary endpoint on the backend
-      // For now, using placeholder data
-      setSummary({
-        totalFees: 1250000,
-        totalCollected: 850000,
-        totalPending: 300000,
-        totalOverdue: 100000,
-        overdueCount: 15,
+      const response = await fetch(`${API_URL}/v2/fees/summary`, {
+        headers: { Authorization: `Bearer ${token}` },
       });
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success && data.data) {
+          setSummary(data.data);
+        }
+      }
     } catch (error) {
       console.error('Error fetching summary:', error);
     }
@@ -244,20 +247,25 @@ export function FeeListPage() {
     {
       key: 'student',
       header: 'Student',
-      accessor: (row: StudentFee) => (
-        <div className="flex items-center gap-3">
-          <Avatar
-            name={`${row.student?.first_name || ''} ${row.student?.last_name || ''}`}
-            size="sm"
-          />
-          <div className="min-w-0">
-            <p className="text-sm font-medium text-slate-900 truncate">
-              {row.student?.first_name} {row.student?.last_name}
-            </p>
-            <p className="text-xs text-slate-500">{row.student?.student_id}</p>
+      accessor: (row: StudentFee) => {
+        const firstName = row.student?.user?.first_name || '';
+        const lastName = row.student?.user?.last_name || '';
+        const studentName = [firstName, lastName].filter(Boolean).join(' ') || 'Unknown';
+        return (
+          <div className="flex items-center gap-3">
+            <Avatar
+              name={studentName}
+              size="sm"
+            />
+            <div className="min-w-0">
+              <p className="text-sm font-medium text-slate-900 truncate">
+                {studentName}
+              </p>
+              <p className="text-xs text-slate-500">{row.student?.student_id}</p>
+            </div>
           </div>
-        </div>
-      ),
+        );
+      },
     },
     {
       key: 'type',
@@ -566,7 +574,7 @@ export function FeeListPage() {
                 {feeTypeConfig[feeToDelete.fee_type] || feeToDelete.fee_type}
               </p>
               <p className="text-sm text-slate-500">
-                {formatCurrency(feeToDelete.total_amount)} - {feeToDelete.student?.first_name} {feeToDelete.student?.last_name}
+                {formatCurrency(feeToDelete.total_amount)} - {[feeToDelete.student?.user?.first_name, feeToDelete.student?.user?.last_name].filter(Boolean).join(' ') || 'Unknown'}
               </p>
             </div>
           )}

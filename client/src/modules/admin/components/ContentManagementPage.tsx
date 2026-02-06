@@ -51,7 +51,7 @@ interface Content {
   title: string;
   description: string | null;
   content_type: 'video' | 'pdf' | 'document' | 'image' | 'audio' | 'link';
-  material_type: 'lecture' | 'notes' | 'dpp' | 'dpp_pdf' | 'dpp_video' | 'quiz' | null;
+  material_type: 'lecture' | 'notes' | 'dpp' | 'dpp_pdf' | 'dpp_video' | 'quiz' | 'dpp_solution' | 'ncert' | 'pyq' | null;
   course_id: string | null;
   class_id: string | null;
   subject_id: string | null;
@@ -67,10 +67,15 @@ interface Content {
   sequence_order: number;
   created_at: string;
   updated_at: string;
-  // Hierarchy info
+  // Hierarchy info from content_with_hierarchy view
   class_name?: string;
+  class_slug?: string;
   subject_name?: string;
+  subject_code?: string;
+  subject_color?: string;
   course_type_name?: string;
+  course_type_slug?: string;
+  course_name?: string;
   courses?: {
     name: string;
   };
@@ -763,9 +768,10 @@ export function ContentManagementPage() {
       const data = await res.json();
 
       if (data.success) {
-        setContent(Array.isArray(data.data) ? data.data : []);
-        setTotalPages(data.pagination?.totalPages || 1);
-        setTotalItems(data.pagination?.total || 0);
+        // sendPaginated returns { items, total, page, pageSize, totalPages } in data
+        setContent(data.data?.items || []);
+        setTotalPages(data.data?.totalPages || 1);
+        setTotalItems(data.data?.total || 0);
       }
     } catch (error) {
       console.error('Error fetching content:', error);
@@ -1163,10 +1169,23 @@ export function ContentManagementPage() {
                           <Badge variant="warning" size="sm">Draft</Badge>
                         )}
                       </div>
-                      <div className="flex flex-wrap items-center gap-3 text-sm text-slate-500">
+                      <div className="flex flex-wrap items-center gap-2 text-sm text-slate-500">
                         <span className="capitalize">{item.content_type}</span>
-                        {item.courses?.name && (
-                          <span>• {item.courses.name}</span>
+                        {item.material_type && (
+                          <Badge variant="info" size="sm" className="capitalize">
+                            {item.material_type.replace(/_/g, ' ')}
+                          </Badge>
+                        )}
+                        {item.class_name && (
+                          <span className="text-slate-600">• {item.class_name}</span>
+                        )}
+                        {item.subject_name && (
+                          <span
+                            className="font-medium"
+                            style={{ color: item.subject_color || '#6b7280' }}
+                          >
+                            • {item.subject_name}
+                          </span>
                         )}
                         {item.file_size && (
                           <span>• {formatFileSize(item.file_size)}</span>

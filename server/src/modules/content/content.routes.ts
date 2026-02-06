@@ -62,22 +62,36 @@ router.get('/', requireAuth, attachUser, async (req: Request, res: Response) => 
     const isAdminOrTeacher = req.user?.role === 'admin' || req.user?.role === 'teacher';
     const effectivePublished = isAdminOrTeacher ? isPublished : true;
 
-    const result = await contentService.list({
-      page,
-      limit,
-      courseId,
-      topicId,
-      batchId,
-      classId,
-      subjectId,
-      materialType,
-      contentType,
-      isPublished: effectivePublished,
-      isFree,
-      search,
-    });
-
-    sendPaginated(res, result.content, result.total, page, limit);
+    // Use listWithHierarchy for admin/teacher to get class/subject names
+    if (isAdminOrTeacher) {
+      const result = await contentService.listWithHierarchy({
+        page,
+        limit,
+        classId,
+        subjectId,
+        materialType,
+        contentType,
+        isPublished: effectivePublished,
+        search,
+      });
+      sendPaginated(res, result.content, result.total, page, limit);
+    } else {
+      const result = await contentService.list({
+        page,
+        limit,
+        courseId,
+        topicId,
+        batchId,
+        classId,
+        subjectId,
+        materialType,
+        contentType,
+        isPublished: effectivePublished,
+        isFree,
+        search,
+      });
+      sendPaginated(res, result.content, result.total, page, limit);
+    }
   } catch (error) {
     console.error('Error listing content:', error);
     sendError(res, 'Failed to list content');

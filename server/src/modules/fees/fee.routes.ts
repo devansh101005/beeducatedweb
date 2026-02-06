@@ -316,6 +316,20 @@ router.get('/', requireAuth, attachUser, requireTeacherOrAdmin, async (req: Requ
 });
 
 /**
+ * GET /api/v2/fees/summary
+ * Get admin-level fee summary across all students
+ */
+router.get('/summary', requireAuth, attachUser, requireTeacherOrAdmin, async (_req: Request, res: Response) => {
+  try {
+    const summary = await feeService.getAdminFeeSummary();
+    sendSuccess(res, summary);
+  } catch (error) {
+    console.error('Error getting fee summary:', error);
+    sendError(res, 'Failed to get fee summary');
+  }
+});
+
+/**
  * GET /api/v2/fees/:id
  * Get student fee by ID
  */

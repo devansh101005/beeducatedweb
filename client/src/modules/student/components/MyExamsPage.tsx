@@ -2,24 +2,19 @@
 // Premium exam listing with upcoming, ongoing, and past exams
 
 import { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
 import { Link, useNavigate } from 'react-router-dom';
+import { useAuth } from '@clerk/clerk-react';
 import {
   FileQuestion,
-  Clock,
   Calendar,
   Play,
-  CheckCircle,
-  AlertCircle,
   Timer,
   Target,
   Award,
-  ChevronRight,
   BarChart3,
   Lock,
-  Bell,
 } from 'lucide-react';
-import { format, formatDistanceToNow, isPast, isFuture, differenceInMinutes } from 'date-fns';
+import { format, formatDistanceToNow, isPast, differenceInMinutes } from 'date-fns';
 import {
   PageTransition,
   FadeIn,
@@ -29,74 +24,85 @@ import {
 } from '@shared/components/ui/motion';
 import { Button } from '@shared/components/ui/Button';
 import { Card, CardBody, StatCard } from '@shared/components/ui/Card';
-import { Badge, StatusBadge } from '@shared/components/ui/Badge';
+import { Badge } from '@shared/components/ui/Badge';
 import { SkeletonCard } from '@shared/components/ui/Loading';
 import { EmptyState } from '@shared/components/ui/EmptyState';
+
+const API_URL = import.meta.env.VITE_API_URL || '/api';
 
 interface Exam {
   id: string;
   title: string;
   description?: string;
-  course: {
-    id: string;
-    name: string;
-  };
-  type: 'quiz' | 'test' | 'mock' | 'final';
+  examType: string | null;
   duration: number; // minutes
   totalMarks: number;
   passingMarks: number;
-  totalQuestions: number;
   scheduledAt?: string;
   endsAt?: string;
   status: 'upcoming' | 'live' | 'completed' | 'missed';
-  attempt?: {
-    id: string;
-    score: number;
-    percentage: number;
-    passed: boolean;
-    completedAt: string;
-    timeTaken: number;
-  };
 }
 
 const typeColors: Record<string, string> = {
   quiz: 'info',
   test: 'primary',
-  mock: 'warning',
+  mock_test: 'warning',
   final: 'danger',
+  unit_test: 'primary',
+  mid_term: 'warning',
+  practice: 'info',
 };
 
 const typeLabels: Record<string, string> = {
   quiz: 'Quiz',
   test: 'Test',
-  mock: 'Mock Test',
+  mock_test: 'Mock Test',
   final: 'Final Exam',
+  unit_test: 'Unit Test',
+  mid_term: 'Mid Term',
+  practice: 'Practice',
 };
 
 export function MyExamsPage() {
   const navigate = useNavigate();
+  const { getToken } = useAuth();
   const [exams, setExams] = useState<Exam[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'upcoming' | 'completed' | 'all'>('upcoming');
-  const [stats, setStats] = useState({
-    upcoming: 0,
-    completed: 0,
-    avgScore: 0,
-    passRate: 0,
-  });
+  const [now, setNow] = useState(new Date());
+
+  // Tick every 30s so countdowns and entry windows update
+  useEffect(() => {
+    const interval = setInterval(() => setNow(new Date()), 30_000);
+    return () => clearInterval(interval);
+  }, []);
 
   useEffect(() => {
     fetchExams();
-    fetchStats();
   }, []);
 
   const fetchExams = async () => {
     setLoading(true);
     try {
-      const response = await fetch('/api/v2/student/exams');
+      const token = await getToken();
+      const response = await fetch(`${API_URL}/v2/exams/available`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
       const data = await response.json();
       if (data.success) {
-        setExams(data.data);
+        const mapped: Exam[] = (data.data || []).map((e: any) => ({
+          id: e.id,
+          title: e.title,
+          description: e.description,
+          examType: e.exam_type,
+          duration: e.duration_minutes,
+          totalMarks: e.total_marks || 0,
+          passingMarks: e.passing_marks || 0,
+          scheduledAt: e.start_time,
+          endsAt: e.end_time,
+          status: e.status === 'live' ? 'live' : 'upcoming',
+        }));
+        setExams(mapped);
       }
     } catch (error) {
       console.error('Failed to fetch exams:', error);
@@ -105,16 +111,11 @@ export function MyExamsPage() {
     }
   };
 
-  const fetchStats = async () => {
-    try {
-      const response = await fetch('/api/v2/student/exams/stats');
-      const data = await response.json();
-      if (data.success) {
-        setStats(data.data);
-      }
-    } catch (error) {
-      console.error('Failed to fetch stats:', error);
-    }
+  // Compute stats client-side
+  const stats = {
+    upcoming: exams.filter((e) => e.status === 'upcoming').length,
+    live: exams.filter((e) => e.status === 'live').length,
+    total: exams.length,
   };
 
   const filteredExams = exams.filter((exam) => {
@@ -123,13 +124,13 @@ export function MyExamsPage() {
     return exam.status === 'completed' || exam.status === 'missed';
   });
 
-  // Sort: Live first, then upcoming by date, then completed
+  // Sort: Live first, then exams enterable soon, then upcoming by date
   const sortedExams = [...filteredExams].sort((a, b) => {
     if (a.status === 'live' && b.status !== 'live') return -1;
     if (b.status === 'live' && a.status !== 'live') return 1;
-    if (a.status === 'upcoming' && b.status !== 'upcoming') return -1;
-    if (b.status === 'upcoming' && a.status !== 'upcoming') return 1;
-    return 0;
+    const aTime = a.scheduledAt ? new Date(a.scheduledAt).getTime() : Infinity;
+    const bTime = b.scheduledAt ? new Date(b.scheduledAt).getTime() : Infinity;
+    return aTime - bTime;
   });
 
   return (
@@ -146,7 +147,7 @@ export function MyExamsPage() {
         </FadeIn>
 
         {/* Stats */}
-        <Stagger className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <Stagger className="grid grid-cols-2 md:grid-cols-3 gap-4">
           <StaggerItem>
             <StatCard
               title="Upcoming"
@@ -157,26 +158,18 @@ export function MyExamsPage() {
           </StaggerItem>
           <StaggerItem>
             <StatCard
-              title="Completed"
-              value={stats.completed}
-              icon={<CheckCircle className="w-5 h-5" />}
+              title="Live Now"
+              value={stats.live}
+              icon={<Play className="w-5 h-5" />}
               color="success"
             />
           </StaggerItem>
           <StaggerItem>
             <StatCard
-              title="Avg. Score"
-              value={`${stats.avgScore.toFixed(0)}%`}
+              title="Total Available"
+              value={stats.total}
               icon={<BarChart3 className="w-5 h-5" />}
               color="primary"
-            />
-          </StaggerItem>
-          <StaggerItem>
-            <StatCard
-              title="Pass Rate"
-              value={`${stats.passRate.toFixed(0)}%`}
-              icon={<Award className="w-5 h-5" />}
-              color="info"
             />
           </StaggerItem>
         </Stagger>
@@ -253,7 +246,7 @@ export function MyExamsPage() {
           <Stagger className="space-y-4">
             {sortedExams.map((exam) => (
               <StaggerItem key={exam.id}>
-                <ExamCard exam={exam} />
+                <ExamCard exam={exam} now={now} />
               </StaggerItem>
             ))}
           </Stagger>
@@ -264,33 +257,45 @@ export function MyExamsPage() {
 }
 
 // Exam Card Component
-function ExamCard({ exam }: { exam: Exam }) {
+function ExamCard({ exam, now }: { exam: Exam; now: Date }) {
   const navigate = useNavigate();
   const isLive = exam.status === 'live';
   const isUpcoming = exam.status === 'upcoming';
-  const isCompleted = exam.status === 'completed';
-  const isMissed = exam.status === 'missed';
 
-  const getTimeRemaining = () => {
+  // Check if student can enter (10 min before start time)
+  const canEnter = (() => {
+    if (isLive) return true;
+    if (!exam.scheduledAt) return false;
+    const startTime = new Date(exam.scheduledAt);
+    const minsUntilStart = differenceInMinutes(startTime, now);
+    return minsUntilStart <= 10;
+  })();
+
+  const getTimeInfo = () => {
     if (!exam.scheduledAt) return null;
-    const scheduled = new Date(exam.scheduledAt);
-    if (isPast(scheduled)) return null;
-    return formatDistanceToNow(scheduled, { addSuffix: true });
+    const startTime = new Date(exam.scheduledAt);
+    if (isPast(startTime)) return null;
+    const minsUntilStart = differenceInMinutes(startTime, now);
+    if (minsUntilStart <= 10) {
+      return `Starts in ${minsUntilStart <= 0 ? 'less than a minute' : `${minsUntilStart} min`}`;
+    }
+    return formatDistanceToNow(startTime, { addSuffix: true });
   };
 
   const handleAction = () => {
-    if (isLive) {
+    if (isLive || canEnter) {
       navigate(`/dashboard/exam/${exam.id}/take`);
-    } else if (isCompleted && exam.attempt) {
-      navigate(`/dashboard/exam/${exam.id}/result`);
     }
   };
+
+  const typeKey = exam.examType || 'test';
 
   return (
     <HoverScale scale={1.01}>
       <Card
         className={`transition-all ${
-          isLive ? 'border-2 border-success-400 shadow-lg shadow-success-100' : ''
+          isLive ? 'border-2 border-success-400 shadow-lg shadow-success-100' :
+          canEnter && isUpcoming ? 'border-2 border-amber-300 shadow-lg shadow-amber-50' : ''
         }`}
       >
         <CardBody className="p-5">
@@ -298,8 +303,8 @@ function ExamCard({ exam }: { exam: Exam }) {
             {/* Left - Info */}
             <div className="flex-1">
               <div className="flex items-center gap-2 mb-2">
-                <Badge variant={typeColors[exam.type] as any}>
-                  {typeLabels[exam.type]}
+                <Badge variant={(typeColors[typeKey] || 'primary') as any}>
+                  {typeLabels[typeKey] || typeKey}
                 </Badge>
                 {isLive && (
                   <span className="flex items-center gap-1 text-xs font-medium text-success-600 bg-success-100 px-2 py-0.5 rounded-full">
@@ -307,13 +312,15 @@ function ExamCard({ exam }: { exam: Exam }) {
                     LIVE NOW
                   </span>
                 )}
-                {isMissed && (
-                  <Badge variant="danger">Missed</Badge>
+                {canEnter && isUpcoming && (
+                  <span className="flex items-center gap-1 text-xs font-medium text-amber-600 bg-amber-100 px-2 py-0.5 rounded-full">
+                    <span className="w-2 h-2 bg-amber-500 rounded-full animate-pulse" />
+                    ENTRY OPEN
+                  </span>
                 )}
               </div>
 
               <h3 className="text-lg font-semibold text-neutral-900">{exam.title}</h3>
-              <p className="text-sm text-neutral-500 mt-1">{exam.course.name}</p>
 
               {exam.description && (
                 <p className="text-sm text-neutral-600 mt-2 line-clamp-1">
@@ -332,19 +339,15 @@ function ExamCard({ exam }: { exam: Exam }) {
                   {exam.totalMarks} marks
                 </span>
                 <span className="flex items-center gap-1">
-                  <FileQuestion className="w-4 h-4" />
-                  {exam.totalQuestions} questions
-                </span>
-                <span className="flex items-center gap-1">
                   <Award className="w-4 h-4" />
                   Pass: {exam.passingMarks} marks
                 </span>
               </div>
             </div>
 
-            {/* Right - Schedule/Result */}
+            {/* Right - Schedule + Action */}
             <div className="flex flex-col items-end gap-3">
-              {isUpcoming && exam.scheduledAt && (
+              {exam.scheduledAt && (
                 <div className="text-right">
                   <p className="text-xs text-neutral-500 uppercase tracking-wider">Scheduled</p>
                   <p className="text-sm font-medium text-neutral-900">
@@ -353,35 +356,11 @@ function ExamCard({ exam }: { exam: Exam }) {
                   <p className="text-sm text-neutral-600">
                     {format(new Date(exam.scheduledAt), 'h:mm a')}
                   </p>
-                  <p className="text-xs text-warning-600 mt-1">
-                    {getTimeRemaining()}
-                  </p>
-                </div>
-              )}
-
-              {isCompleted && exam.attempt && (
-                <div className="text-right">
-                  <div className="flex items-center gap-2 justify-end mb-1">
-                    {exam.attempt.passed ? (
-                      <CheckCircle className="w-5 h-5 text-success-500" />
-                    ) : (
-                      <AlertCircle className="w-5 h-5 text-danger-500" />
-                    )}
-                    <span
-                      className={`text-lg font-bold ${
-                        exam.attempt.passed ? 'text-success-600' : 'text-danger-600'
-                      }`}
-                    >
-                      {exam.attempt.score}/{exam.totalMarks}
-                    </span>
-                  </div>
-                  <p className="text-sm text-neutral-600">
-                    {exam.attempt.percentage.toFixed(0)}% •{' '}
-                    {exam.attempt.passed ? 'Passed' : 'Failed'}
-                  </p>
-                  <p className="text-xs text-neutral-500 mt-1">
-                    Completed {format(new Date(exam.attempt.completedAt), 'MMM d')}
-                  </p>
+                  {getTimeInfo() && (
+                    <p className={`text-xs mt-1 ${canEnter ? 'text-amber-600 font-semibold' : 'text-warning-600'}`}>
+                      {getTimeInfo()}
+                    </p>
+                  )}
                 </div>
               )}
 
@@ -396,25 +375,19 @@ function ExamCard({ exam }: { exam: Exam }) {
                 </Button>
               )}
 
-              {isUpcoming && (
-                <Button variant="outline" disabled leftIcon={<Lock className="w-4 h-4" />}>
-                  Not Available Yet
-                </Button>
-              )}
-
-              {isCompleted && exam.attempt && (
+              {isUpcoming && canEnter && (
                 <Button
-                  variant="outline"
-                  rightIcon={<ChevronRight className="w-4 h-4" />}
+                  variant="warning"
+                  leftIcon={<Play className="w-4 h-4" />}
                   onClick={handleAction}
                 >
-                  View Result
+                  Enter Exam
                 </Button>
               )}
 
-              {isMissed && (
-                <Button variant="ghost" disabled>
-                  Exam Missed
+              {isUpcoming && !canEnter && (
+                <Button variant="outline" disabled leftIcon={<Lock className="w-4 h-4" />}>
+                  Not Available Yet
                 </Button>
               )}
             </div>

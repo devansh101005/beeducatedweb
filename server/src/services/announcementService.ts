@@ -6,7 +6,7 @@ import { storageService, BUCKETS } from './storageService.js';
 
 // Types
 export type AnnouncementPriority = 'low' | 'normal' | 'high' | 'urgent';
-export type AnnouncementTarget = 'all' | 'batch' | 'course' | 'role';
+export type AnnouncementTarget = 'all' | 'batch' | 'course' | 'role' | 'class';
 export type UserRole = 'admin' | 'student' | 'parent' | 'teacher' | 'batch_manager';
 
 export interface Attachment {
@@ -23,6 +23,7 @@ export interface Announcement {
   target_type: AnnouncementTarget;
   target_batch_id: string | null;
   target_course_id: string | null;
+  target_class_id: string | null;
   target_roles: UserRole[] | null;
   priority: AnnouncementPriority;
   is_pinned: boolean;
@@ -49,6 +50,7 @@ export interface CreateAnnouncementInput {
   target_type?: AnnouncementTarget;
   target_batch_id?: string;
   target_course_id?: string;
+  target_class_id?: string;
   target_roles?: UserRole[];
   priority?: AnnouncementPriority;
   is_pinned?: boolean;
@@ -65,6 +67,7 @@ export interface UpdateAnnouncementInput {
   target_type?: AnnouncementTarget;
   target_batch_id?: string | null;
   target_course_id?: string | null;
+  target_class_id?: string | null;
   target_roles?: UserRole[] | null;
   priority?: AnnouncementPriority;
   is_pinned?: boolean;
@@ -81,6 +84,7 @@ export interface AnnouncementListOptions {
   targetType?: AnnouncementTarget;
   batchId?: string;
   courseId?: string;
+  classId?: string;
   priority?: AnnouncementPriority;
   isPublished?: boolean;
   isPinned?: boolean;
@@ -189,6 +193,7 @@ class AnnouncementService {
       targetType,
       batchId,
       courseId,
+      classId,
       priority,
       isPublished,
       isPinned,
@@ -211,6 +216,10 @@ class AnnouncementService {
 
     if (courseId) {
       query = query.eq('target_course_id', courseId);
+    }
+
+    if (classId) {
+      query = query.eq('target_class_id', classId);
     }
 
     if (priority) {
@@ -261,10 +270,11 @@ class AnnouncementService {
       limit?: number;
       batchIds?: string[];
       courseIds?: string[];
+      classIds?: string[];
       unreadOnly?: boolean;
     } = {}
   ): Promise<{ announcements: (Announcement & { is_read: boolean })[]; total: number }> {
-    const { page = 1, limit = 20, batchIds = [], courseIds = [], unreadOnly = false } = options;
+    const { page = 1, limit = 20, batchIds = [], courseIds = [], classIds = [], unreadOnly = false } = options;
     const offset = (page - 1) * limit;
     const now = new Date().toISOString();
 
@@ -290,6 +300,11 @@ class AnnouncementService {
     // Add course targeting if user is enrolled in courses
     if (courseIds.length > 0) {
       targetFilters.push(`target_course_id.in.(${courseIds.join(',')})`);
+    }
+
+    // Add class targeting if user is enrolled in classes
+    if (classIds.length > 0) {
+      targetFilters.push(`target_class_id.in.(${classIds.join(',')})`);
     }
 
     query = query.or(targetFilters.join(','));
@@ -377,7 +392,8 @@ class AnnouncementService {
     userId: string,
     userRole: UserRole,
     batchIds: string[] = [],
-    courseIds: string[] = []
+    courseIds: string[] = [],
+    classIds: string[] = []
   ): Promise<number> {
     const now = new Date().toISOString();
 
@@ -401,6 +417,10 @@ class AnnouncementService {
 
     if (courseIds.length > 0) {
       targetFilters.push(`target_course_id.in.(${courseIds.join(',')})`);
+    }
+
+    if (classIds.length > 0) {
+      targetFilters.push(`target_class_id.in.(${classIds.join(',')})`);
     }
 
     query = query.or(targetFilters.join(','));
