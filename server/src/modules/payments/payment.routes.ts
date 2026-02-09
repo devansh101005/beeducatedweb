@@ -6,7 +6,7 @@ import { requireAuth, attachUser, requireAdmin, requireTeacherOrAdmin } from '..
 import { paymentService, PaymentMethod } from '../../services/paymentService.js';
 import { razorpayService } from '../../services/razorpayService.js';
 import { studentService } from '../../services/studentService.js';
-import { PaymentStatus } from '../../services/feeService.js';
+import { feeService, PaymentStatus } from '../../services/feeService.js';
 import {
   sendSuccess,
   sendCreated,
@@ -97,10 +97,10 @@ router.get('/my-summary', requireAuth, attachUser, async (req: Request, res: Res
  */
 router.post('/initiate', requireAuth, attachUser, async (req: Request, res: Response) => {
   try {
-    const { studentFeeId, amount, discountCode, notes } = req.body;
+    const { studentFeeId, discountCode, notes } = req.body;
 
-    if (!amount || amount <= 0) {
-      return sendBadRequest(res, 'Valid amount is required');
+    if (!studentFeeId) {
+      return sendBadRequest(res, 'studentFeeId is required');
     }
 
     const student = await studentService.getByUserId(req.user!.id);
@@ -108,10 +108,27 @@ router.post('/initiate', requireAuth, attachUser, async (req: Request, res: Resp
       return sendBadRequest(res, 'Student profile not found');
     }
 
+    // Look up the actual fee from the database — never trust client-provided amounts
+    const fee = await feeService.getStudentFeeById(studentFeeId);
+    if (!fee) {
+      return sendNotFound(res, 'Fee record');
+    }
+
+    // Verify this fee belongs to the authenticated student
+    if (fee.student_id !== student.id) {
+      return sendForbidden(res, 'Not authorized to pay this fee');
+    }
+
+    // Calculate the correct amount from the DB record
+    const serverAmount = Number(fee.amount_due);
+    if (serverAmount <= 0) {
+      return sendBadRequest(res, 'This fee has already been fully paid');
+    }
+
     const result = await paymentService.initiateRazorpayPayment({
       student_id: student.id,
       student_fee_id: studentFeeId,
-      amount,
+      amount: serverAmount,
       payer_email: req.user?.email,
       discount_code: discountCode,
       notes,

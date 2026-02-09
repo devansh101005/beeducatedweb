@@ -31,6 +31,8 @@ export interface Exam {
   enable_fullscreen: boolean;
   is_free: boolean;
   access_code: string | null;
+  target_batch_type: string | null;
+  target_class: string | null;
   status: ExamStatus;
   created_by: string | null;
   updated_by: string | null;
@@ -308,42 +310,48 @@ class ExamService {
   async getAvailableForStudent(
     _studentId: string,
     batchIds: string[],
-    courseIds: string[]
+    courseIds: string[],
+    batchTypes: string[] = [],
+    classGrades: string[] = []
   ): Promise<Exam[]> {
-    const now = new Date().toISOString();
+    // Include exams that ended within the last 30 days so students can
+    // still see them as "completed" and view results.
+    const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
 
-    let query = this.supabase
+    const { data, error } = await this.supabase
       .from('exams')
       .select('*')
-      .in('status', ['scheduled', 'live'])
-      .or(`end_time.is.null,end_time.gt.${now}`);
-
-    // Filter by batch or course access
-    // - is_free exams are visible to all
-    // - exams with matching batch_id or course_id
-    // - exams with no batch_id AND no course_id are general (visible to all)
-    const accessFilters: string[] = [
-      'is_free.eq.true',
-      'and(batch_id.is.null,course_id.is.null)',
-    ];
-
-    if (batchIds.length > 0) {
-      accessFilters.push(`batch_id.in.(${batchIds.join(',')})`);
-    }
-
-    if (courseIds.length > 0) {
-      accessFilters.push(`course_id.in.(${courseIds.join(',')})`);
-    }
-
-    query = query.or(accessFilters.join(','));
-
-    const { data, error } = await query.order('start_time', { ascending: true, nullsFirst: false });
+      .in('status', ['scheduled', 'live', 'completed'])
+      .or(`end_time.is.null,end_time.gt.${thirtyDaysAgo}`)
+      .order('start_time', { ascending: true, nullsFirst: false });
 
     if (error) {
       throw new Error(`Failed to get available exams: ${error.message}`);
     }
 
-    return data as Exam[];
+    // Filter access in application code for proper AND logic.
+    // If an exam targets offline batch AND class 10th, student must
+    // match BOTH — not just one.
+    return (data as Exam[]).filter((exam) => {
+      // Free exams → visible to all
+      if (exam.is_free) return true;
+
+      // General exams (no targeting at all) → visible to all
+      const hasNoTargeting =
+        !exam.batch_id &&
+        !exam.course_id &&
+        !exam.target_batch_type &&
+        !exam.target_class;
+      if (hasNoTargeting) return true;
+
+      // Check each targeting field — ALL set fields must match (AND logic)
+      if (exam.batch_id && !batchIds.includes(exam.batch_id)) return false;
+      if (exam.course_id && !courseIds.includes(exam.course_id)) return false;
+      if (exam.target_batch_type && !batchTypes.includes(exam.target_batch_type)) return false;
+      if (exam.target_class && !classGrades.includes(exam.target_class)) return false;
+
+      return true;
+    });
   }
 
   // ============================================

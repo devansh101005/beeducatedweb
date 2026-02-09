@@ -44,11 +44,13 @@ router.get('/available', requireAuth, attachUser, async (req: Request, res: Resp
     // Get student's batches and courses
     const batches = await batchService.getStudentBatches(student.id);
     const batchIds = batches.map((b) => b.batch.id);
+    const batchTypes = [...new Set(batches.map((b) => b.batch.batch_type).filter(Boolean))] as string[];
 
     const courses = await courseService.getStudentCourses(student.id);
     const courseIds = courses.map((c) => c.enrollment.course_id);
+    const classGrades = [...new Set(courses.map((c) => c.course?.class_grade).filter(Boolean))] as string[];
 
-    const exams = await examService.getAvailableForStudent(student.id, batchIds, courseIds);
+    const exams = await examService.getAvailableForStudent(student.id, batchIds, courseIds, batchTypes, classGrades);
 
     sendSuccess(res, exams);
   } catch (error) {
@@ -385,6 +387,8 @@ router.post('/', requireAuth, attachUser, requireTeacherOrAdmin, async (req: Req
       enableFullscreen,
       isFree,
       accessCode,
+      targetBatchType,
+      targetClass,
     } = req.body;
 
     if (!title) {
@@ -419,6 +423,8 @@ router.post('/', requireAuth, attachUser, requireTeacherOrAdmin, async (req: Req
       enable_fullscreen: enableFullscreen || false,
       is_free: isFree || false,
       access_code: accessCode,
+      target_batch_type: targetBatchType || null,
+      target_class: targetClass || null,
       created_by: req.user?.id,
     });
 
@@ -466,6 +472,8 @@ router.put('/:id', requireAuth, attachUser, requireTeacherOrAdmin, async (req: R
       enableFullscreen: 'enable_fullscreen',
       isFree: 'is_free',
       accessCode: 'access_code',
+      targetBatchType: 'target_batch_type',
+      targetClass: 'target_class',
     };
 
     for (const [key, value] of Object.entries(updates)) {

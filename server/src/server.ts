@@ -3,6 +3,8 @@
 
 import express, { Express, Request, Response, NextFunction } from 'express';
 import cors from 'cors';
+import helmet from 'helmet';
+import rateLimit from 'express-rate-limit';
 import { env, validateEnv } from './config/env.js';
 import { errorHandler, notFoundHandler } from './middleware/error.middleware.js';
 
@@ -35,21 +37,32 @@ validateEnv();
 const app: Express = express();
 
 // ============================================
+// Security Headers (Helmet)
+// ============================================
+app.use(helmet({
+  contentSecurityPolicy: false, // Disable CSP for now (frontend serves its own assets)
+  crossOriginEmbedderPolicy: false, // Allow embedded content (videos, images)
+}));
+
+// ============================================
 // CORS Configuration
 // ============================================
 const allowedOrigins = [
   env.FRONTEND_URL,
-  'http://localhost:5173',
-  'http://localhost:5174',
-  'http://localhost:3000',
-  // Add production domains here
+  ...(env.NODE_ENV === 'development'
+    ? ['http://localhost:5173', 'http://localhost:5174', 'http://localhost:3000']
+    : []),
 ];
 
 app.use(
   cors({
     origin: (origin, callback) => {
-      // Allow requests with no origin (mobile apps, curl, etc.)
-      if (!origin) return callback(null, true);
+      // In production, require a valid origin
+      if (!origin) {
+        if (env.NODE_ENV === 'development') return callback(null, true);
+        // Allow webhooks and health checks (no browser origin)
+        return callback(null, true);
+      }
 
       if (allowedOrigins.includes(origin)) {
         callback(null, true);
@@ -63,6 +76,44 @@ app.use(
     allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
   })
 );
+
+// ============================================
+// Rate Limiting
+// ============================================
+const generalLimiter = rateLimit({
+  windowMs: 1 * 60 * 1000, // 1 minute
+  max: 100, // 100 requests per minute per IP
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many requests, please try again later' },
+});
+
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 20, // 20 auth requests per 15 min per IP
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many authentication attempts, please try again later' },
+});
+
+const paymentLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 15, // 15 payment requests per 15 min per IP
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many payment requests, please try again later' },
+});
+
+const uploadLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000, // 1 hour
+  max: 20, // 20 uploads per hour per IP
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Upload limit reached, please try again later' },
+});
+
+// Apply general limiter to all API routes
+app.use('/api/', generalLimiter);
 
 // ============================================
 // Body Parsing Middleware
@@ -94,8 +145,8 @@ app.use('/api/v2/health', healthRoutes);
 app.use('/api/v2/webhooks/clerk', clerkWebhook);
 app.use('/api/v2/webhooks/razorpay', razorpayWebhook);
 
-// Auth routes
-app.use('/api/v2/auth', authRoutes);
+// Auth routes (stricter rate limit)
+app.use('/api/v2/auth', authLimiter, authRoutes);
 
 // Admin routes
 app.use('/api/v2/admin', adminRoutes);
@@ -113,8 +164,8 @@ app.use('/api/v2/student', studentRoutes); // Alias for frontend compatibility
 // Parent routes (Phase 2)
 app.use('/api/v2/parents', parentRoutes);
 
-// Content routes (Phase 3)
-app.use('/api/v2/content', contentRoutes);
+// Content routes (Phase 3 - upload rate limit)
+app.use('/api/v2/content', uploadLimiter, contentRoutes);
 
 // Announcement routes (Phase 3)
 app.use('/api/v2/announcements', announcementRoutes);
@@ -134,8 +185,8 @@ app.use('/api/v2/reports', reportRoutes);
 // Fee routes (Phase 4)
 app.use('/api/v2/fees', feeRoutes);
 
-// Payment routes (Phase 4)
-app.use('/api/v2/payments', paymentRoutes);
+// Payment routes (Phase 4 - stricter rate limit)
+app.use('/api/v2/payments', paymentLimiter, paymentRoutes);
 
 // Contact routes (Public)
 app.use('/api/v2/contact', contactRoutes);

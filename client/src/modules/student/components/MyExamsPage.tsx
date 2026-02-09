@@ -13,6 +13,7 @@ import {
   Award,
   BarChart3,
   Lock,
+  CheckCircle,
 } from 'lucide-react';
 import { format, formatDistanceToNow, isPast, differenceInMinutes } from 'date-fns';
 import {
@@ -100,7 +101,16 @@ export function MyExamsPage() {
           passingMarks: e.passing_marks || 0,
           scheduledAt: e.start_time,
           endsAt: e.end_time,
-          status: e.status === 'live' ? 'live' : 'upcoming',
+          status: (() => {
+            const now = new Date();
+            // If end_time has passed → completed
+            if (e.end_time && new Date(e.end_time) < now) return 'completed' as const;
+            // If start_time has passed (and end_time hasn't) → live
+            if (e.start_time && new Date(e.start_time) <= now) return 'live' as const;
+            // DB says live but dates say otherwise — trust dates
+            if (e.status === 'live') return 'live' as const;
+            return 'upcoming' as const;
+          })(),
         }));
         setExams(mapped);
       }
@@ -115,6 +125,7 @@ export function MyExamsPage() {
   const stats = {
     upcoming: exams.filter((e) => e.status === 'upcoming').length,
     live: exams.filter((e) => e.status === 'live').length,
+    completed: exams.filter((e) => e.status === 'completed').length,
     total: exams.length,
   };
 
@@ -166,9 +177,9 @@ export function MyExamsPage() {
           </StaggerItem>
           <StaggerItem>
             <StatCard
-              title="Total Available"
-              value={stats.total}
-              icon={<BarChart3 className="w-5 h-5" />}
+              title="Completed"
+              value={stats.completed}
+              icon={<CheckCircle className="w-5 h-5" />}
               color="primary"
             />
           </StaggerItem>
@@ -213,7 +224,7 @@ export function MyExamsPage() {
                     </p>
                   </div>
                   <Link
-                    to={`/dashboard/exam/${exams.find((e) => e.status === 'live')?.id}`}
+                    to={`/take-exam/${exams.find((e) => e.status === 'live')?.id}`}
                   >
                     <Button variant="success" leftIcon={<Play className="w-4 h-4" />}>
                       Start Now
@@ -261,9 +272,11 @@ function ExamCard({ exam, now }: { exam: Exam; now: Date }) {
   const navigate = useNavigate();
   const isLive = exam.status === 'live';
   const isUpcoming = exam.status === 'upcoming';
+  const isCompleted = exam.status === 'completed';
 
   // Check if student can enter (10 min before start time)
   const canEnter = (() => {
+    if (isCompleted) return false;
     if (isLive) return true;
     if (!exam.scheduledAt) return false;
     const startTime = new Date(exam.scheduledAt);
@@ -272,6 +285,11 @@ function ExamCard({ exam, now }: { exam: Exam; now: Date }) {
   })();
 
   const getTimeInfo = () => {
+    if (isCompleted) {
+      if (exam.endsAt) return `Ended ${formatDistanceToNow(new Date(exam.endsAt), { addSuffix: true })}`;
+      if (exam.scheduledAt) return `Was ${formatDistanceToNow(new Date(exam.scheduledAt), { addSuffix: true })}`;
+      return null;
+    }
     if (!exam.scheduledAt) return null;
     const startTime = new Date(exam.scheduledAt);
     if (isPast(startTime)) return null;
@@ -284,7 +302,7 @@ function ExamCard({ exam, now }: { exam: Exam; now: Date }) {
 
   const handleAction = () => {
     if (isLive || canEnter) {
-      navigate(`/dashboard/exam/${exam.id}/take`);
+      navigate(`/take-exam/${exam.id}`);
     }
   };
 
@@ -295,7 +313,8 @@ function ExamCard({ exam, now }: { exam: Exam; now: Date }) {
       <Card
         className={`transition-all ${
           isLive ? 'border-2 border-success-400 shadow-lg shadow-success-100' :
-          canEnter && isUpcoming ? 'border-2 border-amber-300 shadow-lg shadow-amber-50' : ''
+          canEnter && isUpcoming ? 'border-2 border-amber-300 shadow-lg shadow-amber-50' :
+          isCompleted ? 'opacity-75' : ''
         }`}
       >
         <CardBody className="p-5">
@@ -316,6 +335,12 @@ function ExamCard({ exam, now }: { exam: Exam; now: Date }) {
                   <span className="flex items-center gap-1 text-xs font-medium text-amber-600 bg-amber-100 px-2 py-0.5 rounded-full">
                     <span className="w-2 h-2 bg-amber-500 rounded-full animate-pulse" />
                     ENTRY OPEN
+                  </span>
+                )}
+                {isCompleted && (
+                  <span className="flex items-center gap-1 text-xs font-medium text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full">
+                    <CheckCircle className="w-3 h-3" />
+                    ENDED
                   </span>
                 )}
               </div>
@@ -349,7 +374,9 @@ function ExamCard({ exam, now }: { exam: Exam; now: Date }) {
             <div className="flex flex-col items-end gap-3">
               {exam.scheduledAt && (
                 <div className="text-right">
-                  <p className="text-xs text-neutral-500 uppercase tracking-wider">Scheduled</p>
+                  <p className="text-xs text-neutral-500 uppercase tracking-wider">
+                    {isCompleted ? 'Was Scheduled' : 'Scheduled'}
+                  </p>
                   <p className="text-sm font-medium text-neutral-900">
                     {format(new Date(exam.scheduledAt), 'MMM d, yyyy')}
                   </p>
@@ -357,7 +384,10 @@ function ExamCard({ exam, now }: { exam: Exam; now: Date }) {
                     {format(new Date(exam.scheduledAt), 'h:mm a')}
                   </p>
                   {getTimeInfo() && (
-                    <p className={`text-xs mt-1 ${canEnter ? 'text-amber-600 font-semibold' : 'text-warning-600'}`}>
+                    <p className={`text-xs mt-1 ${
+                      isCompleted ? 'text-slate-500' :
+                      canEnter ? 'text-amber-600 font-semibold' : 'text-warning-600'
+                    }`}>
                       {getTimeInfo()}
                     </p>
                   )}
@@ -388,6 +418,16 @@ function ExamCard({ exam, now }: { exam: Exam; now: Date }) {
               {isUpcoming && !canEnter && (
                 <Button variant="outline" disabled leftIcon={<Lock className="w-4 h-4" />}>
                   Not Available Yet
+                </Button>
+              )}
+
+              {isCompleted && (
+                <Button
+                  variant="outline"
+                  leftIcon={<BarChart3 className="w-4 h-4" />}
+                  onClick={() => navigate(`/exam-results/${exam.id}`)}
+                >
+                  View Results
                 </Button>
               )}
             </div>

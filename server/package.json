@@ -19,6 +19,8 @@
     "cors": "^2.8.5",
     "dotenv": "^16.5.0",
     "express": "^5.1.0",
+    "express-rate-limit": "^8.2.1",
+    "helmet": "^8.1.0",
     "multer": "^2.0.1",
     "razorpay": "^2.9.4",
     "resend": "^6.8.0",
@@ -27,6 +29,7 @@
   "devDependencies": {
     "@types/cors": "^2.8.17",
     "@types/express": "^5.0.0",
+    "@types/express-rate-limit": "^6.0.2",
     "@types/multer": "^2.0.0",
     "@types/node": "^22.10.0",
     "@typescript-eslint/eslint-plugin": "^8.20.0",

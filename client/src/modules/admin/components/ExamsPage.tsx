@@ -52,6 +52,8 @@ interface Exam {
   subject_id: string | null;
   course_id: string | null;
   batch_id: string | null;
+  target_batch_type: string | null;
+  target_class: string | null;
   duration_minutes: number;
   start_time: string | null;
   end_time: string | null;
@@ -85,6 +87,30 @@ const statusColors: Record<string, 'success' | 'warning' | 'danger' | 'default' 
   completed: 'primary',
   cancelled: 'danger',
 };
+
+/**
+ * Compute the effective status of an exam based on its dates.
+ * The DB status is static (set when admin publishes), so we derive
+ * the real-time status from start_time / end_time.
+ */
+function computeEffectiveStatus(exam: Exam): Exam['status'] {
+  // Draft and cancelled are admin-controlled — don't override
+  if (exam.status === 'draft' || exam.status === 'cancelled') return exam.status;
+
+  const now = new Date();
+
+  // If end_time has passed → completed
+  if (exam.end_time && new Date(exam.end_time) < now) return 'completed';
+
+  // If start_time has passed (and end_time hasn't) → live
+  if (exam.start_time && new Date(exam.start_time) <= now) return 'live';
+
+  // start_time is in the future → scheduled
+  if (exam.start_time && new Date(exam.start_time) > now) return 'scheduled';
+
+  // No dates set — keep DB status
+  return exam.status;
+}
 
 // ============================================
 // MAIN COMPONENT
@@ -131,7 +157,10 @@ export function ExamsPage() {
       const data = await response.json();
 
       if (data.success) {
-        const items = data.data?.items || [];
+        const items: Exam[] = (data.data?.items || []).map((e: Exam) => ({
+          ...e,
+          status: computeEffectiveStatus(e),
+        }));
         setExams(items);
         setTotalPages(data.data?.totalPages || 1);
       }
@@ -150,7 +179,10 @@ export function ExamsPage() {
       const data = await response.json();
 
       if (data.success) {
-        const items: Exam[] = data.data?.items || [];
+        const items: Exam[] = (data.data?.items || []).map((e: Exam) => ({
+          ...e,
+          status: computeEffectiveStatus(e),
+        }));
         const live = items.filter((e) => e.status === 'live').length;
         const scheduled = items.filter((e) => e.status === 'scheduled').length;
         const draft = items.filter((e) => e.status === 'draft').length;
@@ -655,34 +687,21 @@ function ExamForm({
       ? format(new Date(exam.end_time), "yyyy-MM-dd'T'HH:mm")
       : '',
     maxAttempts: exam?.max_attempts || 1,
-    batchId: exam?.batch_id || '',
-    courseId: exam?.course_id || '',
+    targetBatchType: exam?.target_batch_type || '',
+    targetClass: exam?.target_class || '',
   });
   const [saving, setSaving] = useState(false);
-  const [batches, setBatches] = useState<{ value: string; label: string }[]>([]);
-  const [courses, setCourses] = useState<{ value: string; label: string }[]>([]);
 
-  useEffect(() => {
-    const fetchOptions = async () => {
-      const token = await getToken();
-      const headers = { Authorization: `Bearer ${token}` };
-      const [batchRes, courseRes] = await Promise.all([
-        fetch(`${API_URL}/v2/batches?limit=100`, { headers }),
-        fetch(`${API_URL}/v2/courses?limit=100`, { headers }),
-      ]);
-      if (batchRes.ok) {
-        const d = await batchRes.json();
-        const items = d.data?.items || [];
-        setBatches(items.map((b: any) => ({ value: b.id, label: `${b.name} (${b.batch_type || 'N/A'})` })));
-      }
-      if (courseRes.ok) {
-        const d = await courseRes.json();
-        const items = d.data?.items || [];
-        setCourses(items.map((c: any) => ({ value: c.id, label: `${c.name}${c.class_grade ? ` - ${c.class_grade}` : ''}` })));
-      }
-    };
-    fetchOptions();
-  }, []);
+  const classOptions = [
+    { value: '6th', label: 'Class 6th' },
+    { value: '7th', label: 'Class 7th' },
+    { value: '8th', label: 'Class 8th' },
+    { value: '9th', label: 'Class 9th' },
+    { value: '10th', label: 'Class 10th' },
+    { value: '11th', label: 'Class 11th' },
+    { value: '12th', label: 'Class 12th' },
+    { value: 'dropper', label: 'Dropper' },
+  ];
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -709,8 +728,8 @@ function ExamForm({
           startTime: formData.startTime ? new Date(formData.startTime).toISOString() : null,
           endTime: formData.endTime ? new Date(formData.endTime).toISOString() : null,
           maxAttempts: formData.maxAttempts,
-          batchId: formData.batchId || null,
-          courseId: formData.courseId || null,
+          targetBatchType: formData.targetBatchType || null,
+          targetClass: formData.targetClass || null,
         }),
       });
 
@@ -772,20 +791,26 @@ function ExamForm({
           {/* Targeting */}
           <div className="grid grid-cols-2 gap-4">
             <Select
-              label="Batch (Optional)"
-              value={formData.batchId}
-              onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setFormData({ ...formData, batchId: e.target.value })}
-              options={[{ value: '', label: 'All Students (General)' }, ...batches]}
+              label="Coaching Type"
+              value={formData.targetBatchType}
+              onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setFormData({ ...formData, targetBatchType: e.target.value })}
+              options={[
+                { value: '', label: 'All Students' },
+                { value: 'coaching_offline', label: 'Offline Coaching' },
+                { value: 'coaching_online', label: 'Online Coaching' },
+                { value: 'test_series', label: 'Test Series' },
+                { value: 'home_tuition', label: 'Home Tuition' },
+              ]}
             />
             <Select
-              label="Course (Optional)"
-              value={formData.courseId}
-              onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setFormData({ ...formData, courseId: e.target.value })}
-              options={[{ value: '', label: 'All Courses' }, ...courses]}
+              label="Class"
+              value={formData.targetClass}
+              onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setFormData({ ...formData, targetClass: e.target.value })}
+              options={[{ value: '', label: 'All Classes' }, ...classOptions]}
             />
           </div>
           <p className="text-xs text-slate-500 -mt-3">
-            Leave both empty to make this exam visible to all students. Select a batch/course to target specific students.
+            Leave both as &quot;All&quot; to make this exam visible to every student. Select a coaching type and/or class to target specific students.
           </p>
 
           {/* Marks */}

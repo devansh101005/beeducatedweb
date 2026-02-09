@@ -292,23 +292,17 @@ function App() {
         <Route
           path="/take-exam/:examId"
           element={
-            <>
-              <Navbar />
-              <RoleProtectedRoute allowedRoles={["STUDENT"]}>
-                <TakeExam />
-              </RoleProtectedRoute>
-            </>
+            <ClerkProtectedRoute allowedRoles={["student"]}>
+              <TakeExam />
+            </ClerkProtectedRoute>
           }
         />
         <Route
           path="/exam-results/:examId"
           element={
-            <>
-              <Navbar />
-              <RoleProtectedRoute allowedRoles={["STUDENT"]}>
-                <ExamResults />
-              </RoleProtectedRoute>
-            </>
+            <ClerkProtectedRoute allowedRoles={["student"]}>
+              <ExamResults />
+            </ClerkProtectedRoute>
           }
         />
       </Routes>

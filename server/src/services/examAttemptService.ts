@@ -155,8 +155,13 @@ class ExamAttemptService {
       throw new Error('Exam is not available');
     }
 
-    if (exam.start_time && new Date(exam.start_time) > now) {
-      throw new Error('Exam has not started yet');
+    // Allow entry 10 minutes before start time
+    if (exam.start_time) {
+      const startTime = new Date(exam.start_time);
+      const minsUntilStart = (startTime.getTime() - now.getTime()) / 60000;
+      if (minsUntilStart > 10) {
+        throw new Error('Exam has not started yet');
+      }
     }
 
     if (exam.end_time && new Date(exam.end_time) < now) {

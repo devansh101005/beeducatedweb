@@ -12,6 +12,7 @@ import {
   sendNotFound,
   sendError,
   sendBadRequest,
+  sendForbidden,
   sendPaginated,
 } from '../../shared/utils/response.js';
 
@@ -604,12 +605,15 @@ router.put('/:id/students/:studentId/progress', requireAuth, attachUser, async (
     const studentId = getParam(req.params.studentId);
     const { progressPercent, lastAccessedAt, completedAt, status } = req.body;
 
-    // Allow students to update their own progress, or admin/teacher for anyone
-    const isOwnProgress = req.user?.role === 'student';
+    // Admin/teacher can update any student's progress
     const isAdminOrTeacher = req.user?.role === 'admin' || req.user?.role === 'teacher';
 
-    if (!isOwnProgress && !isAdminOrTeacher) {
-      return sendBadRequest(res, 'Not authorized to update this progress');
+    if (!isAdminOrTeacher) {
+      // Students can only update their own progress — verify ownership
+      const student = await studentService.getByUserId(req.user!.id);
+      if (!student || student.id !== studentId) {
+        return sendForbidden(res, 'Not authorized to update this progress');
+      }
     }
 
     const enrollment = await courseService.updateProgress(studentId, courseId, {
