@@ -10,17 +10,17 @@ import { DevTools } from "./components/DevTools.tsx";
 // Get Clerk publishable key from environment
 const CLERK_PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
 
-// Render app - conditionally wrap with ClerkProvider only if key exists
-const AppWithProviders = () => {
-  if (!CLERK_PUBLISHABLE_KEY) {
-    console.warn("Missing VITE_CLERK_PUBLISHABLE_KEY - Running without Clerk auth");
-    return (
-      <AuthProvider>
-        <App />
-      </AuthProvider>
-    );
-  }
+// Validate Clerk key is present
+if (!CLERK_PUBLISHABLE_KEY) {
+  throw new Error(
+    ' Missing VITE_CLERK_PUBLISHABLE_KEY environment variable.\n' +
+    'Add it to your .env file(if dev) or deployment environment.\n' +
+    ''
+  );
+}
 
+// Render app - always with ClerkProvider
+const AppWithProviders = () => {
   return (
     <ClerkProvider publishableKey={CLERK_PUBLISHABLE_KEY}>
       {/* ApiSetup initializes the API client with Clerk token */}
