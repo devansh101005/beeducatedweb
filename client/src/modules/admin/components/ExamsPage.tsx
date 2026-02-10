@@ -11,14 +11,14 @@ import {
   Calendar,
   MoreVertical,
   Edit2,
-  Trash2,
   Copy,
-  Play,
   CheckCircle,
   Target,
   Timer,
   Send,
   XCircle,
+  Play,
+  Trash2,
 } from 'lucide-react';
 import { format } from 'date-fns';
 import {

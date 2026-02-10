@@ -19,7 +19,7 @@ interface EmptyStateProps {
   icon?: ReactNode;
   title: string;
   description?: string;
-  action?: {
+  action?: ReactNode | {
     label: string;
     onClick: () => void;
     variant?: 'primary' | 'secondary' | 'outline';
@@ -95,12 +95,14 @@ export function EmptyState({
       {(action || secondaryAction) && (
         <div className="flex items-center gap-3">
           {action && (
-            <Button
-              variant={action.variant || 'primary'}
-              onClick={action.onClick}
-            >
-              {action.label}
-            </Button>
+            typeof action === 'object' && 'label' in action ? (
+              <Button
+                variant={action.variant || 'primary'}
+                onClick={action.onClick}
+              >
+                {action.label}
+              </Button>
+            ) : action
           )}
           {secondaryAction && (
             <Button variant="ghost" onClick={secondaryAction.onClick}>

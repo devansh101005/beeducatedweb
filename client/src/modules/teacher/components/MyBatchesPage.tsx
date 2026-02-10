@@ -6,16 +6,14 @@ import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import {
   Users,
-  Calendar,
-  Clock,
-  ChevronRight,
   BookOpen,
   GraduationCap,
-  BarChart3,
   Bell,
   Video,
   FileText,
   Plus,
+  Calendar,
+  Clock,
 } from 'lucide-react';
 import { format, isToday, isTomorrow } from 'date-fns';
 import {
@@ -26,9 +24,9 @@ import {
   HoverScale,
 } from '@shared/components/ui/motion';
 import { Button } from '@shared/components/ui/Button';
-import { Card, CardBody, CardHeader, StatCard } from '@shared/components/ui/Card';
+import { Card, CardBody, StatCard } from '@shared/components/ui/Card';
 import { Badge, StatusBadge } from '@shared/components/ui/Badge';
-import { Avatar, AvatarGroup } from '@shared/components/ui/Avatar';
+import { AvatarGroup } from '@shared/components/ui/Avatar';
 import { SkeletonCard } from '@shared/components/ui/Loading';
 import { EmptyState } from '@shared/components/ui/EmptyState';
 

@@ -1,7 +1,7 @@
 // Premium Table Component
 // Data tables with sorting, selection, and pagination
 
-import { ReactNode, useState, useMemo } from 'react';
+import { ReactNode, useState, useMemo, Dispatch, SetStateAction } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronUp, ChevronDown, ChevronsUpDown, ChevronLeft, ChevronRight } from 'lucide-react';
 import clsx from 'clsx';
@@ -17,7 +17,8 @@ type SortDirection = 'asc' | 'desc' | null;
 interface Column<T> {
   key: string;
   header: string;
-  accessor: keyof T | ((row: T) => ReactNode);
+  accessor?: keyof T | ((row: T) => ReactNode);
+  render?: (row: T) => ReactNode;
   sortable?: boolean;
   width?: string;
   align?: 'left' | 'center' | 'right';
@@ -27,20 +28,20 @@ interface Column<T> {
 interface TableProps<T> {
   data: T[];
   columns: Column<T>[];
-  keyExtractor: (row: T) => string | number;
+  keyExtractor?: (row: T) => string | number;
   isLoading?: boolean;
   emptyMessage?: string;
   onRowClick?: (row: T) => void;
   selectedRows?: (string | number)[];
-  onSelectionChange?: (selectedKeys: (string | number)[]) => void;
+  onSelectionChange?: ((selectedKeys: (string | number)[]) => void) | Dispatch<SetStateAction<(string | number)[]>>;
   className?: string;
 }
 
 interface PaginationProps {
   currentPage: number;
   totalPages: number;
-  totalItems: number;
-  pageSize: number;
+  totalItems?: number;
+  pageSize?: number;
   onPageChange: (page: number) => void;
   className?: string;
 }
@@ -52,7 +53,7 @@ interface PaginationProps {
 export function Table<T>({
   data,
   columns,
-  keyExtractor,
+  keyExtractor = ((_row: T, index?: number) => index ?? 0) as unknown as (row: T) => string | number,
   isLoading = false,
   emptyMessage = 'No data available',
   onRowClick,
@@ -86,12 +87,13 @@ export function Table<T>({
     if (!column) return data;
 
     return [...data].sort((a, b) => {
+      if (!column.accessor) return 0;
       const aValue = typeof column.accessor === 'function'
         ? column.accessor(a)
-        : a[column.accessor];
+        : a[column.accessor as keyof T];
       const bValue = typeof column.accessor === 'function'
         ? column.accessor(b)
-        : b[column.accessor];
+        : b[column.accessor as keyof T];
 
       if (aValue === bValue) return 0;
       if (aValue === null || aValue === undefined) return 1;
@@ -104,12 +106,18 @@ export function Table<T>({
 
   // Get cell value
   const getCellValue = (row: T, column: Column<T>): ReactNode => {
+    if (column.render) {
+      return column.render(row);
+    }
     if (typeof column.accessor === 'function') {
       return column.accessor(row);
     }
-    const value = row[column.accessor];
-    if (value === null || value === undefined) return '—';
-    return String(value);
+    if (column.accessor) {
+      const value = row[column.accessor];
+      if (value === null || value === undefined) return '—';
+      return String(value);
+    }
+    return '—';
   };
 
   // Handle row selection
@@ -227,7 +235,7 @@ export function Table<T>({
             ) : (
               // Data rows
               <AnimatePresence>
-                {sortedData.map((row, index) => {
+                {sortedData.map((row) => {
                   const key = keyExtractor(row);
                   const isSelected = selectedRows.includes(key);
 
@@ -292,8 +300,9 @@ export function Pagination({
   onPageChange,
   className,
 }: PaginationProps) {
-  const startItem = (currentPage - 1) * pageSize + 1;
-  const endItem = Math.min(currentPage * pageSize, totalItems);
+  const hasItemInfo = totalItems !== undefined && pageSize !== undefined;
+  const startItem = hasItemInfo ? (currentPage - 1) * pageSize! + 1 : 0;
+  const endItem = hasItemInfo ? Math.min(currentPage * pageSize!, totalItems!) : 0;
 
   // Generate page numbers to show
   const getPageNumbers = () => {
@@ -342,11 +351,18 @@ export function Pagination({
       )}
     >
       {/* Info text */}
-      <p className="text-sm text-slate-500">
-        Showing <span className="font-medium text-slate-700">{startItem}</span> to{' '}
-        <span className="font-medium text-slate-700">{endItem}</span> of{' '}
-        <span className="font-medium text-slate-700">{totalItems}</span> results
-      </p>
+      {hasItemInfo ? (
+        <p className="text-sm text-slate-500">
+          Showing <span className="font-medium text-slate-700">{startItem}</span> to{' '}
+          <span className="font-medium text-slate-700">{endItem}</span> of{' '}
+          <span className="font-medium text-slate-700">{totalItems}</span> results
+        </p>
+      ) : (
+        <p className="text-sm text-slate-500">
+          Page <span className="font-medium text-slate-700">{currentPage}</span> of{' '}
+          <span className="font-medium text-slate-700">{totalPages}</span>
+        </p>
+      )}
 
       {/* Page controls */}
       <div className="flex items-center gap-1">

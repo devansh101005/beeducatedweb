@@ -14,11 +14,10 @@ import {
   IndianRupee,
   Receipt,
   FileText,
-  CreditCard,
   Building,
   Smartphone,
 } from 'lucide-react';
-import { Button, Card, Select, Input, Spinner } from '@shared/components/ui';
+import { Button, Card, Input, Spinner } from '@shared/components/ui';
 import clsx from 'clsx';
 
 // ============================================

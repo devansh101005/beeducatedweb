@@ -48,7 +48,7 @@ function Footer() {
             </ul>
           </div>
 
-          <div>
+          {/* <div>
             <h4 className="font-['Poppins'] text-lg font-semibold mb-4">Programs</h4>
             <ul className="space-y-2 list-none p-0">
               <li>
@@ -72,7 +72,7 @@ function Footer() {
                 </a>
               </li>
             </ul>
-          </div>
+          </div> */}
 
           <div>
             <h4 className="font-['Poppins'] text-lg font-semibold mb-4">Support</h4>

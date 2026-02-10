@@ -65,7 +65,6 @@ const typeLabels: Record<string, string> = {
 };
 
 export function MyExamsPage() {
-  const navigate = useNavigate();
   const { getToken } = useAuth();
   const [exams, setExams] = useState<Exam[]>([]);
   const [loading, setLoading] = useState(true);

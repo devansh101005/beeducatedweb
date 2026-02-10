@@ -56,13 +56,19 @@ import { PaymentPage, PaymentSuccessPage, PaymentHistoryPage } from "@modules/pa
 import { AnnouncementsPage } from "@modules/announcements";
 
 // Admin Management
-import { UsersPage, BatchesPage, CoursesPage, ExamsPage, ExamEditorPage, ApplicationsPage, StudentsPage, ParentsPage, ContentManagementPage, TeachersPage, AdminPaymentsPage } from "@modules/admin";
+import { UsersPage, BatchesPage, CoursesPage, ExamsPage, ExamEditorPage, ApplicationsPage, StudentsPage, ParentsPage, ContentManagementPage, TeachersPage, AdminPaymentsPage, ReportsPage } from "@modules/admin";
 
 // Student Pages
 import { MyCoursesPage, StudyMaterialsPage, MyExamsPage, MyResultsPage } from "@modules/student";
 
 // Teacher Pages
-import { MyBatchesPage, MyStudentsPage, GradingPage } from "@modules/teacher";
+import { MyBatchesPage, MyStudentsPage, GradingPage, SchedulePage } from "@modules/teacher";
+
+// Parent Pages
+import { MyChildrenPage, ChildProgressPage, ParentPaymentsPage } from "@modules/parent";
+
+// Settings
+import { SettingsPage } from "@modules/settings";
 
 // Courses & Enrollment Pages
 import { CoursesPage as NewCoursesPage, ClassesPage, MyEnrollmentsPage } from "@modules/courses";
@@ -125,6 +131,7 @@ function App() {
           <Route path="materials" element={<ContentManagementPage />} />
           <Route path="teachers" element={<TeachersPage />} />
           <Route path="payments" element={<AdminPaymentsPage />} />
+          <Route path="reports" element={<ReportsPage />} />
 
           {/* Student Pages */}
           <Route path="my-courses" element={<MyCoursesPage />} />
@@ -137,6 +144,15 @@ function App() {
           <Route path="my-batches" element={<MyBatchesPage />} />
           <Route path="my-students" element={<MyStudentsPage />} />
           <Route path="grading" element={<GradingPage />} />
+          <Route path="schedule" element={<SchedulePage />} />
+
+          {/* Parent Pages */}
+          <Route path="children" element={<MyChildrenPage />} />
+          <Route path="progress" element={<ChildProgressPage />} />
+          <Route path="parent-payments" element={<ParentPaymentsPage />} />
+
+          {/* Settings (all roles) */}
+          <Route path="settings" element={<SettingsPage />} />
         </Route>
 
         {/* ============================================ */}

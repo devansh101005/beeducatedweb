@@ -10,8 +10,6 @@ import {
   GraduationCap,
   Plus,
   RefreshCw,
-  Mail,
-  Phone,
   Eye,
   X,
   CheckCircle,
@@ -22,7 +20,8 @@ import {
   User,
   Trash2,
   UserX,
-  MoreVertical,
+  Mail,
+  Phone,
 } from 'lucide-react';
 import {
   Card,

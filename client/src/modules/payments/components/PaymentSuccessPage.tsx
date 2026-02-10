@@ -10,9 +10,6 @@ import {
   Download,
   Mail,
   ArrowRight,
-  Receipt,
-  Calendar,
-  IndianRupee,
   Copy,
   Check,
 } from 'lucide-react';

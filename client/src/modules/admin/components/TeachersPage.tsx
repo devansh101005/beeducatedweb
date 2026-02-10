@@ -29,7 +29,6 @@ import {
   Skeleton,
   Pagination,
   Input,
-  Select,
 } from '@shared/components/ui';
 import { Stagger, StaggerItem, fadeInUp } from '@shared/components/ui/motion';
 

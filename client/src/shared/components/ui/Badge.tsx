@@ -8,7 +8,7 @@ import clsx from 'clsx';
 // TYPES
 // ============================================
 
-type BadgeVariant = 'default' | 'primary' | 'success' | 'warning' | 'danger' | 'info';
+type BadgeVariant = 'default' | 'primary' | 'success' | 'warning' | 'danger' | 'error' | 'info';
 type BadgeSize = 'sm' | 'md' | 'lg';
 
 interface BadgeProps extends HTMLAttributes<HTMLSpanElement> {
@@ -28,6 +28,7 @@ const variantStyles: Record<BadgeVariant, string> = {
   success: 'bg-emerald-100 text-emerald-700',
   warning: 'bg-orange-100 text-orange-700',
   danger: 'bg-rose-100 text-rose-700',
+  error: 'bg-rose-100 text-rose-700',
   info: 'bg-sky-100 text-sky-700',
 };
 
@@ -37,6 +38,7 @@ const dotStyles: Record<BadgeVariant, string> = {
   success: 'bg-emerald-500',
   warning: 'bg-orange-500',
   danger: 'bg-rose-500',
+  error: 'bg-rose-500',
   info: 'bg-sky-500',
 };
 
@@ -88,11 +90,12 @@ Badge.displayName = 'Badge';
 // STATUS BADGE - For showing online/offline status
 // ============================================
 
-type StatusType = 'online' | 'offline' | 'busy' | 'away';
+type StatusType = 'online' | 'offline' | 'busy' | 'away' | 'success' | 'danger' | 'warning' | 'default';
 
 interface StatusBadgeProps extends Omit<HTMLAttributes<HTMLSpanElement>, 'children'> {
   status: StatusType;
   showLabel?: boolean;
+  label?: string;
 }
 
 const statusConfig: Record<StatusType, { color: string; label: string }> = {
@@ -100,24 +103,30 @@ const statusConfig: Record<StatusType, { color: string; label: string }> = {
   offline: { color: 'bg-slate-400', label: 'Offline' },
   busy: { color: 'bg-rose-500', label: 'Busy' },
   away: { color: 'bg-amber-500', label: 'Away' },
+  success: { color: 'bg-emerald-500', label: 'Active' },
+  danger: { color: 'bg-rose-500', label: 'Inactive' },
+  warning: { color: 'bg-amber-500', label: 'Warning' },
+  default: { color: 'bg-slate-400', label: 'Default' },
 };
 
 export const StatusBadge = forwardRef<HTMLSpanElement, StatusBadgeProps>(
-  ({ status, showLabel = false, className, ...props }, ref) => {
+  ({ status, showLabel = false, label: customLabel, className, ...props }, ref) => {
     const config = statusConfig[status];
+    const displayLabel = customLabel || config.label;
+    const shouldShowLabel = showLabel || customLabel !== undefined;
 
     return (
       <span
         ref={ref}
         className={clsx(
           'inline-flex items-center gap-1.5',
-          showLabel && 'text-xs text-slate-600',
+          shouldShowLabel && 'text-xs text-slate-600',
           className
         )}
         {...props}
       >
         <span className={clsx('w-2 h-2 rounded-full', config.color)} />
-        {showLabel && <span>{config.label}</span>}
+        {shouldShowLabel && <span>{displayLabel}</span>}
       </span>
     );
   }

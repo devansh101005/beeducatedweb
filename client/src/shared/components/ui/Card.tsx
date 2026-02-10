@@ -49,30 +49,35 @@ export const Card = forwardRef<HTMLDivElement, CardProps>(
     },
     ref
   ) => {
-    const Component = isHoverable || isClickable ? motion.div : 'div';
-    const motionProps = isHoverable || isClickable ? {
-      variants: cardHover,
-      initial: 'initial',
-      whileHover: 'hover',
-      whileTap: isClickable ? 'tap' : undefined,
-    } : {};
+    const cardClassName = clsx(
+      baseStyles,
+      variantStyles[variant],
+      !noPadding && 'p-5',
+      (isHoverable || isClickable) && 'hover:shadow-elevated hover:border-slate-200',
+      isClickable && 'cursor-pointer',
+      className
+    );
+
+    if (isHoverable || isClickable) {
+      return (
+        <motion.div
+          ref={ref}
+          className={cardClassName}
+          variants={cardHover}
+          initial="initial"
+          whileHover="hover"
+          whileTap={isClickable ? 'tap' : undefined}
+          {...(props as HTMLMotionProps<'div'>)}
+        >
+          {children}
+        </motion.div>
+      );
+    }
 
     return (
-      <Component
-        ref={ref}
-        className={clsx(
-          baseStyles,
-          variantStyles[variant],
-          !noPadding && 'p-5',
-          (isHoverable || isClickable) && 'hover:shadow-elevated hover:border-slate-200',
-          isClickable && 'cursor-pointer',
-          className
-        )}
-        {...motionProps}
-        {...(props as HTMLMotionProps<'div'>)}
-      >
+      <div ref={ref} className={cardClassName} {...props}>
         {children}
-      </Component>
+      </div>
     );
   }
 );

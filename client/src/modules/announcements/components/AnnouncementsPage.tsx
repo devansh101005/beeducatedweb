@@ -5,27 +5,21 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@clerk/clerk-react';
 import { useOutletContext } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import {
   Megaphone,
   Plus,
   RefreshCw,
-  Search,
   Edit2,
   Trash2,
-  X,
-  CheckCircle,
   AlertCircle,
   Pin,
   PinOff,
   Globe,
-  Lock,
   Calendar,
   Clock,
-  Users,
   Target,
   Paperclip,
-  Download,
   Eye,
   EyeOff,
   Send,
@@ -33,14 +27,10 @@ import {
   ChevronUp,
   Bell,
   AlertTriangle,
-  Info,
-  Filter,
-  MoreVertical,
   FileText,
-  User,
-  ExternalLink,
+  Download,
 } from 'lucide-react';
-import { format, parseISO, formatDistanceToNow, isAfter, isBefore } from 'date-fns';
+import { formatDistanceToNow, isAfter, isBefore, parseISO } from 'date-fns';
 import {
   Card,
   Button,

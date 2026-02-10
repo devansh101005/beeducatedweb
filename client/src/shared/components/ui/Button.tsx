@@ -10,13 +10,14 @@ import clsx from 'clsx';
 // TYPES
 // ============================================
 
-type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'outline' | 'outline-primary' | 'success' | 'danger';
+type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'outline' | 'outline-primary' | 'success' | 'danger' | 'warning';
 type ButtonSize = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
 
 interface ButtonProps extends Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'children'> {
   variant?: ButtonVariant;
   size?: ButtonSize;
   isLoading?: boolean;
+  loading?: boolean;
   isFullWidth?: boolean;
   leftIcon?: ReactNode;
   rightIcon?: ReactNode;
@@ -76,6 +77,13 @@ const variantStyles: Record<ButtonVariant, string> = {
     shadow-soft-sm hover:shadow-rose-glow
     focus-visible:ring-rose-500
   `,
+  warning: `
+    bg-orange-500 text-white
+    hover:bg-orange-600
+    active:bg-orange-700
+    shadow-soft-sm hover:shadow-orange-glow
+    focus-visible:ring-orange-500
+  `,
 };
 
 const sizeStyles: Record<ButtonSize, string> = {
@@ -104,7 +112,8 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     {
       variant = 'primary',
       size = 'md',
-      isLoading = false,
+      isLoading: isLoadingProp = false,
+      loading = false,
       isFullWidth = false,
       leftIcon,
       rightIcon,
@@ -115,6 +124,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     },
     ref
   ) => {
+    const isLoading = isLoadingProp || loading;
     const isDisabled = disabled || isLoading;
 
     return (
@@ -156,8 +166,9 @@ Button.displayName = 'Button';
 // ============================================
 
 interface IconButtonProps extends Omit<ButtonProps, 'leftIcon' | 'rightIcon' | 'children'> {
-  icon: ReactNode;
-  'aria-label': string;
+  icon?: ReactNode;
+  children?: ReactNode;
+  'aria-label'?: string;
 }
 
 const iconSizeStyles: Record<ButtonSize, string> = {
@@ -173,14 +184,17 @@ export const IconButton = forwardRef<HTMLButtonElement, IconButtonProps>(
     {
       variant = 'ghost',
       size = 'md',
-      isLoading = false,
+      isLoading: isLoadingProp = false,
+      loading = false,
       icon,
+      children,
       className,
       disabled,
       ...props
     },
     ref
   ) => {
+    const isLoading = isLoadingProp || loading;
     const isDisabled = disabled || isLoading;
 
     return (
@@ -205,7 +219,7 @@ export const IconButton = forwardRef<HTMLButtonElement, IconButtonProps>(
         {isLoading ? (
           <Loader2 className="w-4 h-4 animate-spin" />
         ) : (
-          icon
+          icon || children
         )}
       </motion.button>
     );

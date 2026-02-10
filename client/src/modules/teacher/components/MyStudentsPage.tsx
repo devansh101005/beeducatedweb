@@ -2,23 +2,14 @@
 // Premium student management and progress tracking for teachers
 
 import { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import {
   Users,
-  Search,
-  Filter,
-  Mail,
-  Phone,
   TrendingUp,
   TrendingDown,
   BarChart3,
-  Award,
-  Clock,
   ChevronRight,
-  MoreVertical,
   MessageSquare,
-  FileText,
   Download,
 } from 'lucide-react';
 import { format } from 'date-fns';
@@ -28,11 +19,11 @@ import {
   Stagger,
   StaggerItem,
 } from '@shared/components/ui/motion';
-import { Button, IconButton } from '@shared/components/ui/Button';
+import { Button } from '@shared/components/ui/Button';
 import { Card, CardBody, StatCard } from '@shared/components/ui/Card';
 import { SearchInput, Select } from '@shared/components/ui/Input';
-import { Badge, StatusBadge } from '@shared/components/ui/Badge';
-import { Avatar, AvatarWithName } from '@shared/components/ui/Avatar';
+import { StatusBadge, Badge } from '@shared/components/ui/Badge';
+import { AvatarWithName } from '@shared/components/ui/Avatar';
 import { Table, Pagination } from '@shared/components/ui/Table';
 import { SkeletonTable } from '@shared/components/ui/Loading';
 import { EmptyState } from '@shared/components/ui/EmptyState';
@@ -255,13 +246,13 @@ export function MyStudentsPage() {
       header: '',
       render: (student: Student) => (
         <div className="flex items-center gap-1">
-          <IconButton variant="ghost" size="sm" title="Send message">
+          <Button variant="ghost" size="sm" title="Send message">
             <MessageSquare className="w-4 h-4" />
-          </IconButton>
+          </Button>
           <Link to={`/dashboard/student/${student.id}`}>
-            <IconButton variant="ghost" size="sm" title="View profile">
+            <Button variant="ghost" size="sm" title="View profile">
               <ChevronRight className="w-4 h-4" />
-            </IconButton>
+            </Button>
           </Link>
         </div>
       ),

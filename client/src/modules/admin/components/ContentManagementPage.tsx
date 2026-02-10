@@ -9,12 +9,8 @@ import {
   Upload,
   Plus,
   RefreshCw,
-  Search,
-  Eye,
-  Edit,
   Trash2,
   X,
-  CheckCircle,
   AlertCircle,
   File,
   FileText,
@@ -22,10 +18,8 @@ import {
   Image,
   Music,
   Link as LinkIcon,
-  Download,
   Globe,
   Lock,
-  MoreVertical,
 } from 'lucide-react';
 import {
   Card,

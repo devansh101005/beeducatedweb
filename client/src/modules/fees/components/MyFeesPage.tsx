@@ -12,8 +12,6 @@ import {
   Clock,
   CheckCircle,
   AlertTriangle,
-  CreditCard,
-  Download,
   FileText,
   ChevronRight,
   ArrowUpRight,
@@ -21,13 +19,10 @@ import {
 import { format, parseISO, isBefore, addDays } from 'date-fns';
 import {
   Card,
-  CardHeader,
-  CardBody,
   Button,
   Badge,
   StatCard,
   EmptyState,
-  Spinner,
   Skeleton,
 } from '@shared/components/ui';
 import { Stagger, StaggerItem, fadeInUp } from '@shared/components/ui/motion';
@@ -298,7 +293,6 @@ export function MyFeesPage() {
           <div className="divide-y divide-slate-100">
             {filteredFees.map((fee, index) => {
               const config = statusConfig[fee.status] || statusConfig.pending;
-              const StatusIcon = config.icon;
               const dueDate = parseISO(fee.due_date);
               const isOverdue = isBefore(dueDate, new Date()) && fee.status !== 'paid';
               const isDueSoon = !isOverdue && isBefore(dueDate, addDays(new Date(), 7));

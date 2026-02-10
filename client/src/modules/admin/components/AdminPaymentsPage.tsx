@@ -11,26 +11,21 @@ import {
   X,
   AlertCircle,
   CheckCircle,
-  DollarSign,
   TrendingUp,
-  ArrowDownRight,
   RotateCcw,
   Eye,
   Calendar,
   Search,
-  Download,
   IndianRupee,
   Receipt,
   Hash,
   User,
   Mail,
-  Phone,
 } from 'lucide-react';
 import {
   Card,
   Button,
   Badge,
-  SearchInput,
   EmptyState,
   Spinner,
   Skeleton,
@@ -232,7 +227,7 @@ function ManualPaymentModal({ onClose, onSuccess }: ManualPaymentModalProps) {
   const [paymentMethod, setPaymentMethod] = useState('cash');
   const [transactionId, setTransactionId] = useState('');
   const [bankName, setBankName] = useState('');
-  const [bankReference, setBankReference] = useState('');
+  const [bankReference, _setBankReference] = useState('');
   const [chequeNumber, setChequeNumber] = useState('');
   const [chequeDate, setChequeDate] = useState('');
   const [chequeBank, setChequeBank] = useState('');
@@ -875,7 +870,7 @@ export function AdminPaymentsPage() {
   const limit = 20;
 
   // Filters
-  const [search, setSearch] = useState('');
+  const [_search, _setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [methodFilter, setMethodFilter] = useState('');
 

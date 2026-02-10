@@ -10,13 +10,7 @@ import {
   Play,
   CheckCircle,
   ChevronRight,
-  Award,
   BarChart3,
-  Calendar,
-  Video,
-  FileText,
-  Lock,
-  TrendingUp,
 } from 'lucide-react';
 import {
   PageTransition,
@@ -27,7 +21,7 @@ import {
 } from '@shared/components/ui/motion';
 import { Button } from '@shared/components/ui/Button';
 import { Card, CardBody, StatCard } from '@shared/components/ui/Card';
-import { Badge, StatusBadge } from '@shared/components/ui/Badge';
+import { StatusBadge } from '@shared/components/ui/Badge';
 import { SkeletonCard } from '@shared/components/ui/Loading';
 import { EmptyState } from '@shared/components/ui/EmptyState';
 
@@ -59,7 +53,7 @@ interface EnrolledCourse {
 
 const statusColors: Record<string, 'success' | 'warning' | 'default'> = {
   active: 'success',
-  completed: 'primary',
+  completed: 'default',
   paused: 'warning',
 };
 

@@ -4,14 +4,9 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Users,
-  Search,
   Plus,
   Calendar,
   Clock,
-  MapPin,
-  UserPlus,
-  Settings,
   Edit2,
   Trash2,
   Copy,
@@ -30,12 +25,12 @@ import {
   HoverScale,
 } from '@shared/components/ui/motion';
 import { Button, IconButton } from '@shared/components/ui/Button';
-import { Card, CardBody, CardHeader, StatCard } from '@shared/components/ui/Card';
-import { SearchInput, Input, Select, Textarea } from '@shared/components/ui/Input';
+import { Card, CardBody, StatCard } from '@shared/components/ui/Card';
+import { SearchInput, Input, Select } from '@shared/components/ui/Input';
 import { Badge, StatusBadge } from '@shared/components/ui/Badge';
-import { Avatar, AvatarGroup } from '@shared/components/ui/Avatar';
+import { Avatar } from '@shared/components/ui/Avatar';
 import { Modal, ModalHeader, ModalBody, ModalFooter, ConfirmModal } from '@shared/components/ui/Modal';
-import { SkeletonCard, InlineLoader } from '@shared/components/ui/Loading';
+import { SkeletonCard } from '@shared/components/ui/Loading';
 import { EmptyState } from '@shared/components/ui/EmptyState';
 
 interface Batch {

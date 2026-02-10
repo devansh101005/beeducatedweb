@@ -3,33 +3,27 @@
 
 import { useState, useEffect } from 'react';
 import { useAuth } from '@clerk/clerk-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import {
   Megaphone,
   Bell,
   AlertTriangle,
   Info,
-  CheckCircle,
   Calendar,
   User,
   Pin,
   ChevronDown,
   ChevronUp,
   ExternalLink,
-  Search,
-  Filter,
-  Plus,
 } from 'lucide-react';
-import { format, parseISO, formatDistanceToNow } from 'date-fns';
+import { parseISO, formatDistanceToNow } from 'date-fns';
 import {
   Card,
   Button,
   Badge,
   SearchInput,
   Select,
-  Avatar,
   EmptyState,
-  Spinner,
   Skeleton,
 } from '@shared/components/ui';
 import { fadeInUp, staggerItem } from '@shared/components/ui/motion';

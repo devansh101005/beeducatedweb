@@ -1,32 +1,24 @@
 // Fee List Page
 // Admin view for managing all student fees
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@clerk/clerk-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import {
-  Receipt,
   Plus,
-  Search,
-  Filter,
   Download,
   Calendar,
-  User,
   IndianRupee,
   Clock,
   AlertTriangle,
   CheckCircle,
-  XCircle,
-  ChevronDown,
-  MoreHorizontal,
   Eye,
   Edit,
   Trash2,
-  Send,
   RefreshCw,
 } from 'lucide-react';
-import { format, parseISO, isAfter, isBefore, addDays } from 'date-fns';
+import { format, parseISO, isBefore, addDays } from 'date-fns';
 import {
   Card,
   Button,
@@ -38,7 +30,6 @@ import {
   Pagination,
   Avatar,
   EmptyState,
-  Spinner,
   SkeletonTable,
   Modal,
   ModalHeader,
@@ -122,7 +113,6 @@ const feeTypeConfig: Record<string, string> = {
 
 export function FeeListPage() {
   const { getToken } = useAuth();
-  const [searchParams, setSearchParams] = useSearchParams();
 
   const [fees, setFees] = useState<StudentFee[]>([]);
   const [summary, setSummary] = useState<FeeSummary | null>(null);
@@ -131,9 +121,10 @@ export function FeeListPage() {
   const [totalPages, setTotalPages] = useState(1);
   const [totalItems, setTotalItems] = useState(0);
   const [selectedFees, setSelectedFees] = useState<string[]>([]);
-  const [showFilters, setShowFilters] = useState(false);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [feeToDelete, setFeeToDelete] = useState<StudentFee | null>(null);
+
+  const [searchParams] = useSearchParams();
 
   // Filters
   const [search, setSearch] = useState(searchParams.get('search') || '');
@@ -544,9 +535,9 @@ export function FeeListPage() {
               data={fees}
               columns={columns}
               keyExtractor={(row) => row.id}
-              onRowClick={(row) => {}}
+              onRowClick={(_row) => {}}
               selectedRows={selectedFees}
-              onSelectionChange={setSelectedFees}
+              onSelectionChange={(keys: (string | number)[]) => setSelectedFees(keys as string[])}
             />
             <div className="px-4 py-3 border-t border-slate-100">
               <Pagination

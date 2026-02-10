@@ -2,20 +2,14 @@
 // View all payment transactions
 
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
 import { useAuth } from '@clerk/clerk-react';
 import { motion } from 'framer-motion';
 import {
   Receipt,
-  Calendar,
   CheckCircle,
   XCircle,
   Clock,
   Download,
-  Filter,
-  Search,
-  IndianRupee,
-  ExternalLink,
   RefreshCw,
 } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
@@ -27,7 +21,6 @@ import {
   Select,
   Pagination,
   EmptyState,
-  Spinner,
   Skeleton,
 } from '@shared/components/ui';
 import { Stagger, StaggerItem, fadeInUp } from '@shared/components/ui/motion';

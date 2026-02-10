@@ -17,9 +17,8 @@ import {
   School,
   Target,
   Users,
-  MapPin,
 } from 'lucide-react';
-import { Button, Card, Select, Input, Badge, Spinner } from '@shared/components/ui';
+import { Button, Card, Select, Input, Spinner } from '@shared/components/ui';
 import clsx from 'clsx';
 
 // ============================================

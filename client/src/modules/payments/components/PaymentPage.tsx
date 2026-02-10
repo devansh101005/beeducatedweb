@@ -2,7 +2,7 @@
 // Razorpay checkout integration
 
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth, useUser } from '@clerk/clerk-react';
 import { motion } from 'framer-motion';
 import {
@@ -11,19 +11,15 @@ import {
   Lock,
   CheckCircle,
   AlertCircle,
-  IndianRupee,
   Receipt,
   ArrowLeft,
-  Loader2,
   Building2,
   Smartphone,
-  Wallet,
 } from 'lucide-react';
 import {
   Card,
   Button,
   Input,
-  Badge,
   Spinner,
 } from '@shared/components/ui';
 import { fadeInUp } from '@shared/components/ui/motion';
@@ -72,7 +68,6 @@ const API_URL = import.meta.env.VITE_API_URL || '/api';
 
 export function PaymentPage() {
   const { feeId } = useParams<{ feeId: string }>();
-  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { getToken } = useAuth();
   const { user } = useUser();

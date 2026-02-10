@@ -14,3 +14,4 @@ export { ContentManagementPage } from './components/ContentManagementPage';
 export { TeachersPage } from './components/TeachersPage';
 export { AdminPaymentsPage } from './components/AdminPaymentsPage';
 export { ExamEditorPage } from './components/ExamEditorPage';
+export { ReportsPage } from './components/ReportsPage';

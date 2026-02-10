@@ -26,11 +26,12 @@ interface ModalProps {
 }
 
 interface ModalHeaderProps {
-  title: string;
+  title?: string;
   subtitle?: string;
   onClose?: () => void;
   showCloseButton?: boolean;
   className?: string;
+  children?: ReactNode;
 }
 
 interface ModalBodyProps {
@@ -95,7 +96,7 @@ export function Modal({
   onClose,
   children,
   size = 'md',
-  showCloseButton = true,
+  showCloseButton: _showCloseButton = true,
   closeOnBackdrop = true,
   closeOnEscape = true,
   className,
@@ -178,7 +179,9 @@ export function ModalHeader({
   onClose,
   showCloseButton = true,
   className,
+  children,
 }: ModalHeaderProps) {
+  const displayTitle = title || (typeof children === 'string' ? children : undefined);
   return (
     <div
       className={clsx(
@@ -189,7 +192,7 @@ export function ModalHeader({
     >
       <div className="min-w-0 flex-1">
         <h2 className="text-lg font-heading font-semibold text-slate-900">
-          {title}
+          {displayTitle}
         </h2>
         {subtitle && (
           <p className="text-sm text-slate-500 mt-0.5">{subtitle}</p>
@@ -254,8 +257,10 @@ interface ConfirmModalProps {
   onClose: () => void;
   onConfirm: () => void;
   title: string;
-  description: string;
+  description?: string;
+  message?: string;
   confirmText?: string;
+  confirmLabel?: string;
   cancelText?: string;
   variant?: 'danger' | 'warning' | 'default';
   isLoading?: boolean;
@@ -267,11 +272,15 @@ export function ConfirmModal({
   onConfirm,
   title,
   description,
-  confirmText = 'Confirm',
+  message,
+  confirmText,
+  confirmLabel,
   cancelText = 'Cancel',
   variant = 'default',
   isLoading = false,
 }: ConfirmModalProps) {
+  const displayDescription = description || message || '';
+  const displayConfirmText = confirmText || confirmLabel || 'Confirm';
   const confirmButtonClass = {
     danger: 'btn-danger',
     warning: 'btn-primary',
@@ -282,7 +291,7 @@ export function ConfirmModal({
     <Modal isOpen={isOpen} onClose={onClose} size="sm">
       <ModalHeader title={title} onClose={onClose} />
       <ModalBody>
-        <p className="text-slate-600">{description}</p>
+        <p className="text-slate-600">{displayDescription}</p>
       </ModalBody>
       <ModalFooter>
         <button
@@ -297,7 +306,7 @@ export function ConfirmModal({
           onClick={onConfirm}
           disabled={isLoading}
         >
-          {isLoading ? 'Processing...' : confirmText}
+          {isLoading ? 'Processing...' : displayConfirmText}
         </button>
       </ModalFooter>
     </Modal>

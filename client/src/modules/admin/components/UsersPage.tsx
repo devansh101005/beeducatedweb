@@ -7,7 +7,6 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   Users,
   Plus,
-  Mail,
   Phone,
   Shield,
   UserCheck,
@@ -15,6 +14,7 @@ import {
   Edit2,
   Trash2,
   RefreshCw,
+  Mail,
 } from 'lucide-react';
 import { format } from 'date-fns';
 import {

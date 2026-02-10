@@ -2,27 +2,20 @@
 // Premium results and performance analytics
 
 import { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import {
   BarChart3,
   TrendingUp,
   TrendingDown,
   Award,
-  Target,
   CheckCircle,
   XCircle,
-  Calendar,
-  Clock,
   ChevronRight,
   Download,
-  Filter,
   FileQuestion,
 } from 'lucide-react';
 import { format } from 'date-fns';
 import {
-  LineChart,
-  Line,
   AreaChart,
   Area,
   XAxis,
@@ -41,11 +34,11 @@ import {
   StaggerItem,
 } from '@shared/components/ui/motion';
 import { Button } from '@shared/components/ui/Button';
-import { Card, CardBody, CardHeader, StatCard } from '@shared/components/ui/Card';
+import { Card, CardHeader, CardBody, StatCard } from '@shared/components/ui/Card';
 import { Select } from '@shared/components/ui/Input';
 import { Badge } from '@shared/components/ui/Badge';
 import { Table, Pagination } from '@shared/components/ui/Table';
-import { SkeletonTable, SkeletonCard } from '@shared/components/ui/Loading';
+import { SkeletonTable } from '@shared/components/ui/Loading';
 import { EmptyState } from '@shared/components/ui/EmptyState';
 
 interface Result {
@@ -446,7 +439,7 @@ export function MyResultsPage() {
                         paddingAngle={5}
                         dataKey="value"
                       >
-                        {passFailData.map((entry, index) => (
+                        {passFailData.map((_entry, index) => (
                           <Cell
                             key={`cell-${index}`}
                             fill={index === 0 ? '#22c55e' : '#ef4444'}

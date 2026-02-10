@@ -12,7 +12,6 @@ import {
   FileQuestion,
   Send,
   CheckCircle,
-  GripVertical,
   Clock,
   Target,
   Hash,
@@ -20,8 +19,6 @@ import {
   ToggleLeft,
   Calculator,
   AlignLeft,
-  ChevronDown,
-  ChevronUp,
   Save,
 } from 'lucide-react';
 import {

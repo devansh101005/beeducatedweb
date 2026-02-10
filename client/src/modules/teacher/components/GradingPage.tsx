@@ -5,20 +5,13 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   FileQuestion,
-  CheckCircle,
-  Clock,
-  User,
-  ChevronRight,
   ChevronDown,
-  Eye,
-  MessageSquare,
-  Send,
   Award,
   AlertCircle,
-  Filter,
-  Search,
+  Clock,
+  CheckCircle,
 } from 'lucide-react';
-import { format, formatDistanceToNow } from 'date-fns';
+import { formatDistanceToNow } from 'date-fns';
 import {
   PageTransition,
   FadeIn,
@@ -26,11 +19,11 @@ import {
   StaggerItem,
   HoverScale,
 } from '@shared/components/ui/motion';
-import { Button, IconButton } from '@shared/components/ui/Button';
-import { Card, CardBody, CardHeader, StatCard } from '@shared/components/ui/Card';
+import { Button } from '@shared/components/ui/Button';
+import { Card, CardBody, StatCard } from '@shared/components/ui/Card';
 import { SearchInput, Select, Textarea } from '@shared/components/ui/Input';
 import { Badge, StatusBadge } from '@shared/components/ui/Badge';
-import { Avatar, AvatarWithName } from '@shared/components/ui/Avatar';
+import { Avatar } from '@shared/components/ui/Avatar';
 import { Modal, ModalHeader, ModalBody, ModalFooter } from '@shared/components/ui/Modal';
 import { SkeletonCard } from '@shared/components/ui/Loading';
 import { EmptyState } from '@shared/components/ui/EmptyState';

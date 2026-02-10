@@ -163,8 +163,7 @@ const navigationByRole: Record<UserRole, NavSection[]> = {
         { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
         { name: 'My Children', href: '/dashboard/children', icon: Users2 },
         { name: 'Progress', href: '/dashboard/progress', icon: TrendingUp },
-        { name: 'Attendance', href: '/dashboard/attendance', icon: CheckSquare },
-        { name: 'Payments', href: '/dashboard/payments', icon: CreditCard },
+        { name: 'Payments', href: '/dashboard/parent-payments', icon: CreditCard },
         { name: 'Announcements', href: '/dashboard/announcements', icon: Megaphone },
       ],
     },
@@ -793,7 +792,7 @@ function TopBar({ title, onMenuClick, onBellClick, notificationCount = 0 }: TopB
 
 export function DashboardLayout() {
   const { isLoaded, isSignedIn, getToken } = useAuth();
-  const { user: clerkUser } = useUser();
+  const { user: _clerkUser } = useUser();
   const [userData, setUserData] = useState<UserData | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [announcementPanelOpen, setAnnouncementPanelOpen] = useState(false);

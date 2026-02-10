@@ -5,10 +5,8 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   BookOpen,
-  Search,
   Plus,
   Clock,
-  DollarSign,
   Users,
   Star,
   MoreVertical,
@@ -17,15 +15,10 @@ import {
   Copy,
   Eye,
   EyeOff,
-  ChevronRight,
   Layers,
   Video,
-  FileText,
-  Award,
-  TrendingUp,
   Filter,
 } from 'lucide-react';
-import { format } from 'date-fns';
 import {
   PageTransition,
   FadeIn,
@@ -38,7 +31,7 @@ import { Card, CardBody, StatCard } from '@shared/components/ui/Card';
 import { SearchInput, Input, Select, Textarea } from '@shared/components/ui/Input';
 import { Badge, StatusBadge } from '@shared/components/ui/Badge';
 import { Modal, ModalHeader, ModalBody, ModalFooter, ConfirmModal } from '@shared/components/ui/Modal';
-import { SkeletonCard, InlineLoader } from '@shared/components/ui/Loading';
+import { SkeletonCard } from '@shared/components/ui/Loading';
 import { EmptyState } from '@shared/components/ui/EmptyState';
 
 interface Course {
@@ -195,14 +188,6 @@ export function CoursesPage() {
     } catch (error) {
       console.error('Failed to duplicate course:', error);
     }
-  };
-
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('en-IN', {
-      style: 'currency',
-      currency: 'INR',
-      maximumFractionDigits: 0,
-    }).format(price);
   };
 
   return (

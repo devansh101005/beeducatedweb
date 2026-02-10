@@ -3,7 +3,7 @@
 
 import { forwardRef, InputHTMLAttributes, TextareaHTMLAttributes, ReactNode, useState, useId } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { AlertCircle, CheckCircle, Eye, EyeOff, Search } from 'lucide-react';
+import { AlertCircle, Eye, EyeOff, Search } from 'lucide-react';
 import clsx from 'clsx';
 
 // ============================================
@@ -302,9 +302,10 @@ interface SelectOption {
   disabled?: boolean;
 }
 
-interface SelectProps extends Omit<InputHTMLAttributes<HTMLSelectElement>, 'size'>, Omit<BaseInputProps, 'leftIcon' | 'rightIcon'> {
-  options: SelectOption[];
+interface SelectProps extends Omit<InputHTMLAttributes<HTMLSelectElement>, 'size'>, Omit<BaseInputProps, 'rightIcon'> {
+  options?: SelectOption[];
   placeholder?: string;
+  children?: ReactNode;
 }
 
 export const Select = forwardRef<HTMLSelectElement, SelectProps>(
@@ -320,6 +321,8 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
       className,
       id,
       disabled,
+      children,
+      leftIcon: _leftIcon,
       ...props
     },
     ref
@@ -362,11 +365,11 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
               {placeholder}
             </option>
           )}
-          {options.map((option) => (
+          {options ? options.map((option) => (
             <option key={option.value} value={option.value} disabled={option.disabled}>
               {option.label}
             </option>
-          ))}
+          )) : children}
         </select>
 
         <AnimatePresence mode="wait">
