@@ -1,5 +1,4 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { auth } from "./firebase"; // Force early initialization
 
 // Public pages
 import Home from "./pages/Home";
@@ -14,7 +13,7 @@ import StudyMaterials from "./pages/StudyMaterials";
 import SignupForm from "./pages/SignupForm";
 import LoginForm from "./pages/LoginForm";
 import StudentOtpLoginForm from "./pages/StudentOtpLoginForm";
-import PhoneLogin from "./pages/PhoneLogin";
+// import PhoneLogin from "./pages/PhoneLogin"; // Removed: Uses Firebase, replaced by Clerk
 import StudentLogin from "./pages/StudentLogin";
 
 // New Clerk auth pages
@@ -179,7 +178,7 @@ function App() {
         <Route path="/signup" element={<><Navbar /><SignupForm /></>} />
         <Route path="/login" element={<><Navbar /><LoginForm /></>} />
         <Route path="/student-id-login" element={<><Navbar /><StudentOtpLoginForm /></>} />
-        <Route path="/phone-login" element={<><Navbar /><PhoneLogin /></>} />
+        {/* <Route path="/phone-login" element={<><Navbar /><PhoneLogin /></>} /> */} {/* Removed: Uses Firebase */}
         <Route path="/student-login" element={<><Navbar /><StudentLogin /></>} />
         <Route path="/student-portal" element={<><Navbar /><StudentPortal /></>} />
         <Route path="/upload" element={<><Navbar /><UploadForm /></>} />
