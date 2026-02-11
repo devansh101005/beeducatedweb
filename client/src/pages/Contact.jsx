@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
+import { HiOutlineLocationMarker, HiOutlinePhone, HiOutlineMail, HiOutlineClock } from 'react-icons/hi';
 import Footer from '../components/Footer';
 
 const Contact = () => {
@@ -30,9 +31,7 @@ const Contact = () => {
     try {
       const res = await fetch('/api/v2/contact', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData),
       });
 
@@ -40,14 +39,7 @@ const Contact = () => {
 
       if (data.success) {
         setSuccess(true);
-        setFormData({
-          firstName: '',
-          lastName: '',
-          email: '',
-          role: 'student',
-          department: 'general',
-          message: '',
-        });
+        setFormData({ firstName: '', lastName: '', email: '', role: 'student', department: 'general', message: '' });
       } else {
         setError(data.message || 'Failed to send message. Please try again.');
       }
@@ -59,267 +51,276 @@ const Contact = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 font-sans text-gray-900 selection:bg-blue-100">
-      
-      {/* Header / Hero Section */}
-      <div className="bg-white border-b border-gray-100">
-        <div className="max-w-7xl mx-auto px-6 py-16 sm:py-24 text-center">
-          <span className="text-blue-600 font-semibold tracking-wide uppercase text-sm">Get in touch</span>
-          <h1 className="mt-3 text-4xl sm:text-5xl font-extrabold tracking-tight text-gray-900 font-['Poppins']">
-            Contact Our Institute
+    <div className="min-h-screen bg-white">
+
+      {/* ============================================ */}
+      {/* HERO SECTION */}
+      {/* ============================================ */}
+      <section
+        className="relative pt-[80px] min-h-[50vh] flex items-center justify-center text-center"
+        style={{
+          backgroundImage: `url('https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=1600&q=80')`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+        }}
+      >
+        <div className="absolute inset-0 bg-[#0a1e3d]/70"></div>
+        <div className="relative z-10 max-w-3xl mx-auto px-5 py-20">
+          <span className="inline-block font-heading text-sm font-semibold text-[#fbbf24] uppercase tracking-[0.2em] mb-4">
+            Get In Touch
+          </span>
+          <h1 className="font-heading text-[32px] sm:text-[42px] md:text-[50px] font-extrabold text-white mb-4 leading-tight">
+            Contact Us
           </h1>
-          <p className="mt-4 text-lg text-gray-600 max-w-2xl mx-auto font-['Open_Sans']">
+          <p className="font-body text-base sm:text-lg text-white/70 max-w-2xl mx-auto leading-relaxed">
             Have questions about admissions or courses? We're here to help. Reach out to us directly or fill out the form below.
           </p>
         </div>
-      </div>
+      </section>
 
-      {/* Main Content Grid */}
-      <div className="max-w-7xl mx-auto px-6 py-12 sm:py-16">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16">
-          
-          {/* Left Column: Contact Information */}
-          <div className="space-y-8">
-            <div>
-              <h3 className="text-2xl font-bold text-gray-900 mb-6 font-['Poppins']">Contact Information</h3>
-              <p className="text-gray-600 mb-8 font-['Open_Sans']">
-                Visit our campus to experience our learning environment firsthand. Our counselors are available during office hours.
-              </p>
-            </div>
-
-            {/* Info Cards */}
-            <div className="space-y-6">
-              <ContactCard 
-                icon={<MapPinIcon />}
-                title="Our Location"
-                content={
-                  <>
-                    Saraswati Mod, Lalganj Ajhara <br />
-                    Pratapgarh, Uttar Pradesh, 230132 <br />
-                    India
-                  </>
-                }
-                action={
-                  <a 
-                    href="https://maps.app.goo.gl/ukWj2xa2bHVWekvy8" 
-                    target="_blank" 
-                    rel="noopener noreferrer" 
-                    className="inline-flex items-center text-sm font-medium text-blue-600 hover:text-blue-800 transition-colors mt-2"
-                  >
-                    View on Google Maps &rarr;
-                  </a>
-                }
-              />
-
-              <ContactCard 
-                icon={<PhoneIcon />}
-                title="Phone Numbers"
-                content={
-                  <>
-                    <a href="tel:+919721145364" className="hover:text-blue-600 transition">+91 9721145364</a> <br />
-                    <a href="tel:+918601575896" className="hover:text-blue-600 transition">+91 8601575896</a>
-                  </>
-                }
-              />
-
-              <ContactCard 
-                icon={<MailIcon />}
-                title="Email Address"
-                content={
-                  <a href="mailto:Officialbe.educated@gmail.com" className="hover:text-blue-600 transition">
-                    Officialbe.educated@gmail.com
-                  </a>
-                }
-              />
-
-              <ContactCard 
-                icon={<ClockIcon />}
-                title="Office Hours"
-                content={
-                  <>
-                    <span className="font-medium">Mon - Fri:</span> 8:00 AM - 7:30 PM <br />
-                    <span className="font-medium">Saturday:</span> 9:00 AM - 6:00 PM <br />
-                    <span className="font-medium">Sunday:</span> 9:00 AM - 5:00 PM
-                  </>
-                }
-              />
-            </div>
+      {/* ============================================ */}
+      {/* CONTACT INFO CARDS */}
+      {/* ============================================ */}
+      <section className="relative -mt-16 z-10 pb-10">
+        <div className="max-w-6xl mx-auto px-5">
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
+            {[
+              {
+                icon: HiOutlineLocationMarker,
+                title: 'Our Location',
+                line1: 'Saraswati Mod, Lalganj Ajhara',
+                line2: 'Pratapgarh, UP – 230132',
+                link: { href: 'https://maps.app.goo.gl/ukWj2xa2bHVWekvy8', label: 'View on Map' },
+              },
+              {
+                icon: HiOutlinePhone,
+                title: 'Phone Numbers',
+                line1: '+91 9721145364',
+                line2: '+91 8601575896',
+                link: { href: 'tel:+919721145364', label: 'Call Now' },
+              },
+              {
+                icon: HiOutlineMail,
+                title: 'Email Address',
+                line1: 'Officialbe.educated',
+                line2: '@gmail.com',
+                link: { href: 'mailto:Officialbe.educated@gmail.com', label: 'Send Email' },
+              },
+              {
+                icon: HiOutlineClock,
+                title: 'Office Hours',
+                line1: 'Mon–Fri: 8:00 AM – 7:30 PM',
+                line2: 'Sat–Sun: 9:00 AM – 5:00 PM',
+              },
+            ].map(({ icon: Icon, title, line1, line2, link }, i) => (
+              <div
+                key={i}
+                className="group relative bg-white rounded-2xl p-6 border border-gray-100 overflow-hidden hover:-translate-y-2 hover:shadow-elevated-lg transition-all duration-500 cursor-default"
+              >
+                {/* Top accent bar */}
+                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-[#05308d] to-[#1a56db] group-hover:h-1.5 transition-all duration-500" />
+                {/* Corner glow */}
+                <div className="absolute -top-16 -right-16 w-32 h-32 bg-[#05308d]/5 rounded-full blur-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                <div className="relative z-10">
+                  <div className="w-12 h-12 bg-[#05308d]/10 rounded-xl flex items-center justify-center text-[#05308d] mb-4 group-hover:bg-[#05308d] group-hover:text-white group-hover:scale-110 group-hover:rotate-3 transition-all duration-500">
+                    <Icon className="text-xl" />
+                  </div>
+                  <h4 className="font-heading text-base font-bold text-[#0a1e3d] mb-2">{title}</h4>
+                  <p className="font-body text-[13px] text-gray-500 leading-relaxed">{line1}</p>
+                  <p className="font-body text-[13px] text-gray-500 leading-relaxed">{line2}</p>
+                  {link && (
+                    <a
+                      href={link.href}
+                      target={link.href.startsWith('http') ? '_blank' : undefined}
+                      rel={link.href.startsWith('http') ? 'noopener noreferrer' : undefined}
+                      className="inline-flex items-center gap-1 font-body text-xs font-semibold text-[#05308d] no-underline mt-3 group-hover:gap-2 transition-all duration-300"
+                    >
+                      {link.label}
+                      <span className="transition-transform duration-300 group-hover:translate-x-1">&rarr;</span>
+                    </a>
+                  )}
+                </div>
+              </div>
+            ))}
           </div>
+        </div>
+      </section>
 
-          {/* Right Column: Contact Form */}
-          <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-8 sm:p-10 lg:p-12 relative overflow-hidden">
-            {/* Decorative gradient blob */}
-            <div className="absolute top-0 right-0 -mr-20 -mt-20 w-64 h-64 bg-gradient-to-br from-blue-50 to-teal-50 rounded-full blur-3xl opacity-60 pointer-events-none"></div>
+      {/* ============================================ */}
+      {/* FORM + MAP SECTION */}
+      {/* ============================================ */}
+      <section className="py-16 bg-gray-50">
+        <div className="max-w-6xl mx-auto px-5">
+          <div className="grid lg:grid-cols-2 gap-10">
 
-            <h3 className="text-2xl font-bold text-gray-900 mb-2 relative z-10 font-['Poppins']">Send us a Message</h3>
-            <p className="text-gray-500 mb-8 relative z-10">Fill out the form below and we'll get back to you within 24 hours.</p>
+            {/* Left: Contact Form */}
+            <div className="group relative bg-white rounded-2xl p-8 sm:p-10 border border-gray-100 overflow-hidden shadow-soft-md">
+              {/* Decorative elements */}
+              <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-[#05308d] to-[#1a56db]" />
+              <div className="absolute -top-24 -right-24 w-48 h-48 bg-[#05308d]/3 rounded-full blur-3xl pointer-events-none" />
+              <div className="absolute -bottom-24 -left-24 w-48 h-48 bg-[#1a56db]/3 rounded-full blur-3xl pointer-events-none" />
 
-            {success && (
-              <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg mb-4 relative z-10">
-                <p className="font-medium">Message sent successfully!</p>
-                <p className="text-sm">We'll get back to you within 24 hours.</p>
+              <div className="relative z-10">
+                <span className="inline-block font-heading text-xs font-semibold text-[#05308d] uppercase tracking-[0.2em] mb-2">
+                  Enquiry Form
+                </span>
+                <h3 className="font-heading text-2xl font-bold text-[#0a1e3d] mb-1">Send us a Message</h3>
+                <p className="font-body text-sm text-gray-400 mb-8">We'll get back to you within 24 hours.</p>
+
+                {success && (
+                  <div className="bg-emerald-50 border border-emerald-200 text-emerald-700 px-4 py-3 rounded-xl mb-6 font-body text-sm">
+                    <p className="font-semibold">Message sent successfully!</p>
+                    <p className="text-emerald-600">We'll get back to you within 24 hours.</p>
+                  </div>
+                )}
+
+                {error && (
+                  <div className="bg-rose-50 border border-rose-200 text-rose-700 px-4 py-3 rounded-xl mb-6 font-body text-sm">
+                    <p className="font-semibold">{error}</p>
+                  </div>
+                )}
+
+                <form onSubmit={handleSubmit} className="space-y-5">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                    <div>
+                      <label htmlFor="firstName" className="block font-body text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">First Name</label>
+                      <input
+                        type="text" id="firstName" name="firstName"
+                        value={formData.firstName} onChange={handleChange} required
+                        className="w-full px-4 py-3 rounded-xl border border-gray-200 font-body text-sm text-[#0a1e3d] bg-gray-50 outline-none focus:border-[#05308d] focus:ring-2 focus:ring-[#05308d]/10 focus:bg-white transition-all duration-300"
+                        placeholder="Enter first name"
+                      />
+                    </div>
+                    <div>
+                      <label htmlFor="lastName" className="block font-body text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">Last Name</label>
+                      <input
+                        type="text" id="lastName" name="lastName"
+                        value={formData.lastName} onChange={handleChange} required
+                        className="w-full px-4 py-3 rounded-xl border border-gray-200 font-body text-sm text-[#0a1e3d] bg-gray-50 outline-none focus:border-[#05308d] focus:ring-2 focus:ring-[#05308d]/10 focus:bg-white transition-all duration-300"
+                        placeholder="Enter last name"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label htmlFor="email" className="block font-body text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">Email Address</label>
+                    <input
+                      type="email" id="email" name="email"
+                      value={formData.email} onChange={handleChange} required
+                      className="w-full px-4 py-3 rounded-xl border border-gray-200 font-body text-sm text-[#0a1e3d] bg-gray-50 outline-none focus:border-[#05308d] focus:ring-2 focus:ring-[#05308d]/10 focus:bg-white transition-all duration-300"
+                      placeholder="your@email.com"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                    <div>
+                      <label htmlFor="role" className="block font-body text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">I am a</label>
+                      <select
+                        id="role" name="role"
+                        value={formData.role} onChange={handleChange} required
+                        className="w-full px-4 py-3 rounded-xl border border-gray-200 font-body text-sm text-[#0a1e3d] bg-gray-50 outline-none focus:border-[#05308d] focus:ring-2 focus:ring-[#05308d]/10 focus:bg-white transition-all duration-300 appearance-none cursor-pointer"
+                      >
+                        <option value="student">Student</option>
+                        <option value="parent">Parent</option>
+                        <option value="teacher">Teacher</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label htmlFor="department" className="block font-body text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">Inquiry For</label>
+                      <select
+                        id="department" name="department"
+                        value={formData.department} onChange={handleChange} required
+                        className="w-full px-4 py-3 rounded-xl border border-gray-200 font-body text-sm text-[#0a1e3d] bg-gray-50 outline-none focus:border-[#05308d] focus:ring-2 focus:ring-[#05308d]/10 focus:bg-white transition-all duration-300 appearance-none cursor-pointer"
+                      >
+                        <option value="general">General Information</option>
+                        <option value="admission">Admission</option>
+                        <option value="technical">Technical Support</option>
+                        <option value="accounts">Accounts & Finance</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label htmlFor="message" className="block font-body text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">Message</label>
+                    <textarea
+                      id="message" name="message"
+                      value={formData.message} onChange={handleChange} required rows="4"
+                      className="w-full px-4 py-3 rounded-xl border border-gray-200 font-body text-sm text-[#0a1e3d] bg-gray-50 outline-none focus:border-[#05308d] focus:ring-2 focus:ring-[#05308d]/10 focus:bg-white transition-all duration-300 resize-none"
+                      placeholder="How can we help you?"
+                    ></textarea>
+                  </div>
+
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    className="w-full bg-[#05308d] text-white font-heading font-semibold py-3.5 rounded-xl hover:bg-[#1648b8] hover:-translate-y-0.5 hover:shadow-lg transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0 disabled:hover:shadow-none"
+                  >
+                    {loading ? (
+                      <span className="inline-flex items-center gap-2">
+                        <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                        Sending...
+                      </span>
+                    ) : 'Send Message'}
+                  </button>
+                </form>
               </div>
-            )}
+            </div>
 
-            {error && (
-              <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-4 relative z-10">
-                <p className="font-medium">{error}</p>
-              </div>
-            )}
-
-            <form onSubmit={handleSubmit} className="space-y-6 relative z-10">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                <div>
-                  <label htmlFor="firstName" className="block text-sm font-medium text-gray-700 mb-2">First Name *</label>
-                  <input
-                    type="text"
-                    id="firstName"
-                    name="firstName"
-                    value={formData.firstName}
-                    onChange={handleChange}
-                    required
-                    className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition outline-none bg-gray-50 focus:bg-white"
-                    placeholder="John"
-                  />
-                </div>
-                <div>
-                  <label htmlFor="lastName" className="block text-sm font-medium text-gray-700 mb-2">Last Name *</label>
-                  <input
-                    type="text"
-                    id="lastName"
-                    name="lastName"
-                    value={formData.lastName}
-                    onChange={handleChange}
-                    required
-                    className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition outline-none bg-gray-50 focus:bg-white"
-                    placeholder="Doe"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">Email Address *</label>
-                <input
-                  type="email"
-                  id="email"
-                  name="email"
-                  value={formData.email}
-                  onChange={handleChange}
-                  required
-                  className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition outline-none bg-gray-50 focus:bg-white"
-                  placeholder="john@example.com"
+            {/* Right: Map + Quick CTA */}
+            <div className="flex flex-col gap-6">
+              {/* Map */}
+              <div className="relative rounded-2xl overflow-hidden border border-gray-100 shadow-soft-md flex-1 min-h-[300px]">
+                <iframe
+                  title="Be Educated Location"
+                  src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3606.123456789!2d81.95!3d25.89!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zMjXCsDUzJzI0LjAiTiA4McKwNTcnMDAuMCJF!5e0!3m2!1sen!2sin!4v1234567890"
+                  className="w-full h-full absolute inset-0"
+                  style={{ border: 0, minHeight: 300 }}
+                  allowFullScreen=""
+                  loading="lazy"
+                  referrerPolicy="no-referrer-when-downgrade"
                 />
               </div>
 
-              <div>
-                <label htmlFor="role" className="block text-sm font-medium text-gray-700 mb-2">I am a *</label>
-                <select
-                  id="role"
-                  name="role"
-                  value={formData.role}
-                  onChange={handleChange}
-                  required
-                  className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition outline-none bg-gray-50 focus:bg-white"
-                >
-                  <option value="student">Student</option>
-                  <option value="parent">Parent</option>
-                  <option value="teacher">Teacher</option>
-                </select>
+              {/* Quick Action Card */}
+              <div className="group relative bg-gradient-to-r from-[#0a1e3d] to-[#05308d] rounded-2xl p-7 overflow-hidden">
+                {/* Decorative circles */}
+                <div className="absolute top-4 right-4 w-24 h-24 border border-white/5 rounded-full" />
+                <div className="absolute top-8 right-8 w-16 h-16 border border-white/5 rounded-full" />
+                <div className="absolute -bottom-8 -left-8 w-32 h-32 bg-white/5 rounded-full blur-xl" />
+                <div className="relative z-10">
+                  <h3 className="font-heading text-xl font-bold text-white mb-2">Need Immediate Help?</h3>
+                  <p className="font-body text-sm text-white/60 mb-5">
+                    Call us directly for instant assistance with admissions and course details.
+                  </p>
+                  <div className="flex flex-col sm:flex-row gap-3">
+                    <a
+                      href="tel:+919721145364"
+                      className="inline-flex items-center justify-center gap-2 bg-white text-[#05308d] px-5 py-2.5 rounded-lg no-underline font-heading font-semibold text-sm hover:bg-white/90 hover:-translate-y-0.5 transition-all duration-300"
+                    >
+                      <HiOutlinePhone className="text-base" />
+                      Call Now
+                    </a>
+                    <a
+                      href="https://wa.me/919721145364"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center justify-center gap-2 border border-white/20 text-white px-5 py-2.5 rounded-lg no-underline font-heading font-semibold text-sm hover:bg-white/10 hover:-translate-y-0.5 transition-all duration-300"
+                    >
+                      WhatsApp
+                    </a>
+                  </div>
+                </div>
               </div>
+            </div>
 
-              <div>
-                <label htmlFor="department" className="block text-sm font-medium text-gray-700 mb-2">Inquiry For *</label>
-                <select
-                  id="department"
-                  name="department"
-                  value={formData.department}
-                  onChange={handleChange}
-                  required
-                  className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition outline-none bg-gray-50 focus:bg-white"
-                >
-                  <option value="general">General Information</option>
-                  <option value="admission">Admission</option>
-                  <option value="technical">Technical Support</option>
-                  <option value="hr">HR Department</option>
-                  <option value="accounts">Accounts & Finance</option>
-                </select>
-              </div>
-
-              <div>
-                <label htmlFor="message" className="block text-sm font-medium text-gray-700 mb-2">Message *</label>
-                <textarea
-                  id="message"
-                  name="message"
-                  value={formData.message}
-                  onChange={handleChange}
-                  required
-                  rows="4"
-                  className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition outline-none bg-gray-50 focus:bg-white resize-none"
-                  placeholder="How can we help you?"
-                ></textarea>
-              </div>
-
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full bg-gradient-to-r from-blue-600 to-teal-500 text-white font-semibold py-4 rounded-lg shadow-lg hover:shadow-xl hover:opacity-90 transition-all transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {loading ? 'Sending...' : 'Send Message'}
-              </button>
-            </form>
           </div>
-
         </div>
-      </div>
+      </section>
 
       {/* Footer */}
       <Footer />
     </div>
   );
 };
-
-// --- Helper Components (For cleaner code) ---
-
-const ContactCard = ({ icon, title, content, action }) => (
-  <div className="flex items-start gap-4 p-4 rounded-xl hover:bg-white hover:shadow-md transition-all duration-300 border border-transparent hover:border-gray-100">
-    <div className="flex-shrink-0 w-12 h-12 bg-gradient-to-br from-blue-100 to-teal-100 text-blue-600 rounded-xl flex items-center justify-center shadow-sm">
-      {icon}
-    </div>
-    <div>
-      <h4 className="text-lg font-semibold text-gray-900 font-['Poppins']">{title}</h4>
-      <div className="mt-1 text-gray-600 leading-relaxed text-sm font-['Open_Sans']">
-        {content}
-      </div>
-      {action && <div className="mt-1">{action}</div>}
-    </div>
-  </div>
-);
-
-// --- SVG Icons (No external libraries needed) ---
-
-const MapPinIcon = () => (
-  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-  </svg>
-);
-
-const PhoneIcon = () => (
-  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-  </svg>
-);
-
-const MailIcon = () => (
-  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-  </svg>
-);
-
-const ClockIcon = () => (
-  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-  </svg>
-);
 
 export default Contact;

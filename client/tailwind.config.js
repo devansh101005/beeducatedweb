@@ -121,11 +121,11 @@ export default {
 
       // ============================================
       // TYPOGRAPHY
-      // DM Sans for headings (geometric, confident)
+      // Outfit for headings (premium geometric, similar to Gilroy)
       // Inter for body (readable, clean)
       // ============================================
       fontFamily: {
-        heading: ['Poppins', 'system-ui', 'sans-serif'],
+        heading: ['Outfit', 'system-ui', 'sans-serif'],
         body: ['Inter', 'system-ui', 'sans-serif'],
         mono: ['JetBrains Mono', 'Menlo', 'monospace'],
         sans: ['Inter', 'system-ui', 'sans-serif'],

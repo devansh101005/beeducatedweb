@@ -34,7 +34,7 @@ function Footer() {
                 </div>
               </div>
               <p className="font-body text-[13px] text-gray-500 leading-relaxed mb-6">
-                Building bright minds through quality education, concept-based teaching, and personalized attention in Pratapgarh.
+                Building bright minds through quality education, concept-based teaching, and personalized attention
               </p>
               {/* Social Icons */}
               <div className="flex gap-3">
@@ -103,8 +103,8 @@ function Footer() {
                   </Link>
                 </li>
                 <li>
-                  <Link to="/contact" className="font-body text-[14px] text-gray-500 no-underline hover:text-[#1a56db] transition-colors duration-200">
-                    Help & Support
+                  <Link to="/faq" className="font-body text-[14px] text-gray-500 no-underline hover:text-[#1a56db] transition-colors duration-200">
+                    FAQ
                   </Link>
                 </li>
               </ul>
@@ -115,20 +115,20 @@ function Footer() {
               <h4 className="font-heading text-[15px] font-bold text-[#0a1e3d] mb-5 uppercase tracking-wider">Contact Us</h4>
               <div className="space-y-4">
                 <div className="flex items-start gap-3">
-                  <HiOutlineLocationMarker className="text-[#1a56db] text-lg mt-0.5 flex-shrink-0" />
+                  <HiOutlineLocationMarker className="text-[#052a7b] text-lg mt-0.5 flex-shrink-0" />
                   <p className="font-body text-[13px] text-gray-500 leading-relaxed">
-                    Saraswati Mod, Lalganj Ajhara,<br />
+                    Lalganj Ajhara,<br />
                     Pratapgarh, UP – 230132
                   </p>
                 </div>
                 <div className="flex items-center gap-3">
-                  <HiOutlinePhone className="text-[#1a56db] text-lg flex-shrink-0" />
-                  <a href="tel:+919721145364" className="font-body text-[13px] text-gray-500 no-underline hover:text-[#1a56db] transition-colors">
-                    +91 9721145364
+                  <HiOutlinePhone className="text-[#052a7b] text-lg flex-shrink-0" />
+                  <a href="tel:+918382970800" className="font-body text-[13px] text-gray-500 no-underline hover:text-[#1a56db] transition-colors">
+                    +91 8382970800
                   </a>
                 </div>
                 <div className="flex items-center gap-3">
-                  <HiOutlineMail className="text-[#1a56db] text-lg flex-shrink-0" />
+                  <HiOutlineMail className="text-[#052a7b] text-lg flex-shrink-0" />
                   <a href="mailto:Officialbe.educated@gmail.com" className="font-body text-[13px] text-gray-500 no-underline hover:text-[#1a56db] transition-colors break-all">
                     Officialbe.educated@gmail.com
                   </a>
@@ -146,7 +146,7 @@ function Footer() {
               &copy; 2025–{new Date().getFullYear()} Be Educated. All rights reserved.
             </p>
             <p className="font-body text-[12px] text-gray-400">
-              IIT-JEE & NEET Foundation Institute, Pratapgarh
+              IIT-JEE & NEET Foundation Institute
             </p>
           </div>
         </div>

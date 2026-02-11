@@ -7,6 +7,7 @@ import Courses from "./pages/Courses";
 import FeeStructure from './pages/FeeStructure';
 import FacultyPage from "./pages/FacultyPage";
 import Contact from "./pages/Contact";
+import FAQ from "./pages/FAQ";
 import StudyMaterials from "./pages/StudyMaterials";
 
 // Legacy auth pages (keep during migration)
@@ -165,6 +166,7 @@ function App() {
         <Route path="/fee-structure" element={<><Navbar /><FeeStructure /></>} />
         <Route path="/materials" element={<><Navbar /><StudyMaterials /></>} />
         <Route path="/faculty" element={<><Navbar /><FacultyPage /></>} />
+        <Route path="/faq" element={<><Navbar /><FAQ /></>} />
         <Route path="/unauthorized" element={<><Navbar /><Unauthorized /></>} />
         <Route path="/auth-test" element={<><Navbar /><AuthTest /></>} />
 

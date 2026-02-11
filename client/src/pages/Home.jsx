@@ -1,20 +1,12 @@
-import logo from "../assets/logo.png";
 import { Link } from "react-router-dom"
-import { useState,useEffect } from "react"
-import {FaFacebook,FaInstagram,FaLinkedin,FaYoutube} from 'react-icons/fa';
+import { useState, useEffect } from "react"
+import { FaFacebook, FaInstagram, FaLinkedin, FaYoutube } from 'react-icons/fa';
 import AnnouncementModal from "../components/AnnouncementModal";
-import { useAuth, UserButton } from '@clerk/clerk-react';
 import Footer from "../components/Footer";
 
 function Home() {
-  const { isSignedIn, isLoaded } = useAuth();
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-    const [announcement, setAnnouncement] = useState(null);
-    const [showAnnouncement, setShowAnnouncement] = useState(false);
-
-  const toggleMobileMenu = () => {
-    setIsMobileMenuOpen(!isMobileMenuOpen);
-  };
+  const [announcement, setAnnouncement] = useState(null);
+  const [showAnnouncement, setShowAnnouncement] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -23,9 +15,9 @@ function Home() {
         const res = await fetch(`${import.meta.env.VITE_API_URL || import.meta.env.VITE_API_BASE_URL}/api/v2/announcements/latest`);
         const data = await res.json();
         if (!cancelled && data?.success && data.announcement?.message) {
-           const seenId = localStorage.getItem("seenAnnouncementId");
+          const seenId = localStorage.getItem("seenAnnouncementId");
           if (String(seenId) !== String(data.announcement.id)) {
-             setAnnouncement(data.announcement);
+            setAnnouncement(data.announcement);
             setShowAnnouncement(true);
           }
         }
@@ -50,67 +42,6 @@ function Home() {
           }}
         />
       )}
-
-      {/* Navigation */}
-      <nav className="fixed top-0 w-full bg-white/95 backdrop-blur-md border-b border-gray-200 z-[1000] transition-all duration-300 h-20">
-        <div className="max-w-7xl mx-auto px-5 w-full">
-          <div className="flex justify-between items-center py-4 h-full">
-            <div className="flex items-center">
-              <Link to="/" className="no-underline">
-                <div className="flex items-center gap-3">
-                  <img src={logo} alt="Be Educated Logo" className="w-20 h-15 object-contain rounded-lg" />
-                  <div className="flex flex-col items-start">
-                    <span className="font-heading text-2xl font-bold text-[#0a1e3d]">Be Educated</span>
-                    <span className="font-body text-xs font-normal text-gray-500 -mt-0.5 leading-none">Achieve Beyond Limits</span>
-                  </div>
-                </div>
-              </Link>
-            </div>
-            <button className="md:hidden bg-none border-none cursor-pointer p-2.5 z-[1001]" onClick={toggleMobileMenu}>
-              <span className={`block w-6 h-0.5 bg-gray-700 relative transition-all duration-300 ${isMobileMenuOpen ? 'bg-transparent before:rotate-45 before:top-0 after:-rotate-45 after:bottom-0' : ''} before:content-[''] before:absolute before:w-6 before:h-0.5 before:bg-gray-700 before:transition-all before:duration-300 before:-top-2 after:content-[''] after:absolute after:w-6 after:h-0.5 after:bg-gray-700 after:transition-all after:duration-300 after:-bottom-2`}></span>
-            </button>
-            <div className={`flex gap-8 items-center max-md:fixed max-md:top-20 max-md:left-0 max-md:right-0 max-md:bg-white max-md:flex-col max-md:p-8 max-md:gap-6 max-md:shadow-lg max-md:transition-all max-md:duration-300 ${isMobileMenuOpen ? 'max-md:translate-y-0 max-md:opacity-100 max-md:visible' : 'max-md:-translate-y-full max-md:opacity-0 max-md:invisible'}`}>
-              <Link to="/about" className="no-underline text-gray-600 font-medium font-body transition-all duration-300 hover:text-[#0a1e3d]" onClick={() => setIsMobileMenuOpen(false)}>
-                About
-              </Link>
-              <Link to="/courses" className="no-underline text-gray-600 font-medium font-body transition-all duration-300 hover:text-[#0a1e3d]" onClick={() => setIsMobileMenuOpen(false)}>
-                Courses
-              </Link>
-               <Link to="/fee-structure" className="no-underline text-gray-600 font-medium font-body transition-all duration-300 hover:text-[#0a1e3d]" onClick={() => setIsMobileMenuOpen(false)}>
-                Fee Structure
-              </Link>
-              <Link to="/contact" className="no-underline text-gray-600 font-medium font-body transition-all duration-300 hover:text-[#0a1e3d]" onClick={() => setIsMobileMenuOpen(false)}>
-                Contact
-              </Link>
-              {isLoaded && isSignedIn ? (
-                <>
-                  <Link to="/dashboard" className="bg-[#1a56db] text-white px-6 py-3 rounded-lg no-underline font-heading font-semibold transition-all duration-300 hover:bg-[#1648b8] hover:-translate-y-0.5 shadow-lg" onClick={() => setIsMobileMenuOpen(false)}>
-                    Go to Dashboard
-                  </Link>
-                  <UserButton
-                    afterSignOutUrl="/"
-                    appearance={{
-                      elements: {
-                        avatarBox: 'w-10 h-10 rounded-full border-2 border-[#0a1e3d] hover:border-[#1a56db] transition-all',
-                        userButtonPopoverCard: 'shadow-2xl',
-                      },
-                    }}
-                  />
-                </>
-              ) : (
-                <>
-                  <Link to="/sign-in" className="no-underline text-gray-600 font-medium font-body transition-all duration-300 hover:text-[#0a1e3d]" onClick={() => setIsMobileMenuOpen(false)}>
-                    Sign In
-                  </Link>
-                  <Link to="/sign-up" className="bg-[#1a56db] text-white px-6 py-3 rounded-lg no-underline font-heading font-semibold transition-all duration-300 hover:bg-[#1648b8] hover:-translate-y-0.5" onClick={() => setIsMobileMenuOpen(false)}>
-                    Get Started
-                  </Link>
-                </>
-              )}
-            </div>
-          </div>
-        </div>
-      </nav>
 
       {/* ============================================ */}
       {/* HERO SECTION - Dark overlay classroom bg */}
@@ -144,7 +75,7 @@ function Home() {
 
           {/* Subheading */}
           <p className="font-body text-[15px] sm:text-[17px] md:text-[19px] font-medium text-white/80 mb-4">
-            Foundation Program (Class 6–10) | Home Tuition Service (Nursery–12)
+            Foundation Program (Class 6–12) | Home Tuition Service (Nursery–12)
           </p>
 
           {/* Trust Line */}
@@ -156,7 +87,7 @@ function Home() {
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link
               to="/contact"
-              className="inline-block bg-[#1a56db] text-white px-9 py-4 rounded-lg no-underline font-heading font-bold text-base sm:text-lg hover:bg-[#1648b8] transition-colors duration-300 shadow-xl"
+              className="inline-block bg-[#05308d] text-white px-9 py-4 rounded-lg no-underline font-heading font-bold text-base sm:text-lg hover:bg-[#1648b8] transition-colors duration-300 shadow-xl"
             >
               Enquire Now
             </Link>
@@ -340,7 +271,7 @@ function Home() {
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link
               to="/contact"
-              className="inline-block bg-[#1a56db] text-white px-9 py-4 rounded-lg no-underline font-heading font-bold text-base sm:text-lg hover:bg-[#1648b8] transition-colors duration-300 shadow-xl"
+              className="inline-block bg-[#05308d] text-white px-9 py-4 rounded-lg no-underline font-heading font-bold text-base sm:text-lg hover:bg-[#1648b8] transition-colors duration-300 shadow-xl"
             >
               Enquire Now
             </Link>
