@@ -4,7 +4,7 @@
 import { Router, Request, Response } from 'express';
 import { requireAuth, attachUser } from '../../middleware/auth.js';
 import { userService } from '../../services/userService.js';
-import { sendSuccess, sendNotFound, sendError } from '../../shared/utils/response.js';
+import { sendSuccess, sendNotFound, sendError, sendBadRequest } from '../../shared/utils/response.js';
 
 const router = Router();
 
@@ -130,6 +130,43 @@ router.patch('/role', requireAuth, attachUser, async (req: Request, res: Respons
   } catch (error) {
     console.error('Error updating role:', error);
     sendError(res, 'Failed to update role');
+  }
+});
+
+/**
+ * PUT /api/v2/auth/profile
+ * Update current user's profile (first_name, last_name, phone)
+ */
+router.put('/profile', requireAuth, attachUser, async (req: Request, res: Response) => {
+  try {
+    if (!req.user) {
+      return sendNotFound(res, 'User');
+    }
+
+    const { first_name, last_name, phone } = req.body;
+
+    const updateData: Record<string, string> = {};
+    if (first_name !== undefined) updateData.first_name = String(first_name).trim();
+    if (last_name !== undefined) updateData.last_name = String(last_name).trim();
+    if (phone !== undefined) updateData.phone = String(phone).trim();
+
+    if (Object.keys(updateData).length === 0) {
+      return sendBadRequest(res, 'No fields to update');
+    }
+
+    const updated = await userService.update(req.user.id, updateData);
+
+    sendSuccess(res, {
+      user: {
+        id: updated.id,
+        firstName: updated.first_name,
+        lastName: updated.last_name,
+        phone: updated.phone,
+      },
+    }, 'Profile updated successfully');
+  } catch (error) {
+    console.error('Error updating profile:', error);
+    sendError(res, 'Failed to update profile');
   }
 });
 

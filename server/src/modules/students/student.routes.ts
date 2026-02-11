@@ -513,7 +513,7 @@ router.post('/materials/:id/download', requireAuth, attachUser, async (req: Requ
 
     // Update progress to track the download/view
     await contentService.updateProgress(contentId, student.id, {
-      view_count: 1, // Increment view count
+      view_count_increment: true, // Increment view count
     });
 
     // Generate signed URL for download
@@ -574,6 +574,174 @@ router.get('/materials/:id', requireAuth, attachUser, async (req: Request, res: 
   } catch (error) {
     console.error('Error fetching material:', error);
     sendError(res, 'Failed to fetch material');
+  }
+});
+
+// ============================================
+// STUDENT COURSES (Current User)
+// ============================================
+
+/**
+ * GET /api/v2/student/courses
+ * Get current student's enrolled courses with progress
+ */
+router.get('/courses', requireAuth, attachUser, async (req: Request, res: Response) => {
+  try {
+    if (!req.user) {
+      return sendBadRequest(res, 'User not authenticated');
+    }
+
+    const student = await studentService.getByUserId(req.user.id);
+    if (!student) {
+      return sendSuccess(res, []);
+    }
+
+    // Get enrolled courses through the new enrollment system
+    const accessSummary = await enrollmentService.getStudentAccessSummary(student.id);
+
+    // Transform enrollments to match frontend expected format
+    const enrolledCourses = await Promise.all(
+      accessSummary.activeEnrollments.map(async (enrollment: any) => {
+        // Get content for this class to calculate progress
+        const content = await contentService.getByClass(enrollment.classId, { publishedOnly: true });
+
+        // Get student's progress on this content
+        const studentContent = await contentService.getStudentClassContent(student.id, {
+          classId: enrollment.classId,
+        });
+
+        const totalLessons = content.length;
+        const completedLessons = studentContent.filter((c: any) => c.is_completed).length;
+        const progress = totalLessons > 0 ? Math.round((completedLessons / totalLessons) * 100) : 0;
+
+        // Group by modules if content has module info
+        const modules = content.reduce((acc: any[], c: any) => {
+          const moduleId = c.module_id || 'general';
+          if (!acc.find(m => m.id === moduleId)) {
+            acc.push({ id: moduleId, name: c.module_name || 'General' });
+          }
+          return acc;
+        }, []);
+
+        const completedModules = modules.filter((module: any) => {
+          const moduleContent = content.filter((c: any) => (c.module_id || 'general') === module.id);
+          const moduleStudentContent = studentContent.filter((c: any) => (c.module_id || 'general') === module.id);
+          const moduleCompleted = moduleStudentContent.filter((c: any) => c.is_completed).length;
+          return moduleCompleted === moduleContent.length && moduleContent.length > 0;
+        }).length;
+
+        // Get last accessed timestamp
+        const lastAccessed = studentContent
+          .map((c: any) => c.last_viewed_at)
+          .filter(Boolean)
+          .sort()
+          .reverse()[0];
+
+        // Determine status
+        let status: 'active' | 'completed' | 'paused' = 'active';
+        if (progress === 100) {
+          status = 'completed';
+        }
+
+        return {
+          id: enrollment.enrollmentId,
+          course: {
+            id: enrollment.classId,
+            name: enrollment.className,
+            description: `${enrollment.courseTypeName} - ${enrollment.className}`,
+            thumbnail: undefined,
+            category: enrollment.courseTypeName,
+            duration: enrollment.daysRemaining ? `${enrollment.daysRemaining} days remaining` : 'Ongoing',
+          },
+          batch: undefined, // Not using batch system for new enrollments
+          progress,
+          completedLessons,
+          totalLessons,
+          completedModules,
+          totalModules: modules.length,
+          lastAccessedAt: lastAccessed,
+          status,
+          expiresAt: enrollment.expiresAt,
+          enrolledAt: enrollment.enrolledAt,
+        };
+      })
+    );
+
+    sendSuccess(res, enrolledCourses);
+  } catch (error) {
+    console.error('Error fetching student courses:', error);
+    sendError(res, 'Failed to fetch courses');
+  }
+});
+
+/**
+ * GET /api/v2/student/courses/stats
+ * Get current student's course enrollment statistics
+ */
+router.get('/courses/stats', requireAuth, attachUser, async (req: Request, res: Response) => {
+  try {
+    if (!req.user) {
+      return sendBadRequest(res, 'User not authenticated');
+    }
+
+    const student = await studentService.getByUserId(req.user.id);
+    if (!student) {
+      return sendSuccess(res, {
+        enrolled: 0,
+        inProgress: 0,
+        completed: 0,
+        totalHours: 0,
+      });
+    }
+
+    // Get enrolled courses
+    const accessSummary = await enrollmentService.getStudentAccessSummary(student.id);
+
+    let inProgress = 0;
+    let completed = 0;
+    let totalMinutes = 0;
+
+    // Calculate stats for each enrollment
+    for (const enrollment of accessSummary.activeEnrollments) {
+      const content = await contentService.getByClass(enrollment.classId, { publishedOnly: true });
+      const studentContent = await contentService.getStudentClassContent(student.id, {
+        classId: enrollment.classId,
+      });
+
+      const totalLessons = content.length;
+      const completedLessons = studentContent.filter((c: any) => c.is_completed).length;
+      const progress = totalLessons > 0 ? (completedLessons / totalLessons) * 100 : 0;
+
+      if (progress === 100) {
+        completed++;
+      } else if (progress > 0) {
+        inProgress++;
+      }
+
+      // Sum up duration from content (duration_seconds)
+      content.forEach((c: any) => {
+        if (c.duration_seconds) {
+          totalMinutes += c.duration_seconds / 60;
+        }
+      });
+    }
+
+    // If not started yet, count as in progress
+    if (inProgress === 0 && completed === 0 && accessSummary.activeEnrollments.length > 0) {
+      inProgress = accessSummary.activeEnrollments.length;
+    }
+
+    const totalHours = Math.round(totalMinutes / 60);
+
+    sendSuccess(res, {
+      enrolled: accessSummary.activeEnrollments.length,
+      inProgress,
+      completed,
+      totalHours,
+    });
+  } catch (error) {
+    console.error('Error fetching course stats:', error);
+    sendError(res, 'Failed to fetch course statistics');
   }
 });
 

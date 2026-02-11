@@ -537,6 +537,38 @@ router.get('/student/:studentId/summary', requireAuth, attachUser, requireTeache
 });
 
 /**
+ * GET /api/v2/fees/students/:studentId/dues
+ * Get student's fee records (for parent dashboard)
+ */
+router.get('/students/:studentId/dues', requireAuth, attachUser, async (req: Request, res: Response) => {
+  try {
+    const studentId = req.params.studentId as string;
+
+    // Allow parents, admins, teachers, or the student themselves
+    const role = req.user?.role;
+    if (role === 'student') {
+      const student = await studentService.getByUserId(req.user!.id);
+      if (!student || student.id !== studentId) {
+        return sendForbidden(res, 'Not authorized to view these fees');
+      }
+    } else if (role !== 'admin' && role !== 'teacher' && role !== 'parent' && role !== 'batch_manager') {
+      return sendForbidden(res, 'Not authorized');
+    }
+
+    const result = await feeService.listStudentFees({
+      page: 1,
+      limit: 100,
+      studentId,
+    });
+
+    sendSuccess(res, result.fees);
+  } catch (error) {
+    console.error('Error getting student fee dues:', error);
+    sendError(res, 'Failed to get fee dues');
+  }
+});
+
+/**
  * POST /api/v2/fees/apply-late-fees
  * Apply late fees to overdue fees
  */

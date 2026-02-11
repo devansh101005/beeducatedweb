@@ -319,6 +319,68 @@ router.get('/:id/my-attempts', requireAuth, attachUser, async (req: Request, res
   }
 });
 
+/**
+ * GET /api/v2/exams/student/:studentId/results
+ * Get all exam results for a student (used by parent dashboard)
+ */
+router.get('/student/:studentId/results', requireAuth, attachUser, async (req: Request, res: Response) => {
+  try {
+    const studentId = getParam(req.params.studentId);
+
+    // Allow parents, admins, teachers, or the student themselves
+    const role = req.user?.role;
+    if (role === 'student') {
+      const student = await studentService.getByUserId(req.user!.id);
+      if (!student || student.id !== studentId) {
+        return sendForbidden(res, 'Not authorized to view these results');
+      }
+    } else if (role !== 'admin' && role !== 'teacher' && role !== 'parent' && role !== 'batch_manager') {
+      return sendForbidden(res, 'Not authorized');
+    }
+
+    const { getSupabase } = await import('../../config/supabase.js');
+    const supabase = getSupabase();
+
+    const { data, error } = await supabase
+      .from('exam_results')
+      .select(`
+        id,
+        exam_id,
+        best_marks,
+        best_percentage,
+        total_attempts,
+        average_marks,
+        average_percentage,
+        is_passed,
+        exam:exams(id, title, total_marks, exam_type)
+      `)
+      .eq('student_id', studentId)
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('Error fetching student results:', error);
+      return sendError(res, 'Failed to fetch results');
+    }
+
+    const results = (data || []).map((r: any) => ({
+      id: r.id,
+      exam_id: r.exam_id,
+      exam_title: r.exam?.title || 'Exam',
+      exam_type: r.exam?.exam_type,
+      best_marks: r.best_marks,
+      best_percentage: r.best_percentage,
+      total_marks: r.exam?.total_marks || 100,
+      is_passed: r.is_passed,
+      attempts_count: r.total_attempts,
+    }));
+
+    sendSuccess(res, results);
+  } catch (error) {
+    console.error('Error fetching student exam results:', error);
+    sendError(res, 'Failed to fetch exam results');
+  }
+});
+
 // ============================================
 // ADMIN/TEACHER ENDPOINTS
 // ============================================
