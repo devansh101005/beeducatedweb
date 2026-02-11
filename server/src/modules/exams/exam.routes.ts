@@ -449,8 +449,6 @@ router.post('/', requireAuth, attachUser, requireTeacherOrAdmin, async (req: Req
       enableFullscreen,
       isFree,
       accessCode,
-      targetBatchType,
-      targetClass,
     } = req.body;
 
     if (!title) {
@@ -485,8 +483,6 @@ router.post('/', requireAuth, attachUser, requireTeacherOrAdmin, async (req: Req
       enable_fullscreen: enableFullscreen || false,
       is_free: isFree || false,
       access_code: accessCode,
-      target_batch_type: targetBatchType || null,
-      target_class: targetClass || null,
       created_by: req.user?.id,
     });
 

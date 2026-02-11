@@ -14,6 +14,12 @@ import {
   sendBadRequest,
 } from '../../shared/utils/response.js';
 
+// Helper to get string param (Express 5 can return string | string[])
+const getParam = (param: string | string[] | undefined): string => {
+  if (Array.isArray(param)) return param[0];
+  return param || '';
+};
+
 const router = Router();
 
 // All routes require teacher or admin access
@@ -51,7 +57,6 @@ router.get('/batches', ...auth, async (req: Request, res: Response) => {
     const batches = await Promise.all(
       teacherBatches.map(async (tb: any) => {
         const batch = tb.batch || tb;
-        const assignment = tb.assignment || tb;
 
         // Get student count for this batch
         let studentCount = 0;
@@ -696,7 +701,7 @@ router.post('/submissions/:submissionId/grade', ...auth, async (req: Request, re
     const teacher = await getTeacher(req);
     if (!teacher) return sendNotFound(res, 'Teacher profile');
 
-    const { submissionId } = req.params;
+    const submissionId = getParam(req.params.submissionId);
     const { grades } = req.body;
 
     if (!grades || !Array.isArray(grades)) {

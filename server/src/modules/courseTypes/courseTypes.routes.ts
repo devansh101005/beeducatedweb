@@ -14,6 +14,12 @@ import {
   sendCreated,
 } from '../../shared/utils/response.js';
 
+// Helper to get string param (Express 5 can return string | string[])
+const getParam = (param: string | string[] | undefined): string => {
+  if (Array.isArray(param)) return param[0];
+  return param || '';
+};
+
 const router = Router();
 
 // ============================================
@@ -81,7 +87,7 @@ router.get('/material-types', async (_req: Request, res: Response) => {
  */
 router.get('/:slug', async (req: Request, res: Response) => {
   try {
-    const { slug } = req.params;
+    const slug = getParam(req.params.slug);
 
     const courseType = await courseTypeService.getBySlug(slug);
     if (!courseType) {
@@ -114,7 +120,7 @@ router.get('/:slug', async (req: Request, res: Response) => {
  */
 router.get('/:slug/classes', async (req: Request, res: Response) => {
   try {
-    const { slug } = req.params;
+    const slug = getParam(req.params.slug);
 
     // Try to get student ID if authenticated
     let studentId: string | undefined;
@@ -189,7 +195,7 @@ router.get('/:slug/classes', async (req: Request, res: Response) => {
  */
 router.get('/classes/:classId', async (req: Request, res: Response) => {
   try {
-    const { classId } = req.params;
+    const classId = getParam(req.params.classId);
 
     const classInfo = await courseTypeService.getClassById(classId);
     if (!classInfo) {
@@ -245,7 +251,7 @@ router.get('/classes/:classId', async (req: Request, res: Response) => {
  */
 router.get('/classes/:classId/subjects', async (req: Request, res: Response) => {
   try {
-    const { classId } = req.params;
+    const classId = getParam(req.params.classId);
 
     const classSubjects = await courseTypeService.getClassSubjects(classId);
 
@@ -335,9 +341,9 @@ router.post(
         studentId: student.id,
         classId,
         feePlanId,
-        studentName: `${student.first_name || ''} ${student.last_name || ''}`.trim() || 'Student',
+        studentName: 'Student', // Will be populated from Razorpay payment details
         studentEmail: req.user.email,
-        studentPhone: student.phone || undefined,
+        studentPhone: undefined, // Will be populated from Razorpay payment details
       });
 
       sendCreated(res, result, 'Enrollment initiated');
@@ -530,7 +536,7 @@ router.get(
   attachUser,
   async (req: Request, res: Response) => {
     try {
-      const { classId } = req.params;
+      const classId = getParam(req.params.classId);
 
       if (!req.user || req.user.role !== 'student') {
         return sendSuccess(res, {
@@ -578,7 +584,7 @@ router.get(
   attachUser,
   async (req: Request, res: Response) => {
     try {
-      const { id } = req.params;
+      const id = getParam(req.params.id);
 
       const enrollment = await enrollmentService.getEnrollmentById(id);
       if (!enrollment) {

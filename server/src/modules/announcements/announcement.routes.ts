@@ -44,7 +44,7 @@ const router = Router();
  * GET /api/v2/announcements/admin/targeting-options
  * Get academic classes for announcement targeting dropdowns
  */
-router.get('/admin/targeting-options', requireAuth, attachUser, requireTeacherOrAdmin, async (req: Request, res: Response) => {
+router.get('/admin/targeting-options', requireAuth, attachUser, requireTeacherOrAdmin, async (_req: Request, res: Response) => {
   try {
     const classes = await courseTypeService.getClassesWithFeePlans();
 
