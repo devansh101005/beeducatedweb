@@ -22,7 +22,7 @@ function Home() {
     let cancelled = false;
     (async () => {
       try {
-        const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/announcements/latest`);
+        const res = await fetch(`${import.meta.env.VITE_API_URL || import.meta.env.VITE_API_BASE_URL}/api/v2/announcements/latest`);
         const data = await res.json();
         if (!cancelled && data?.success && data.announcement?.message) {
            const seenId = localStorage.getItem("seenAnnouncementId");

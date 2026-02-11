@@ -37,6 +37,42 @@ const upload = multer({
 const router = Router();
 
 // ============================================
+// PUBLIC ENDPOINTS (no auth required)
+// ============================================
+
+/**
+ * GET /api/v2/announcements/latest
+ * Get the latest published announcement (public, for homepage popup)
+ */
+router.get('/latest', async (_req: Request, res: Response) => {
+  try {
+    const result = await announcementService.list({
+      page: 1,
+      limit: 1,
+      isPublished: true,
+    });
+
+    if (!result.announcements || result.announcements.length === 0) {
+      return sendSuccess(res, { announcement: null });
+    }
+
+    const latest = result.announcements[0];
+    sendSuccess(res, {
+      announcement: {
+        id: latest.id,
+        title: latest.title,
+        message: latest.body,
+        priority: latest.priority,
+        created_at: latest.created_at,
+      },
+    });
+  } catch (error) {
+    console.error('Error fetching latest announcement:', error);
+    sendError(res, 'Failed to fetch latest announcement');
+  }
+});
+
+// ============================================
 // ADMIN/TEACHER ENDPOINTS (must be before /:id routes)
 // ============================================
 
