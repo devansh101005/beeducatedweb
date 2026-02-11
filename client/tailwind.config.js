@@ -125,7 +125,7 @@ export default {
       // Inter for body (readable, clean)
       // ============================================
       fontFamily: {
-        heading: ['DM Sans', 'system-ui', 'sans-serif'],
+        heading: ['Poppins', 'system-ui', 'sans-serif'],
         body: ['Inter', 'system-ui', 'sans-serif'],
         mono: ['JetBrains Mono', 'Menlo', 'monospace'],
         sans: ['Inter', 'system-ui', 'sans-serif'],
