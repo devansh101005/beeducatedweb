@@ -37,6 +37,12 @@ validateEnv();
 const app: Express = express();
 
 // ============================================
+// Trust Proxy (Required for Render, Vercel, etc.)
+// ============================================
+// Enable trust proxy to get real client IP from X-Forwarded-For header
+app.set('trust proxy', true);
+
+// ============================================
 // Security Headers (Helmet)
 // ============================================
 app.use(helmet({
@@ -49,6 +55,9 @@ app.use(helmet({
 // ============================================
 const allowedOrigins = [
   env.FRONTEND_URL,
+  // Production domains
+  'https://beeducated.co.in',
+  'https://www.beeducated.co.in',
   ...(env.NODE_ENV === 'development'
     ? ['http://localhost:5173', 'http://localhost:5174', 'http://localhost:3000']
     : []),
