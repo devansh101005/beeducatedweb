@@ -39,8 +39,9 @@ const app: Express = express();
 // ============================================
 // Trust Proxy (Required for Render, Vercel, etc.)
 // ============================================
-// Enable trust proxy to get real client IP from X-Forwarded-For header
-app.set('trust proxy', true);
+// Trust only the first proxy (Render's load balancer)
+// This is more secure than 'trust proxy: true' which trusts all proxies
+app.set('trust proxy', 1);
 
 // ============================================
 // Security Headers (Helmet)
@@ -73,12 +74,18 @@ app.use(
         return callback(null, true);
       }
 
+      // Check if origin is in allowed origins list
       if (allowedOrigins.includes(origin)) {
-        callback(null, true);
-      } else {
-        console.warn(`CORS blocked request from: ${origin}`);
-        callback(null, false);
+        return callback(null, true);
       }
+
+      // Allow Vercel preview deployments (*.vercel.app)
+      if (origin.endsWith('.vercel.app')) {
+        return callback(null, true);
+      }
+
+      console.warn(`CORS blocked request from: ${origin}`);
+      callback(null, false);
     },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
