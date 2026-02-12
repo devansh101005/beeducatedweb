@@ -202,7 +202,30 @@ function About() {
           </div>
 
           <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
-            {/* Founder 1: Devansh */}
+            {/* Founder 1: Rishabh */}
+            <div className="group relative bg-white rounded-2xl overflow-hidden border border-gray-100 hover:-translate-y-2 hover:shadow-elevated-lg transition-all duration-500 flex flex-col">
+              <div className="h-36 bg-gradient-to-r from-[#0a1e3d] via-[#05308d] to-[#05308d] bg-[length:200%_100%] group-hover:animate-shimmer w-full relative">
+                <div className="absolute top-4 right-4 w-20 h-20 border border-white/10 rounded-full" />
+                <div className="absolute top-8 right-8 w-12 h-12 border border-white/5 rounded-full" />
+                <div className="absolute -bottom-14 left-8 p-1.5 bg-white rounded-full shadow-lg group-hover:shadow-xl transition-shadow duration-500">
+                  <img src={Rishabh} alt="Rishabh Pandey" className="w-24 h-24 rounded-full object-cover ring-4 ring-white group-hover:scale-105 transition-transform duration-500" />
+                </div>
+              </div>
+              <div className="pt-18 pb-8 px-8 flex-1 flex flex-col">
+                <h3 className="font-heading text-2xl font-bold text-[#0a1e3d] group-hover:text-[#05308d] transition-colors duration-300">Rishabh Pandey</h3>
+                <span className="inline-block font-body text-[#05308d] font-medium text-xs mb-4 bg-[#05308d]/8 px-3 py-1 rounded-full w-fit">Founder</span>
+                <p className="font-body text-gray-600 text-[15px] leading-relaxed mb-6 flex-1">
+                  With strong roots in Lalganj Ajhara, Pratapgarh, Rishabh Pandey founded Be Educated with a clear vision — to bring high-quality IIT-JEE & NEET foundation education directly to students, both at centre and at home. Understanding that every student learns differently, he built a personalized home tuition model supported by expert subject teachers, structured study plans, and regular performance tracking. From Nursery to Class 12, students receive concept-focused guidance that builds a strong academic base for boards as well as competitive exams. His mission is simple yet powerful — deliver disciplined, result-oriented, and affordable education to every household.
+                </p>
+                <div className="flex gap-2 pt-4 border-t border-gray-100">
+                  <a href="https://www.linkedin.com/in/rishabh-pandey-6209542ba/" target="_blank" rel="noopener noreferrer" className="w-9 h-9 rounded-lg flex items-center justify-center text-gray-400 hover:text-white hover:bg-[#05308d] transition-all duration-300">
+                    <FaLinkedin size={18} />
+                  </a>
+                </div>
+              </div>
+            </div>
+
+            {/* Founder 2: Devansh */}
             <div className="group relative bg-white rounded-2xl overflow-hidden border border-gray-100 hover:-translate-y-2 hover:shadow-elevated-lg transition-all duration-500 flex flex-col">
               {/* Banner with animated gradient */}
               <div className="h-36 bg-gradient-to-r from-[#0a1e3d] via-[#05308d] to-[#0a1e3d] bg-[length:200%_100%] group-hover:animate-shimmer w-full relative">
@@ -227,29 +250,6 @@ function About() {
                   </a>
                   <a href="https://github.com/devansh101005" target="_blank" rel="noopener noreferrer" className="w-9 h-9 rounded-lg flex items-center justify-center text-gray-400 hover:text-white hover:bg-[#0a1e3d] transition-all duration-300">
                     <FaGithub size={18} />
-                  </a>
-                </div>
-              </div>
-            </div>
-
-            {/* Founder 2: Rishabh */}
-            <div className="group relative bg-white rounded-2xl overflow-hidden border border-gray-100 hover:-translate-y-2 hover:shadow-elevated-lg transition-all duration-500 flex flex-col">
-              <div className="h-36 bg-gradient-to-r from-[#05308d] via-[#1a56db] to-[#05308d] bg-[length:200%_100%] group-hover:animate-shimmer w-full relative">
-                <div className="absolute top-4 right-4 w-20 h-20 border border-white/10 rounded-full" />
-                <div className="absolute top-8 right-8 w-12 h-12 border border-white/5 rounded-full" />
-                <div className="absolute -bottom-14 left-8 p-1.5 bg-white rounded-full shadow-lg group-hover:shadow-xl transition-shadow duration-500">
-                  <img src={Rishabh} alt="Rishabh Pandey" className="w-24 h-24 rounded-full object-cover ring-4 ring-white group-hover:scale-105 transition-transform duration-500" />
-                </div>
-              </div>
-              <div className="pt-18 pb-8 px-8 flex-1 flex flex-col">
-                <h3 className="font-heading text-2xl font-bold text-[#0a1e3d] group-hover:text-[#05308d] transition-colors duration-300">Rishabh Pandey</h3>
-                <span className="inline-block font-body text-[#05308d] font-medium text-xs mb-4 bg-[#05308d]/8 px-3 py-1 rounded-full w-fit">Founder</span>
-                <p className="font-body text-gray-600 text-[15px] leading-relaxed mb-6 flex-1">
-                  With a deep connection to his roots in Lalganj Ajhara, Pratapgarh, he started this journey to ensure that every child, regardless of their background, gets access to quality education.
-                </p>
-                <div className="flex gap-2 pt-4 border-t border-gray-100">
-                  <a href="https://www.linkedin.com/in/rishabh-pandey-6209542ba/" target="_blank" rel="noopener noreferrer" className="w-9 h-9 rounded-lg flex items-center justify-center text-gray-400 hover:text-white hover:bg-[#05308d] transition-all duration-300">
-                    <FaLinkedin size={18} />
                   </a>
                 </div>
               </div>

@@ -90,14 +90,14 @@ const Contact = () => {
                 title: 'Our Location',
                 line1: 'Saraswati Mod, Lalganj Ajhara',
                 line2: 'Pratapgarh, UP – 230132',
-                link: { href: 'https://maps.app.goo.gl/ukWj2xa2bHVWekvy8', label: 'View on Map' },
+                link: { href: 'https://maps.app.goo.gl/AZtQsSZmwAHAjAtr7', label: 'View on Map' },
               },
               {
                 icon: HiOutlinePhone,
                 title: 'Phone Numbers',
-                line1: '+91 9721145364',
+                line1: '+91 8382970800',
                 line2: '+91 8601575896',
-                link: { href: 'tel:+919721145364', label: 'Call Now' },
+                link: { href: 'tel:+918382970800', label: 'Call Now' },
               },
               {
                 icon: HiOutlineMail,
@@ -272,7 +272,7 @@ const Contact = () => {
               <div className="relative rounded-2xl overflow-hidden border border-gray-100 shadow-soft-md flex-1 min-h-[300px]">
                 <iframe
                   title="Be Educated Location"
-                  src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3606.123456789!2d81.95!3d25.89!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zMjXCsDUzJzI0LjAiTiA4McKwNTcnMDAuMCJF!5e0!3m2!1sen!2sin!4v1234567890"
+                  src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3606.0!2d81.95!3d25.89!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x399be3d4b7f63cc7%3A0x6d0b7ca4a7e0a279!2sBe%20Educated!5e0!3m2!1sen!2sin!4v1700000000000"
                   className="w-full h-full absolute inset-0"
                   style={{ border: 0, minHeight: 300 }}
                   allowFullScreen=""
@@ -294,14 +294,14 @@ const Contact = () => {
                   </p>
                   <div className="flex flex-col sm:flex-row gap-3">
                     <a
-                      href="tel:+919721145364"
+                      href="tel:+918382970800"
                       className="inline-flex items-center justify-center gap-2 bg-white text-[#05308d] px-5 py-2.5 rounded-lg no-underline font-heading font-semibold text-sm hover:bg-white/90 hover:-translate-y-0.5 transition-all duration-300"
                     >
                       <HiOutlinePhone className="text-base" />
                       Call Now
                     </a>
                     <a
-                      href="https://wa.me/919721145364"
+                      href="https://wa.me/918382970800"
                       target="_blank"
                       rel="noopener noreferrer"
                       className="inline-flex items-center justify-center gap-2 border border-white/20 text-white px-5 py-2.5 rounded-lg no-underline font-heading font-semibold text-sm hover:bg-white/10 hover:-translate-y-0.5 transition-all duration-300"

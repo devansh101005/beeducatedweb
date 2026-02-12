@@ -92,7 +92,7 @@ function Home() {
               Enquire Now
             </Link>
             <a
-              href="tel:+919721145364"
+              href="tel:+918382970800"
               className="inline-block border-2 border-white text-white px-9 py-4 rounded-lg no-underline font-heading font-bold text-base sm:text-lg hover:bg-white hover:text-[#0a1e3d] transition-colors duration-300"
             >
               Call for Admission
@@ -276,7 +276,7 @@ function Home() {
               Enquire Now
             </Link>
             <a
-              href="tel:+919721145364"
+              href="tel:+918382970800"
               className="inline-block border-2 border-white text-white px-9 py-4 rounded-lg no-underline font-heading font-bold text-base sm:text-lg hover:bg-white hover:text-[#0a1e3d] transition-colors duration-300"
             >
               Call Now

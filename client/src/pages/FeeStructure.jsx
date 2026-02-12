@@ -566,7 +566,7 @@ const FeeStructure = () => {
               </svg>
             </Link>
             <a
-              href="tel:+919876543210"
+              href="tel:+918382970800"
               className="group inline-flex items-center justify-center gap-2 bg-white border-2 border-[#05308d]/15 text-[#05308d] px-8 py-4 rounded-xl font-heading font-bold text-sm sm:text-base no-underline transition-all duration-300 hover:border-[#05308d]/30 hover:shadow-md hover:-translate-y-0.5"
             >
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
