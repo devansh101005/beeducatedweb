@@ -467,7 +467,15 @@ export function ClassesPage() {
       {/* WHAT YOU GET — OFFLINE BATCH */}
       {/* ============================================ */}
       {data.classes.length > 0 && (
-        <section className="py-16 sm:py-20 bg-[#0a1e3d] relative overflow-hidden">
+        <section
+          className="py-16 sm:py-20 relative overflow-hidden"
+          style={{
+            backgroundImage: `url('https://images.unsplash.com/photo-1503676260728-1c00da094a0b?w=1600&q=80')`,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+          }}
+        >
+          <div className="absolute inset-0 bg-[#0a1e3d]/90"></div>
           <div className="absolute top-0 right-0 w-72 h-72 bg-[#05308d]/20 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
           <div className="absolute bottom-0 left-0 w-56 h-56 bg-[#fbbf24]/10 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2"></div>
 

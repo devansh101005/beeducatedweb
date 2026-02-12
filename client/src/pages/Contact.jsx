@@ -88,7 +88,7 @@ const Contact = () => {
               {
                 icon: HiOutlineLocationMarker,
                 title: 'Our Location',
-                line1: 'Saraswati Mod, Lalganj Ajhara',
+                line1: 'Lalganj Ajhara',
                 line2: 'Pratapgarh, UP – 230132',
                 link: { href: 'https://maps.app.goo.gl/AZtQsSZmwAHAjAtr7', label: 'View on Map' },
               },
