@@ -276,12 +276,15 @@ router.put('/users/:id', async (req: Request, res: Response) => {
       return sendNotFound(res, 'User');
     }
 
-    // Update in Clerk if name changed
-    if (firstName !== undefined || lastName !== undefined) {
-      await clerkClient.users.updateUser(existingUser.clerk_id, {
-        firstName: firstName ?? existingUser.first_name ?? undefined,
-        lastName: lastName ?? existingUser.last_name ?? undefined,
-      });
+    // Update in Clerk (name and/or role)
+    const clerkUpdate: Record<string, any> = {};
+    if (firstName !== undefined) clerkUpdate.firstName = firstName;
+    if (lastName !== undefined) clerkUpdate.lastName = lastName;
+    if (role !== undefined) {
+      clerkUpdate.publicMetadata = { ...((await clerkClient.users.getUser(existingUser.clerk_id)).publicMetadata || {}), role };
+    }
+    if (Object.keys(clerkUpdate).length > 0) {
+      await clerkClient.users.updateUser(existingUser.clerk_id, clerkUpdate);
     }
 
     // Update in Supabase
@@ -312,6 +315,17 @@ router.put('/users/:id/role', async (req: Request, res: Response) => {
     if (!role || !['admin', 'student', 'parent', 'teacher', 'batch_manager'].includes(role)) {
       return sendBadRequest(res, 'Invalid role');
     }
+
+    const existingUser = await userService.getById(userId);
+    if (!existingUser) {
+      return sendNotFound(res, 'User');
+    }
+
+    // Sync role to Clerk publicMetadata
+    const clerkUser = await clerkClient.users.getUser(existingUser.clerk_id);
+    await clerkClient.users.updateUser(existingUser.clerk_id, {
+      publicMetadata: { ...(clerkUser.publicMetadata || {}), role },
+    });
 
     const user = await userService.updateRole(userId, role as UserRole);
 

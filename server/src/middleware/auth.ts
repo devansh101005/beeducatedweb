@@ -71,6 +71,8 @@ export const attachUser: RequestHandler = async (
         const adminEmails = env.ADMIN_EMAILS?.split(',').map(e => e.trim().toLowerCase()) || [];
         const isAdmin = adminEmails.includes(email.toLowerCase());
 
+        const assignedRole = isAdmin ? 'admin' : 'student';
+
         // Create user in our database
         user = await userService.create({
           clerk_id: clerkId,
@@ -78,7 +80,12 @@ export const attachUser: RequestHandler = async (
           first_name: clerkUser.firstName || undefined,
           last_name: clerkUser.lastName || undefined,
           phone: clerkUser.phoneNumbers[0]?.phoneNumber || undefined,
-          role: isAdmin ? 'admin' : 'student',
+          role: assignedRole,
+        });
+
+        // Sync role to Clerk publicMetadata so frontend can read it
+        await clerkClient.users.updateUser(clerkId, {
+          publicMetadata: { role: assignedRole, dbUserId: user.id },
         });
 
         console.log('Auto-created user from Clerk:', user.id, 'role:', user.role);
