@@ -88,8 +88,8 @@ const Contact = () => {
               {
                 icon: HiOutlineLocationMarker,
                 title: 'Our Location',
-                line1: 'Lalganj Ajhara',
-                line2: 'Pratapgarh, UP – 230132',
+                line1: 'Lalganj Ajhara, Pratapgarh',
+                line2: 'Uttar Pradesh – 230132',
                 link: { href: 'https://maps.app.goo.gl/AZtQsSZmwAHAjAtr7', label: 'View on Map' },
               },
               {

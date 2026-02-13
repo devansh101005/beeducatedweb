@@ -29,6 +29,51 @@ declare global {
   }
 }
 
+/* ── Static content overrides per class (frontend only) ── */
+const classContentMap: Record<string, { title: string; description: string; features: string[] }> = {
+  '6': {
+    title: 'CLASS 6 – HYBRID BATCH',
+    description: 'Strong foundation building for Class 6 students with classroom teaching and digital support.',
+    features: ['Complete NCERT Coverage', 'Classroom Teaching (Offline)', 'Live + Recorded Backup Access', 'Printed + PDF Notes', 'Weekly Assignments', 'Monthly Tests', 'Parent Performance Updates', 'Doubt Support (Offline + Online)'],
+  },
+  '7': {
+    title: 'CLASS 7 – HYBRID BATCH',
+    description: 'Concept clarity and analytical thinking development with structured classroom learning.',
+    features: ['Full Syllabus Coverage', 'Offline Classroom Teaching', 'Recorded Lecture Access', 'Study Material (Printed + PDF)', 'Weekly Practice Sheets', 'Monthly Test Series', 'Performance Report', 'Doubt Support System'],
+  },
+  '8': {
+    title: 'CLASS 8 – HYBRID BATCH',
+    description: 'Strong academic preparation with regular assessment and hybrid learning support.',
+    features: ['Complete NCERT + Important Questions', 'Offline Teaching + Online Backup', 'Chapter-wise Tests', 'Printed + Digital Notes', 'Doubt Clearing Sessions', 'Parent Updates', 'Annual Revision Program'],
+  },
+  '9': {
+    title: 'CLASS 9 – HYBRID BATCH',
+    description: 'Board-oriented preparation with conceptual clarity and exam-focused strategy.',
+    features: ['Complete Syllabus Coverage', 'Classroom Teaching', 'Recorded Backup Access', 'Weekly Tests', 'Board Pattern Practice', 'Study Material + Notes', 'Performance Tracking', 'Doubt Sessions'],
+  },
+  '10': {
+    title: 'CLASS 10 – HYBRID BATCH',
+    description: 'Board Exam Special Preparation with structured revision plan.',
+    features: ['Full Board Syllabus Coverage', 'Offline + Online Access', 'Chapter-wise Tests', 'Pre-Board Exams', 'Important Question Bank', 'Revision Classes', 'Parent Meeting Updates', 'Performance Analysis'],
+  },
+  '11': {
+    title: 'CLASS 11 – HYBRID BATCH',
+    description: 'Strong foundation for higher studies & competitive preparation.',
+    features: ['Complete Syllabus Coverage', 'Concept-based Teaching', 'Recorded Lecture Access', 'Weekly & Monthly Tests', 'Competitive Oriented Questions', 'Study Material (Printed + PDF)', 'Doubt Sessions', 'Performance Report'],
+  },
+  '12': {
+    title: 'CLASS 12 – HYBRID BATCH',
+    description: 'Board + Competitive Focused Preparation with exam strategy guidance.',
+    features: ['Full Board Syllabus', 'Offline + Recorded Access', 'Board Pattern Tests', 'Sample Paper Practice', 'Important Question Discussion', 'Revision Program', 'Performance Tracking', 'Career Guidance Support'],
+  },
+};
+
+/* Extract class number from name like "Class 6", "Class 10" etc. */
+function getClassNumber(name: string): string | null {
+  const match = name.match(/\b(\d{1,2})\b/);
+  return match ? match[1] : null;
+}
+
 export function ClassesPage() {
   const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
@@ -308,7 +353,11 @@ export function ClassesPage() {
             </div>
           ) : (
             <div className="grid lg:grid-cols-2 gap-6">
-              {data.classes.map((classItem) => (
+              {data.classes.map((classItem) => {
+                const classNum = getClassNumber(classItem.name);
+                const staticContent = classNum ? classContentMap[classNum] : null;
+
+                return (
                 <div
                   key={classItem.id}
                   className="group/card relative bg-white rounded-2xl border border-gray-200 overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-1 hover:border-[#05308d]/20"
@@ -326,16 +375,18 @@ export function ClassesPage() {
 
                     <div className="relative z-10 flex items-start justify-between">
                       <div>
-                        <h3 className="font-heading text-2xl font-bold mb-2">{classItem.name}</h3>
+                        <h3 className="font-heading text-2xl font-bold text-white mb-2">
+                          {staticContent ? staticContent.title : classItem.name}
+                        </h3>
                         {classItem.targetBoard && (
-                          <span className="inline-flex items-center gap-1.5 text-sm text-white/60">
+                          <span className="inline-flex items-center gap-1.5 text-sm text-[#fbbf24]/80">
                             <HiOutlineShieldCheck className="w-4 h-4" />
                             {classItem.targetBoard}
                           </span>
                         )}
                       </div>
                       {classItem.duration && (
-                        <span className="inline-flex items-center gap-1.5 text-sm text-white/60">
+                        <span className="inline-flex items-center gap-1.5 text-sm text-white/70">
                           <HiOutlineClock className="w-4 h-4" />
                           {classItem.duration}
                         </span>
@@ -346,21 +397,19 @@ export function ClassesPage() {
                   {/* Card Body */}
                   <div className="p-6">
                     {/* Description */}
-                    {classItem.description && (
-                      <p className="font-body text-gray-500 text-[15px] leading-relaxed mb-5">
-                        {classItem.description}
-                      </p>
-                    )}
+                    <p className="font-body text-gray-500 text-[15px] leading-relaxed mb-5">
+                      {staticContent ? staticContent.description : classItem.description}
+                    </p>
 
                     {/* Features */}
-                    {classItem.features && classItem.features.length > 0 && (
+                    {(staticContent || (classItem.features && classItem.features.length > 0)) && (
                       <div className="mb-5">
                         <h4 className="font-heading text-sm font-bold text-[#0a1e3d] mb-3 flex items-center gap-2">
                           <HiOutlineBookOpen className="w-4 h-4 text-[#05308d]" />
-                          What you'll get
+                          What Students Will Get
                         </h4>
                         <ul className="grid sm:grid-cols-2 gap-2">
-                          {classItem.features.slice(0, 6).map((feature, idx) => (
+                          {(staticContent ? staticContent.features : classItem.features!.slice(0, 8)).map((feature, idx) => (
                             <li key={idx} className="flex items-start gap-2 font-body text-sm text-gray-600">
                               <span className="w-1.5 h-1.5 rounded-full bg-[#fbbf24] mt-1.5 flex-shrink-0"></span>
                               {feature}
@@ -457,7 +506,8 @@ export function ClassesPage() {
                     )}
                   </div>
                 </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>

@@ -117,8 +117,8 @@ function Footer() {
                 <div className="flex items-start gap-3">
                   <HiOutlineLocationMarker className="text-[#052a7b] text-lg mt-0.5 flex-shrink-0" />
                   <p className="font-body text-[13px] text-gray-500 leading-relaxed">
-                    Lalganj Ajhara,<br />
-                    Pratapgarh, UP – 230132
+                    Lalganj Ajhara, Pratapgarh<br />
+                    Uttar Pradesh – 230132
                   </p>
                 </div>
                 <div className="flex items-center gap-3">

@@ -286,7 +286,7 @@ const FeeStructure = () => {
                       className={`block w-full py-3 text-center rounded-xl font-heading font-bold text-sm no-underline transition-all duration-300 ${
                         isPopular
                           ? 'bg-[#05308d] text-white hover:bg-[#1a56db] hover:shadow-lg hover:shadow-[#05308d]/25'
-                          : 'bg-[#05308d]/5 text-[#05308d] hover:bg-[#05308d] hover:text-white'
+                          : 'bg-[#05308d] text-white hover:bg-[#1a56db] hover:text-white hover:shadow-[#05308d]/25'
                       }`}
                     >
                       Enroll Now

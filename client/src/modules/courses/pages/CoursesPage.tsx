@@ -209,7 +209,7 @@ export function CoursesPage() {
                             <span className={`w-1.5 h-1.5 rounded-full mt-1.5 flex-shrink-0 ${
                               isActive ? 'bg-[#fbbf24]' : 'bg-gray-300'
                             }`}></span>
-                            {feature}
+                            {feature.replace(/\s*\(max\s+\d+\s+students\)/i, '')}
                           </li>
                         ))}
                       </ul>
