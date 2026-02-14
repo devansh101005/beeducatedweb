@@ -73,22 +73,38 @@ export const attachUser: RequestHandler = async (
 
         const assignedRole = isAdmin ? 'admin' : 'student';
 
-        // Create user in our database
-        user = await userService.create({
-          clerk_id: clerkId,
-          email,
-          first_name: clerkUser.firstName || undefined,
-          last_name: clerkUser.lastName || undefined,
-          phone: clerkUser.phoneNumbers[0]?.phoneNumber || undefined,
-          role: assignedRole,
-        });
+        // Check if a user with this email already exists (clerk_id mismatch)
+        const existingByEmail = await userService.getByEmail(email);
 
-        // Sync role to Clerk publicMetadata so frontend can read it
-        await clerkClient.users.updateUser(clerkId, {
-          publicMetadata: { role: assignedRole, dbUserId: user.id },
-        });
+        if (existingByEmail) {
+          // User exists with a different/old clerk_id — update it to the current one
+          console.log(`Clerk ID mismatch for ${email}: DB has ${existingByEmail.clerk_id}, Clerk has ${clerkId}. Updating...`);
+          user = await userService.update(existingByEmail.id, { clerk_id: clerkId });
 
-        console.log('Auto-created user from Clerk:', user.id, 'role:', user.role);
+          // Sync role to Clerk publicMetadata
+          await clerkClient.users.updateUser(clerkId, {
+            publicMetadata: { role: user.role, dbUserId: user.id },
+          });
+
+          console.log('Updated clerk_id for existing user:', user.id, 'role:', user.role);
+        } else {
+          // Truly new user — create them
+          user = await userService.create({
+            clerk_id: clerkId,
+            email,
+            first_name: clerkUser.firstName || undefined,
+            last_name: clerkUser.lastName || undefined,
+            phone: clerkUser.phoneNumbers[0]?.phoneNumber || undefined,
+            role: assignedRole,
+          });
+
+          // Sync role to Clerk publicMetadata so frontend can read it
+          await clerkClient.users.updateUser(clerkId, {
+            publicMetadata: { role: assignedRole, dbUserId: user.id },
+          });
+
+          console.log('Auto-created user from Clerk:', user.id, 'role:', user.role);
+        }
       } catch (clerkError) {
         console.error('Failed to auto-create user from Clerk:', clerkError);
         res.status(404).json({

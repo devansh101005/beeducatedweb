@@ -94,7 +94,7 @@ async function handleUserCreated(data: ClerkWebhookEvent['data']) {
     first_name: data.first_name || null,
     last_name: data.last_name || null,
     avatar_url: data.image_url || null,
-    role: isAdmin ? ('admin' as const) : ('user' as const), // Auto-assign admin or default to user
+    role: isAdmin ? ('admin' as const) : ('student' as const), // Auto-assign admin or default to student
     email_verified: primaryEmail?.verification?.status === 'verified',
     phone_verified: primaryPhone?.verification?.status === 'verified',
     metadata: {
@@ -105,13 +105,43 @@ async function handleUserCreated(data: ClerkWebhookEvent['data']) {
 
   console.log(`Creating user with email: ${userEmail}, role: ${userData.role}`);
 
+  // Use upsert with onConflict to avoid overwriting role if user already exists
   const { data: newUser, error } = await supabase
     .from('users')
-    .insert(userData)
+    .upsert(userData, {
+      onConflict: 'clerk_id',
+      ignoreDuplicates: false,
+    })
     .select()
     .single();
 
   if (error) {
+    // If conflict on clerk_id, user already exists — update non-role fields only
+    if (error.code === '23505') {
+      console.log('User already exists, updating non-role fields only');
+      const { data: existingUser, error: updateError } = await supabase
+        .from('users')
+        .update({
+          email: userData.email,
+          phone: userData.phone,
+          first_name: userData.first_name,
+          last_name: userData.last_name,
+          avatar_url: userData.avatar_url,
+          email_verified: userData.email_verified,
+          phone_verified: userData.phone_verified,
+        })
+        .eq('clerk_id', data.id)
+        .select()
+        .single();
+
+      if (updateError) {
+        console.error('Error updating existing user:', updateError);
+        throw updateError;
+      }
+      console.log(`Existing user updated (role preserved): ${existingUser.id}`);
+      return existingUser;
+    }
+
     console.error('Error creating user in Supabase:', error);
     throw error;
   }
@@ -152,9 +182,9 @@ async function handleUserUpdated(data: ClerkWebhookEvent['data']) {
     .single();
 
   if (error) {
-    // User might not exist yet, create them
+    // User might not exist yet — but don't overwrite role if they were already created via attachUser middleware
     if (error.code === 'PGRST116') {
-      console.log('User not found, creating...');
+      console.log('User not found in webhook update, creating...');
       return handleUserCreated(data);
     }
     console.error('Error updating user in Supabase:', error);
