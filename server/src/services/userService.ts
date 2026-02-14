@@ -42,6 +42,7 @@ export interface UpdateUserInput {
   role?: UserRole;
   is_active?: boolean;
   metadata?: Record<string, unknown>;
+  clerk_id?: string;
 }
 
 class UserService {

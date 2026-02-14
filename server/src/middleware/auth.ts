@@ -12,6 +12,7 @@ declare global {
     interface Request {
       auth?: {
         userId: string;
+        //clerkId: string;
         sessionId?: string;
       };
       user?: {
