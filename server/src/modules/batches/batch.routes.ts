@@ -66,6 +66,30 @@ router.get('/', async (req: Request, res: Response) => {
 });
 
 /**
+ * GET /api/v2/batches/stats
+ * Get aggregate batch statistics (must be before /:id route)
+ */
+router.get('/stats', async (_req: Request, res: Response) => {
+  try {
+    const result = await batchService.list({ page: 1, limit: 1000 });
+    const allBatches = result.batches;
+
+    const now = new Date();
+    const stats = {
+      totalBatches: result.total,
+      activeBatches: allBatches.filter((b: any) => b.is_active && new Date(b.start_date) <= now).length,
+      upcomingBatches: allBatches.filter((b: any) => b.is_active && new Date(b.start_date) > now).length,
+      totalStudents: allBatches.reduce((sum: number, b: any) => sum + (b.current_students || 0), 0),
+    };
+
+    sendSuccess(res, stats);
+  } catch (error) {
+    console.error('Error fetching aggregate batch stats:', error);
+    sendError(res, 'Failed to fetch batch statistics');
+  }
+});
+
+/**
  * GET /api/v2/batches/:id
  * Get batch by ID with details
  */

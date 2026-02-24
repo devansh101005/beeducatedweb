@@ -22,13 +22,13 @@ import Footer from '../components/Footer';
    FEE DATA
    ────────────────────────────────────────────── */
 const classFees = [
-  { class: '6', fee: '7,999', raw: 7999 },
-  { class: '7', fee: '8,999', raw: 8999 },
-  { class: '8', fee: '9,999', raw: 9999 },
-  { class: '9', fee: '14,999', raw: 14999 },
-  { class: '10', fee: '16,999', raw: 16999 },
-  { class: '11', fee: '17,999', raw: 17999 },
-  { class: '12', fee: '18,999', raw: 18999 },
+  { class: '6', originalFee: '9,599', discountedFee: '8,639', originalRaw: 9599, discountedRaw: 8639 },
+  { class: '7', originalFee: '10,799', discountedFee: '9,719', originalRaw: 10799, discountedRaw: 9719 },
+  { class: '8', originalFee: '11,999', discountedFee: '10,799', originalRaw: 11999, discountedRaw: 10799 },
+  { class: '9', originalFee: '17,000', discountedFee: '15,300', originalRaw: 17000, discountedRaw: 15300 },
+  { class: '10', originalFee: '21,000', discountedFee: '18,900', originalRaw: 21000, discountedRaw: 18900 },
+  { class: '11', originalFee: '26,000', discountedFee: '23,400', originalRaw: 26000, discountedRaw: 23400 },
+  { class: '12', originalFee: '33,000', discountedFee: '29,700', originalRaw: 33000, discountedRaw: 29700 },
 ];
 
 const batchIncludes = [
@@ -41,18 +41,18 @@ const batchIncludes = [
 ];
 
 const termsConditions = [
-  'Admission is confirmed only after payment of ₹499 registration fee + 70% course fee.',
-  'The remaining 30% course fee must be paid within 45 days from the admission date.',
-  'Delay beyond 45 days will attract a late fine of ₹50 per day.',
-  'Non-payment beyond 60 days may lead to cancellation of admission without any refund.',
+  'Flat 10% OFF is applicable for a limited period only.',
+  'Admission is confirmed only after payment of 70% course fee at the time of admission.',
+  'The remaining 30% course fee must be paid within 60–75 days from the admission date.',
+  'Instalment option is not eligible for any additional discount.',
+  'Delay beyond 75 days will attract a late fine of ₹50 per day.',
+  'Fees once paid are non-refundable.',
   'Registration fee is strictly non-refundable.',
   'Course fee once paid is non-transferable and non-adjustable.',
   'Students must follow institute discipline, attendance, and academic rules.',
   'Admission may be terminated due to misconduct or irregular attendance without any refund.',
-  'No compensation will be provided if a student misses any class.',
   'If a class is cancelled by the institute or faculty, a replacement or extra class will be arranged.',
   'Batch timings or faculty may be changed at the discretion of the institute.',
-  'Official communication will be through notice board or WhatsApp only.',
   "The management's decision shall be final and binding.",
 ];
 
@@ -254,31 +254,38 @@ const FeeStructure = () => {
                       </div>
                     </div>
 
-                    {/* Price */}
+                    {/* Price - Original & Discounted */}
                     <div className="mb-5">
-                      <div className="flex items-baseline gap-1">
-                        <span className="font-heading text-3xl sm:text-[34px] font-extrabold text-[#0a1e3d] group-hover/card:text-[#05308d] transition-colors duration-300">
-                          ₹{item.fee}
+                      <div className="flex items-baseline gap-3 mb-2">
+                        <span className="font-body text-sm text-gray-500 line-through">₹{item.originalFee}</span>
+                        <span className="font-heading text-3xl sm:text-[34px] font-extrabold text-[#05308d] group-hover/card:text-[#fbbf24] transition-colors duration-300">
+                          ₹{item.discountedFee}
+                        </span>
+                        <span className="inline-block px-2 py-1 bg-[#05308d]/10 text-[#05308d] text-xs font-bold rounded-lg">
+                          10% OFF
                         </span>
                       </div>
-                      <p className="font-body text-xs text-gray-400 mt-1">per year / full course</p>
+                      <p className="font-body text-xs text-gray-400">per year / full course</p>
                     </div>
 
-                    {/* Installment breakdown */}
-                    <div className="space-y-2 mb-6">
-                      <div className="flex justify-between items-center py-2 px-3 rounded-lg bg-gray-50 group-hover/card:bg-[#05308d]/[0.03] transition-colors duration-300">
-                        <span className="font-body text-xs text-gray-500">1st Installment (70%)</span>
-                        <span className="font-heading text-sm font-bold text-[#0a1e3d]">
-                          ₹{Math.round(item.raw * 0.7).toLocaleString('en-IN')}
-                        </span>
+                    {/* Installment breakdown - Only for Classes 9-12 */}
+                    {(item.class === '9' || item.class === '10' || item.class === '11' || item.class === '12') && (
+                      <div className="space-y-2 mb-6 p-3 bg-[#05308d]/5 rounded-xl">
+                        <p className="font-body text-xs font-semibold text-[#05308d] mb-2">Installment Breakdown:</p>
+                        <div className="flex justify-between items-center py-2 px-2 rounded-lg bg-white">
+                          <span className="font-body text-xs text-gray-500">1st Installment (70%)</span>
+                          <span className="font-heading text-sm font-bold text-[#0a1e3d]">
+                            ₹{Math.round(item.discountedRaw * 0.7).toLocaleString('en-IN')}
+                          </span>
+                        </div>
+                        <div className="flex justify-between items-center py-2 px-2 rounded-lg bg-white">
+                          <span className="font-body text-xs text-gray-500">2nd Installment (30%)</span>
+                          <span className="font-heading text-sm font-bold text-[#0a1e3d]">
+                            ₹{Math.round(item.discountedRaw * 0.3).toLocaleString('en-IN')}
+                          </span>
+                        </div>
                       </div>
-                      <div className="flex justify-between items-center py-2 px-3 rounded-lg bg-gray-50 group-hover/card:bg-[#05308d]/[0.03] transition-colors duration-300">
-                        <span className="font-body text-xs text-gray-500">2nd Installment (30%)</span>
-                        <span className="font-heading text-sm font-bold text-[#0a1e3d]">
-                          ₹{Math.round(item.raw * 0.3).toLocaleString('en-IN')}
-                        </span>
-                      </div>
-                    </div>
+                    )}
 
                     {/* Enroll CTA */}
                     <Link

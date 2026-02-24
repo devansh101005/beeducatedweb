@@ -113,7 +113,8 @@ export function BatchesPage() {
       const data = await response.json();
 
       if (data.success) {
-        setBatches(data.data);
+        // API returns paginated: { items: [...], total, page, ... }
+        setBatches(Array.isArray(data.data) ? data.data : data.data?.items || []);
       }
     } catch (error) {
       console.error('Failed to fetch batches:', error);
@@ -127,7 +128,7 @@ export function BatchesPage() {
       const response = await fetch('/api/v2/courses?limit=100');
       const data = await response.json();
       if (data.success) {
-        setCourses(data.data);
+        setCourses(Array.isArray(data.data) ? data.data : data.data?.items || []);
       }
     } catch (error) {
       console.error('Failed to fetch courses:', error);

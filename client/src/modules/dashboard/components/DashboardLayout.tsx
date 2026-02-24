@@ -233,11 +233,9 @@ function Sidebar({ navigation, currentPath, isOpen, onClose, userData }: Sidebar
         {/* Logo */}
         <div className="h-[72px] px-5 flex items-center justify-between border-b border-slate-100">
           <Link to="/" className="flex items-center gap-2.5">
-            <div className="w-9 h-9 bg-amber-500 rounded-xl flex items-center justify-center">
-              <span className="text-lg font-bold text-white">B</span>
-            </div>
+            <img src="/logo.png" alt="Be Educated" className="w-9 h-9 rounded-xl object-contain" />
             <span className="text-lg font-heading font-semibold text-slate-900">
-              BeEducated
+              Be Educated
             </span>
           </Link>
           <button
