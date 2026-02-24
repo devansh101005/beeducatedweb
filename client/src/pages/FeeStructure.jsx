@@ -268,9 +268,8 @@ const FeeStructure = () => {
                       <p className="font-body text-xs text-gray-400">per year / full course</p>
                     </div>
 
-                    {/* Installment breakdown - Only for Classes 9-12 */}
-                    {(item.class === '9' || item.class === '10' || item.class === '11' || item.class === '12') && (
-                      <div className="space-y-2 mb-6 p-3 bg-[#05308d]/5 rounded-xl">
+                    {/* Installment breakdown - All Classes */}
+                    <div className="space-y-2 mb-6 p-3 bg-[#05308d]/5 rounded-xl">
                         <p className="font-body text-xs font-semibold text-[#05308d] mb-2">Installment Breakdown:</p>
                         <div className="flex justify-between items-center py-2 px-2 rounded-lg bg-white">
                           <span className="font-body text-xs text-gray-500">1st Installment (70%)</span>
@@ -285,7 +284,6 @@ const FeeStructure = () => {
                           </span>
                         </div>
                       </div>
-                    )}
 
                     {/* Enroll CTA */}
                     <Link
