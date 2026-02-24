@@ -194,7 +194,7 @@ const FeeStructure = () => {
             </p>
           </div>
 
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5 justify-items-center [&>*]:w-full">
             {classFees.map((item, index) => {
               const isPopular = item.class === '11' || item.class === '12';
               const isHovered = hoveredCard === index;
@@ -256,15 +256,15 @@ const FeeStructure = () => {
 
                     {/* Price - Original & Discounted */}
                     <div className="mb-5">
-                      <div className="flex items-baseline gap-3 mb-2">
-                        <span className="font-body text-sm text-gray-500 line-through">₹{item.originalFee}</span>
-                        <span className="font-heading text-3xl sm:text-[34px] font-extrabold text-[#05308d] group-hover/card:text-[#fbbf24] transition-colors duration-300">
-                          ₹{item.discountedFee}
-                        </span>
-                        <span className="inline-block px-2 py-1 bg-[#05308d]/10 text-[#05308d] text-xs font-bold rounded-lg">
+                      <div className="flex items-center gap-2 mb-1.5">
+                        <span className="font-body text-sm text-gray-400 line-through">₹{item.originalFee}</span>
+                        <span className="inline-block px-2 py-0.5 bg-green-100 text-green-700 text-[10px] font-bold rounded-md tracking-wide">
                           10% OFF
                         </span>
                       </div>
+                      <p className="font-heading text-3xl font-extrabold text-[#05308d] group-hover/card:text-[#fbbf24] transition-colors duration-300 mb-1">
+                        ₹{item.discountedFee}
+                      </p>
                       <p className="font-body text-xs text-gray-400">per year / full course</p>
                     </div>
 
