@@ -176,6 +176,21 @@ router.get('/:slug/classes', async (req: Request, res: Response) => {
               validityMonths: c.fee_plan.validity_months,
             }
           : null,
+        feePlans: (c.fee_plans || []).map((fp: any) => ({
+          id: fp.id,
+          name: fp.name,
+          description: fp.description,
+          registrationFee: fp.registration_fee,
+          tuitionFee: fp.tuition_fee,
+          materialFee: fp.material_fee,
+          examFee: fp.exam_fee,
+          discountAmount: fp.discount_amount,
+          discountLabel: fp.discount_label,
+          totalAmount: fp.total_amount,
+          validityMonths: fp.validity_months,
+          highlightLabel: fp.highlight_label,
+          metadata: fp.metadata,
+        })),
       })),
     };
 
@@ -431,6 +446,51 @@ router.post(
     } catch (error) {
       console.error('Error handling payment failure:', error);
       sendError(res, 'Failed to record payment failure');
+    }
+  }
+);
+
+/**
+ * POST /api/v2/course-types/enrollments/:id/second-installment
+ * Initiate second installment payment for Plan C enrollments
+ */
+router.post(
+  '/enrollments/:id/second-installment',
+  requireAuth,
+  attachUser,
+  async (req: Request, res: Response) => {
+    try {
+      const enrollmentId = getParam(req.params.id);
+
+      if (!req.user || req.user.role !== 'student') {
+        return sendBadRequest(res, 'Only students can make payments');
+      }
+
+      // Verify ownership
+      const student = await studentService.getByUserId(req.user.id);
+      if (!student) {
+        return sendBadRequest(res, 'Student profile not found');
+      }
+
+      const enrollment = await enrollmentService.getEnrollmentById(enrollmentId);
+      if (!enrollment || enrollment.student_id !== student.id) {
+        return sendNotFound(res, 'Enrollment');
+      }
+
+      const result = await enrollmentService.initiateSecondInstallment({
+        enrollmentId,
+        studentName: 'Student',
+        studentEmail: req.user.email,
+        studentPhone: undefined,
+      });
+
+      sendCreated(res, result, 'Second installment initiated');
+    } catch (error: any) {
+      console.error('Error initiating second installment:', error);
+      if (error.message.includes('already been paid') || error.message.includes('not on a 2-installment')) {
+        return sendBadRequest(res, error.message);
+      }
+      sendError(res, 'Failed to initiate second installment');
     }
   }
 );

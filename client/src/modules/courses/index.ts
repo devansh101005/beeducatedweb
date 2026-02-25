@@ -4,6 +4,7 @@
 // Pages
 export { CoursesPage } from './pages/CoursesPage';
 export { ClassesPage } from './pages/ClassesPage';
+export { HomeTuitionClassesPage } from './pages/HomeTuitionClassesPage';
 export { MyEnrollmentsPage } from './pages/MyEnrollmentsPage';
 
 // Types

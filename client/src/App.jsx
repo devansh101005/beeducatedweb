@@ -71,7 +71,7 @@ import { MyChildrenPage, ChildProgressPage, ParentPaymentsPage } from "@modules/
 import { SettingsPage } from "@modules/settings";
 
 // Courses & Enrollment Pages
-import { CoursesPage as NewCoursesPage, ClassesPage, MyEnrollmentsPage } from "@modules/courses";
+import { CoursesPage as NewCoursesPage, ClassesPage, HomeTuitionClassesPage, MyEnrollmentsPage } from "@modules/courses";
 
 // Other pages
 import Unauthorized from "./pages/Unauthorized";
@@ -161,6 +161,7 @@ function App() {
         <Route path="/" element={<><Navbar /><Home /></>} />
         <Route path="/about" element={<><Navbar /><About /></>} />
         <Route path="/courses" element={<><Navbar /><NewCoursesPage /></>} />
+        <Route path="/courses/home-tuition" element={<><Navbar /><HomeTuitionClassesPage /></>} />
         <Route path="/courses/:slug" element={<><Navbar /><ClassesPage /></>} />
         <Route path="/contact" element={<><Navbar /><Contact /></>} />
         <Route path="/fee-structure" element={<><Navbar /><FeeStructure /></>} />

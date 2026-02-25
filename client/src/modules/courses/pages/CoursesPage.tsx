@@ -50,6 +50,8 @@ export function CoursesPage() {
   const handleCardClick = (courseType: CourseType) => {
     if (courseType.isActive) {
       navigate(`/courses/${courseType.slug}`);
+    } else if (courseType.slug?.includes('home-tuition') || courseType.slug?.includes('home_tuition') || courseType.name?.toLowerCase().includes('home tuition')) {
+      navigate('/courses/home-tuition');
     }
   };
 
@@ -217,6 +219,15 @@ export function CoursesPage() {
 
                     {/* CTA */}
                     {isActive ? (
+                      <div className="flex items-center justify-between">
+                        <span className="font-heading text-sm font-bold text-[#05308d] group-hover/card:text-[#1a56db] transition-colors duration-300">
+                          View Classes & Enroll
+                        </span>
+                        <div className="w-10 h-10 rounded-full bg-[#05308d]/5 flex items-center justify-center transition-all duration-300 group-hover/card:bg-[#05308d] group-hover/card:translate-x-1">
+                          <HiOutlineChevronRight className="w-5 h-5 text-[#05308d] group-hover/card:text-white transition-colors duration-300" />
+                        </div>
+                      </div>
+                    ) : (courseType.slug?.includes('home-tuition') || courseType.slug?.includes('home_tuition') || courseType.name?.toLowerCase().includes('home tuition')) ? (
                       <div className="flex items-center justify-between">
                         <span className="font-heading text-sm font-bold text-[#05308d] group-hover/card:text-[#1a56db] transition-colors duration-300">
                           View Classes & Enroll

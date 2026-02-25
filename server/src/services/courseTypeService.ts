@@ -74,6 +74,7 @@ export interface ClassFeePlan {
 export interface ClassWithFees extends AcademicClass {
   course_type?: CourseType;
   fee_plan?: ClassFeePlan;
+  fee_plans?: ClassFeePlan[];
   is_enrolled?: boolean;
   enrollment_status?: string;
 }
@@ -164,16 +165,15 @@ class CourseTypeService {
       throw new Error('Course type not found');
     }
 
-    // Get classes with their default fee plans
+    // Get classes with all active fee plans
     const { data: classes, error } = await getSupabase()
       .from('academic_classes')
       .select(`
         *,
-        class_fee_plans!inner (*)
+        class_fee_plans (*)
       `)
       .eq('course_type_id', courseType.id)
       .eq('is_active', true)
-      .eq('class_fee_plans.is_default', true)
       .eq('class_fee_plans.is_active', true)
       .order('display_order', { ascending: true });
 
@@ -206,11 +206,15 @@ class CourseTypeService {
 
     // Transform data
     const classesWithFees: ClassWithFees[] = (classes || []).map((classItem: any) => {
-      const feePlan = classItem.class_fee_plans?.[0] || null;
+      const allPlans = (classItem.class_fee_plans as ClassFeePlan[] || [])
+        .filter((fp: ClassFeePlan) => (fp as any).plan_type !== 'manual')
+        .sort((a: ClassFeePlan, b: ClassFeePlan) => a.display_order - b.display_order);
+      const defaultPlan = allPlans.find((fp: ClassFeePlan) => fp.is_default) || allPlans[0] || null;
       return {
         ...classItem,
         class_fee_plans: undefined,
-        fee_plan: feePlan,
+        fee_plan: defaultPlan,
+        fee_plans: allPlans,
         is_enrolled: !!enrollments[classItem.id],
         enrollment_status: enrollments[classItem.id] || null,
       };

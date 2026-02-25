@@ -201,8 +201,15 @@ class EnrollmentService {
       throw new Error('Invalid fee plan');
     }
 
-    // 4. Create Razorpay order
-    const amountPaise = Math.round(feePlan.total_amount * 100);
+    // 4. Determine payment amount (handle installment plans)
+    const planMetadata = feePlan.metadata as Record<string, any> || {};
+    const isInstallmentPlan = planMetadata.plan_code === 'C' && planMetadata.installments === 2;
+    const paymentAmount = isInstallmentPlan
+      ? planMetadata.installment_1 as number
+      : feePlan.total_amount;
+
+    // 4b. Create Razorpay order
+    const amountPaise = Math.round(paymentAmount * 100);
     const order = await getRazorpay().orders.create({
       amount: amountPaise,
       currency: 'INR',
@@ -211,6 +218,7 @@ class EnrollmentService {
         classId,
         studentId,
         feePlanId,
+        ...(isInstallmentPlan ? { installment: '1', plan_code: 'C' } : {}),
       },
     });
 
@@ -262,10 +270,11 @@ class EnrollmentService {
       .insert({
         enrollment_id: enrollment.id,
         razorpay_order_id: order.id,
-        amount: feePlan.total_amount,
+        amount: paymentAmount,
         amount_paise: amountPaise,
         currency: 'INR',
         status: 'pending',
+        payment_notes: isInstallmentPlan ? 'Installment 1 of 2' : null,
       });
 
     if (paymentError) {
@@ -273,10 +282,27 @@ class EnrollmentService {
       // Don't throw - enrollment is created, payment record failure shouldn't stop the flow
     }
 
+    // Store installment info in enrollment metadata
+    if (isInstallmentPlan) {
+      await getSupabase()
+        .from('class_enrollments')
+        .update({
+          metadata: {
+            plan_code: 'C',
+            installments: 2,
+            installment_1: planMetadata.installment_1,
+            installment_2: planMetadata.installment_2,
+            installment_1_paid: false,
+            installment_2_paid: false,
+          },
+        })
+        .eq('id', enrollment.id);
+    }
+
     return {
       enrollmentId: enrollment.id,
       orderId: order.id,
-      amount: feePlan.total_amount,
+      amount: paymentAmount,
       amountPaise,
       currency: 'INR',
       keyId: env.RAZORPAY_KEY_ID,
@@ -372,16 +398,46 @@ class EnrollmentService {
     const expiresAt = new Date();
     expiresAt.setMonth(expiresAt.getMonth() + validityMonths);
 
-    // 6. Update enrollment to active
+    // 6. Get current enrollment to check installment metadata
+    const { data: currentEnrollment } = await getSupabase()
+      .from('class_enrollments')
+      .select('metadata, amount_paid')
+      .eq('id', payment.enrollment_id)
+      .single();
+
+    const enrollmentMeta = (currentEnrollment?.metadata as Record<string, any>) || {};
+    const isInstallment1 = enrollmentMeta.plan_code === 'C' && !enrollmentMeta.installment_1_paid;
+    const isInstallment2 = enrollmentMeta.plan_code === 'C' && enrollmentMeta.installment_1_paid && !enrollmentMeta.installment_2_paid;
+    const previousAmountPaid = currentEnrollment?.amount_paid || 0;
+
+    // Build update object
+    const enrollmentUpdate: Record<string, any> = {
+      status: 'active',
+      enrolled_at: new Date().toISOString(),
+      expires_at: expiresAt.toISOString(),
+      amount_paid: previousAmountPaid + payment.amount,
+      updated_at: new Date().toISOString(),
+    };
+
+    // Update installment tracking metadata
+    if (isInstallment1) {
+      enrollmentUpdate.metadata = {
+        ...enrollmentMeta,
+        installment_1_paid: true,
+        installment_1_paid_at: new Date().toISOString(),
+      };
+    } else if (isInstallment2) {
+      enrollmentUpdate.metadata = {
+        ...enrollmentMeta,
+        installment_2_paid: true,
+        installment_2_paid_at: new Date().toISOString(),
+      };
+    }
+
+    // 6b. Update enrollment to active
     const { data: enrollment, error: enrollmentError } = await getSupabase()
       .from('class_enrollments')
-      .update({
-        status: 'active',
-        enrolled_at: new Date().toISOString(),
-        expires_at: expiresAt.toISOString(),
-        amount_paid: payment.amount,
-        updated_at: new Date().toISOString(),
-      })
+      .update(enrollmentUpdate)
       .eq('id', payment.enrollment_id)
       .select()
       .single();
@@ -428,6 +484,103 @@ class EnrollmentService {
         updated_at: new Date().toISOString(),
       })
       .eq('razorpay_order_id', orderId);
+  }
+
+  /**
+   * Initiate second installment payment for Plan C enrollments
+   */
+  async initiateSecondInstallment(input: {
+    enrollmentId: string;
+    studentName: string;
+    studentEmail: string;
+    studentPhone?: string;
+  }): Promise<InitiateEnrollmentResult> {
+    const { enrollmentId, studentName, studentEmail, studentPhone } = input;
+
+    // 1. Get enrollment
+    const { data: enrollment, error: enrollmentError } = await getSupabase()
+      .from('class_enrollments')
+      .select('*')
+      .eq('id', enrollmentId)
+      .single();
+
+    if (enrollmentError || !enrollment) {
+      throw new Error('Enrollment not found');
+    }
+
+    if (enrollment.status !== 'active') {
+      throw new Error('Enrollment is not active');
+    }
+
+    // 2. Check installment metadata
+    const meta = (enrollment.metadata as Record<string, any>) || {};
+    if (meta.plan_code !== 'C' || meta.installments !== 2) {
+      throw new Error('This enrollment is not on a 2-installment plan');
+    }
+
+    if (!meta.installment_1_paid) {
+      throw new Error('First installment has not been paid yet');
+    }
+
+    if (meta.installment_2_paid) {
+      throw new Error('Second installment has already been paid');
+    }
+
+    const installment2Amount = meta.installment_2 as number;
+    if (!installment2Amount || installment2Amount <= 0) {
+      throw new Error('Invalid installment amount');
+    }
+
+    // 3. Create Razorpay order for installment 2
+    const amountPaise = Math.round(installment2Amount * 100);
+    const order = await getRazorpay().orders.create({
+      amount: amountPaise,
+      currency: 'INR',
+      receipt: `inst2_${Date.now()}`,
+      notes: {
+        enrollmentId,
+        classId: enrollment.class_id,
+        studentId: enrollment.student_id,
+        installment: '2',
+        plan_code: 'C',
+      },
+    });
+
+    // 4. Create payment record
+    const { error: paymentError } = await getSupabase()
+      .from('enrollment_payments')
+      .insert({
+        enrollment_id: enrollmentId,
+        razorpay_order_id: order.id,
+        amount: installment2Amount,
+        amount_paise: amountPaise,
+        currency: 'INR',
+        status: 'pending',
+        payment_notes: 'Installment 2 of 2',
+      });
+
+    if (paymentError) {
+      console.error('Error creating payment record for installment 2:', paymentError);
+    }
+
+    return {
+      enrollmentId,
+      orderId: order.id,
+      amount: installment2Amount,
+      amountPaise,
+      currency: 'INR',
+      keyId: env.RAZORPAY_KEY_ID,
+      prefill: {
+        name: studentName,
+        email: studentEmail,
+        contact: studentPhone,
+      },
+      notes: {
+        enrollmentId,
+        classId: enrollment.class_id,
+        studentId: enrollment.student_id,
+      },
+    };
   }
 
   /**

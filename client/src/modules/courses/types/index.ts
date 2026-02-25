@@ -18,6 +18,7 @@ export interface CourseType {
 export interface FeePlan {
   id: string;
   name: string;
+  description?: string | null;
   registrationFee: number;
   tuitionFee: number;
   materialFee: number;
@@ -26,6 +27,8 @@ export interface FeePlan {
   discountLabel: string | null;
   totalAmount: number;
   validityMonths: number;
+  highlightLabel?: string | null;
+  metadata?: Record<string, any>;
 }
 
 export interface AcademicClass {
@@ -45,6 +48,7 @@ export interface AcademicClass {
   isEnrolled: boolean;
   enrollmentStatus: string | null;
   feePlan: FeePlan | null;
+  feePlans?: FeePlan[];
 }
 
 export interface ClassesResponse {
