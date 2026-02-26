@@ -33,90 +33,122 @@ class EmailService {
   async sendContactEnquiry(data: ContactFormData): Promise<void> {
     const { firstName, lastName, email, role, message } = data;
 
+    const roleLabel = role.charAt(0).toUpperCase() + role.slice(1);
+    const timestamp = new Date().toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' });
+
     const html = `
       <!DOCTYPE html>
       <html>
         <head>
-          <style>
-            body {
-              font-family: Arial, sans-serif;
-              line-height: 1.6;
-              color: #333;
-            }
-            .container {
-              max-width: 600px;
-              margin: 0 auto;
-              padding: 20px;
-            }
-            .header {
-              background: linear-gradient(135deg, #2563eb 0%, #14b8a6 100%);
-              color: white;
-              padding: 30px;
-              border-radius: 8px 8px 0 0;
-              text-align: center;
-            }
-            .content {
-              background: #f9fafb;
-              padding: 30px;
-              border: 1px solid #e5e7eb;
-              border-top: none;
-              border-radius: 0 0 8px 8px;
-            }
-            .info-row {
-              margin-bottom: 15px;
-              padding: 10px;
-              background: white;
-              border-radius: 4px;
-            }
-            .label {
-              font-weight: bold;
-              color: #2563eb;
-              margin-right: 10px;
-            }
-            .message-box {
-              background: white;
-              padding: 20px;
-              border-left: 4px solid #2563eb;
-              border-radius: 4px;
-              margin-top: 20px;
-            }
-            .footer {
-              text-align: center;
-              margin-top: 30px;
-              color: #6b7280;
-              font-size: 12px;
-            }
-          </style>
+          <meta charset="utf-8" />
+          <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         </head>
-        <body>
-          <div class="container">
-            <div class="header">
-              <h1>New Contact Form Enquiry</h1>
-              <p>BeEducated LMS Platform</p>
-            </div>
-            <div class="content">
-              <div class="info-row">
-                <span class="label">Name:</span>
-                <span>${firstName} ${lastName}</span>
-              </div>
-              <div class="info-row">
-                <span class="label">Email:</span>
-                <span>${email}</span>
-              </div>
-              <div class="info-row">
-                <span class="label">Role:</span>
-                <span style="text-transform: capitalize;">${role}</span>
-              </div>
-              <div class="message-box">
-                <p class="label">Message:</p>
-                <p>${message}</p>
-              </div>
-              <div class="footer">
-                <p>This email was sent from the BeEducated contact form.</p>
-                <p>Received at: ${new Date().toLocaleString()}</p>
-              </div>
-            </div>
-          </div>
+        <body style="margin:0;padding:0;background-color:#f1f5f9;font-family:'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#f1f5f9;padding:40px 20px;">
+            <tr>
+              <td align="center">
+                <table role="presentation" width="560" cellpadding="0" cellspacing="0" style="max-width:560px;width:100%;">
+
+                  <!-- Header -->
+                  <tr>
+                    <td style="background:linear-gradient(135deg,#0a1e3d 0%,#05308d 100%);border-radius:16px 16px 0 0;padding:36px 32px;text-align:center;">
+                      <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+                        <tr>
+                          <td align="center" style="padding-bottom:12px;">
+                            <div style="width:48px;height:48px;background-color:rgba(251,191,36,0.15);border-radius:12px;display:inline-block;line-height:48px;font-size:22px;">
+                              &#9993;
+                            </div>
+                          </td>
+                        </tr>
+                        <tr>
+                          <td align="center">
+                            <h1 style="margin:0;font-size:22px;font-weight:800;color:#ffffff;letter-spacing:-0.3px;">New Enquiry Received</h1>
+                            <p style="margin:6px 0 0;font-size:13px;color:rgba(255,255,255,0.5);">via BeEducated Contact Form</p>
+                          </td>
+                        </tr>
+                      </table>
+                    </td>
+                  </tr>
+
+                  <!-- Body -->
+                  <tr>
+                    <td style="background-color:#ffffff;padding:32px;">
+
+                      <!-- Role badge -->
+                      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:24px;">
+                        <tr>
+                          <td>
+                            <span style="display:inline-block;background-color:#fbbf24;color:#0a1e3d;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;padding:5px 14px;border-radius:20px;">${roleLabel}</span>
+                            <span style="font-size:12px;color:#94a3b8;margin-left:10px;">${timestamp}</span>
+                          </td>
+                        </tr>
+                      </table>
+
+                      <!-- Info cards -->
+                      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:8px;">
+                        <tr>
+                          <td style="padding:14px 16px;background-color:#f8fafc;border-radius:10px;border:1px solid #e2e8f0;margin-bottom:8px;">
+                            <p style="margin:0 0 2px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.6px;color:#94a3b8;">Full Name</p>
+                            <p style="margin:0;font-size:15px;font-weight:600;color:#0a1e3d;">${firstName} ${lastName}</p>
+                          </td>
+                        </tr>
+                      </table>
+                      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:8px;">
+                        <tr>
+                          <td style="padding:14px 16px;background-color:#f8fafc;border-radius:10px;border:1px solid #e2e8f0;">
+                            <p style="margin:0 0 2px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.6px;color:#94a3b8;">Email Address</p>
+                            <p style="margin:0;font-size:15px;color:#05308d;font-weight:600;">
+                              <a href="mailto:${email}" style="color:#05308d;text-decoration:none;">${email}</a>
+                            </p>
+                          </td>
+                        </tr>
+                      </table>
+
+                      <!-- Divider -->
+                      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:20px 0;">
+                        <tr>
+                          <td style="border-top:1px dashed #e2e8f0;">&nbsp;</td>
+                        </tr>
+                      </table>
+
+                      <!-- Message -->
+                      <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+                        <tr>
+                          <td>
+                            <p style="margin:0 0 10px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.6px;color:#94a3b8;">Message</p>
+                            <div style="padding:18px 20px;background-color:#f8fafc;border-left:3px solid #fbbf24;border-radius:0 10px 10px 0;border:1px solid #e2e8f0;border-left:3px solid #fbbf24;">
+                              <p style="margin:0;font-size:14px;line-height:1.7;color:#334155;white-space:pre-wrap;">${message}</p>
+                            </div>
+                          </td>
+                        </tr>
+                      </table>
+
+                      <!-- Reply CTA -->
+                      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top:28px;">
+                        <tr>
+                          <td align="center">
+                            <a href="mailto:${email}" style="display:inline-block;background-color:#05308d;color:#ffffff;font-size:13px;font-weight:700;text-decoration:none;padding:12px 32px;border-radius:10px;letter-spacing:0.3px;">
+                              Reply to ${firstName} &rarr;
+                            </a>
+                          </td>
+                        </tr>
+                      </table>
+
+                    </td>
+                  </tr>
+
+                  <!-- Footer -->
+                  <tr>
+                    <td style="background-color:#f8fafc;border-top:1px solid #e2e8f0;border-radius:0 0 16px 16px;padding:20px 32px;text-align:center;">
+                      <p style="margin:0 0 4px;font-size:13px;font-weight:700;color:#0a1e3d;">Be Educated</p>
+                      <p style="margin:0;font-size:11px;color:#94a3b8;">This is an automated notification from your website contact form.</p>
+                    </td>
+                  </tr>
+
+                </table>
+              </td>
+            </tr>
+          </table>
         </body>
       </html>
     `;
