@@ -267,9 +267,37 @@ export function StudyMaterialsPage() {
     return `${mins} min`;
   };
 
-  const handleMaterialClick = (material: Material) => {
-    if (material.fileUrl) {
+  const [downloadingId, setDownloadingId] = useState<string | null>(null);
+
+  const handleMaterialClick = async (material: Material, download = false) => {
+    if (!material.fileUrl && material.type !== 'link') return;
+
+    // External links open directly
+    if (material.type === 'link' && material.fileUrl) {
       window.open(material.fileUrl, '_blank');
+      return;
+    }
+
+    try {
+      setDownloadingId(material.id);
+      const token = await getToken();
+      const params = download ? '?download=true' : '';
+      const response = await fetch(`${API_URL}/v2/content/${material.id}/signed-url${params}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      const data = await response.json();
+      if (data.success && data.data?.url) {
+        window.open(data.data.url, '_blank');
+      } else {
+        console.error('Failed to get signed URL:', data.message);
+        setError(data.message || 'Failed to access file. Please try again.');
+      }
+    } catch (err) {
+      console.error('Failed to get signed URL:', err);
+      setError('Failed to access file. Please try again.');
+    } finally {
+      setDownloadingId(null);
     }
   };
 
@@ -469,6 +497,8 @@ export function StudyMaterialsPage() {
                       key={material.id}
                       material={material}
                       onView={() => handleMaterialClick(material)}
+                      onDownload={() => handleMaterialClick(material, true)}
+                      isLoading={downloadingId === material.id}
                       formatFileSize={formatFileSize}
                       formatDuration={formatDuration}
                     />
@@ -514,6 +544,8 @@ export function StudyMaterialsPage() {
                       key={material.id}
                       material={material}
                       onView={() => handleMaterialClick(material)}
+                      onDownload={() => handleMaterialClick(material, true)}
+                      isLoading={downloadingId === material.id}
                       formatFileSize={formatFileSize}
                       formatDuration={formatDuration}
                     />
@@ -539,6 +571,8 @@ export function StudyMaterialsPage() {
                     key={material.id}
                     material={material}
                     onView={() => handleMaterialClick(material)}
+                    onDownload={() => handleMaterialClick(material, true)}
+                    isLoading={downloadingId === material.id}
                     formatFileSize={formatFileSize}
                     formatDuration={formatDuration}
                   />
@@ -559,11 +593,13 @@ export function StudyMaterialsPage() {
 interface MaterialCardProps {
   material: Material;
   onView: () => void;
+  onDownload?: () => void;
+  isLoading?: boolean;
   formatFileSize: (bytes?: number) => string;
   formatDuration: (seconds?: number) => string;
 }
 
-function MaterialCard({ material, onView, formatFileSize, formatDuration }: MaterialCardProps) {
+function MaterialCard({ material, onView, onDownload, isLoading, formatFileSize, formatDuration }: MaterialCardProps) {
   const config = material.materialType ? materialTypeConfig[material.materialType] : null;
 
   return (
@@ -617,8 +653,8 @@ function MaterialCard({ material, onView, formatFileSize, formatDuration }: Mate
         {/* Actions */}
         <div className="flex items-center gap-2 mt-4">
           {material.type === 'video' ? (
-            <Button size="sm" className="flex-1" leftIcon={<Play className="w-4 h-4" />} onClick={onView}>
-              Watch
+            <Button size="sm" className="flex-1" leftIcon={<Play className="w-4 h-4" />} onClick={onView} disabled={isLoading}>
+              {isLoading ? 'Loading...' : 'Watch'}
             </Button>
           ) : material.type === 'link' ? (
             <Button
@@ -631,12 +667,12 @@ function MaterialCard({ material, onView, formatFileSize, formatDuration }: Mate
             </Button>
           ) : (
             <>
-              <Button size="sm" variant="outline" className="flex-1" leftIcon={<Eye className="w-4 h-4" />} onClick={onView}>
-                View
+              <Button size="sm" variant="outline" className="flex-1" leftIcon={<Eye className="w-4 h-4" />} onClick={onView} disabled={isLoading}>
+                {isLoading ? 'Loading...' : 'View'}
               </Button>
               {material.isDownloadable && (
-                <Button size="sm" className="flex-1" leftIcon={<Download className="w-4 h-4" />} onClick={onView}>
-                  Download
+                <Button size="sm" className="flex-1" leftIcon={<Download className="w-4 h-4" />} onClick={onDownload} disabled={isLoading}>
+                  {isLoading ? 'Loading...' : 'Download'}
                 </Button>
               )}
             </>
