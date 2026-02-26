@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { HiOutlineLocationMarker, HiOutlinePhone, HiOutlineMail, HiOutlineClock } from 'react-icons/hi';
+import { useState, useEffect } from 'react';
+import { HiOutlineLocationMarker, HiOutlinePhone, HiOutlineMail, HiOutlineClock, HiOutlineCheckCircle, HiOutlineX } from 'react-icons/hi';
 import Footer from '../components/Footer';
 
 const Contact = () => {
@@ -15,12 +15,24 @@ const Contact = () => {
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState('');
 
+  const MESSAGE_LIMIT = 1000;
+
   const handleChange = (e) => {
+    const { name, value } = e.target;
+    if (name === 'message' && value.length > MESSAGE_LIMIT) return;
     setFormData({
       ...formData,
-      [e.target.name]: e.target.value,
+      [name]: value,
     });
   };
+
+  // Auto-dismiss success popup after 6 seconds
+  useEffect(() => {
+    if (success) {
+      const timer = setTimeout(() => setSuccess(false), 6000);
+      return () => clearTimeout(timer);
+    }
+  }, [success]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -167,13 +179,6 @@ const Contact = () => {
                 <h3 className="font-heading text-2xl font-bold text-[#0a1e3d] mb-1">Send us a Message</h3>
                 <p className="font-body text-sm text-gray-400 mb-8">We'll get back to you within 24 hours.</p>
 
-                {success && (
-                  <div className="bg-emerald-50 border border-emerald-200 text-emerald-700 px-4 py-3 rounded-xl mb-6 font-body text-sm">
-                    <p className="font-semibold">Message sent successfully!</p>
-                    <p className="text-emerald-600">We'll get back to you within 24 hours.</p>
-                  </div>
-                )}
-
                 {error && (
                   <div className="bg-rose-50 border border-rose-200 text-rose-700 px-4 py-3 rounded-xl mb-6 font-body text-sm">
                     <p className="font-semibold">{error}</p>
@@ -245,9 +250,15 @@ const Contact = () => {
                     <textarea
                       id="message" name="message"
                       value={formData.message} onChange={handleChange} required rows="4"
+                      maxLength={MESSAGE_LIMIT}
                       className="w-full px-4 py-3 rounded-xl border border-gray-200 font-body text-sm text-[#0a1e3d] bg-gray-50 outline-none focus:border-[#05308d] focus:ring-2 focus:ring-[#05308d]/10 focus:bg-white transition-all duration-300 resize-none"
                       placeholder="How can we help you?"
                     ></textarea>
+                    <div className="flex justify-end mt-1">
+                      <span className={`font-body text-xs ${formData.message.length > MESSAGE_LIMIT * 0.9 ? 'text-amber-500' : 'text-gray-400'} ${formData.message.length >= MESSAGE_LIMIT ? '!text-red-500 font-semibold' : ''}`}>
+                        {formData.message.length}/{MESSAGE_LIMIT}
+                      </span>
+                    </div>
                   </div>
 
                   <button
@@ -316,6 +327,78 @@ const Contact = () => {
           </div>
         </div>
       </section>
+
+      {/* ============================================ */}
+      {/* SUCCESS POPUP MODAL */}
+      {/* ============================================ */}
+      {success && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-5">
+          {/* Backdrop */}
+          <div
+            className="absolute inset-0 bg-[#0a1e3d]/60 backdrop-blur-sm animate-[fadeIn_0.3s_ease]"
+            onClick={() => setSuccess(false)}
+          />
+
+          {/* Modal */}
+          <div className="relative bg-white rounded-3xl shadow-2xl max-w-sm w-full overflow-hidden animate-[popIn_0.4s_ease]">
+            {/* Close button */}
+            <button
+              onClick={() => setSuccess(false)}
+              className="absolute top-4 right-4 z-10 w-8 h-8 rounded-full bg-black/5 flex items-center justify-center text-gray-400 hover:bg-black/10 hover:text-gray-600 transition-all cursor-pointer border-none"
+            >
+              <HiOutlineX className="w-4 h-4" />
+            </button>
+
+            {/* Top gradient section */}
+            <div className="bg-gradient-to-br from-[#0a1e3d] to-[#05308d] px-8 pt-10 pb-8 text-center relative overflow-hidden">
+              <div className="absolute top-4 right-4 w-20 h-20 border border-white/5 rounded-full" />
+              <div className="absolute -bottom-6 -left-6 w-24 h-24 bg-[#fbbf24]/10 rounded-full blur-xl" />
+
+              {/* Animated checkmark */}
+              <div className="relative inline-flex items-center justify-center w-20 h-20 mb-5">
+                <div className="absolute inset-0 bg-[#fbbf24]/20 rounded-full animate-ping" style={{ animationDuration: '2s' }} />
+                <div className="relative w-16 h-16 bg-[#fbbf24] rounded-full flex items-center justify-center shadow-lg shadow-[#fbbf24]/30">
+                  <HiOutlineCheckCircle className="w-9 h-9 text-[#0a1e3d]" />
+                </div>
+              </div>
+
+              <h3 className="font-heading text-xl font-extrabold text-white mb-1">
+                Message Sent!
+              </h3>
+              <p className="font-body text-sm text-white/50">
+                Your enquiry has been received
+              </p>
+            </div>
+
+            {/* Body */}
+            <div className="px-8 py-7 text-center">
+              <p className="font-body text-sm text-gray-500 leading-relaxed mb-6">
+                Thank you for reaching out to us. Our team will review your message and get back to you
+                <span className="font-semibold text-[#0a1e3d]"> within 24 hours</span>.
+              </p>
+
+              <button
+                onClick={() => setSuccess(false)}
+                className="w-full bg-[#05308d] text-white font-heading font-bold text-sm py-3.5 rounded-xl hover:bg-[#1a56db] transition-all duration-300 cursor-pointer border-none hover:shadow-lg hover:shadow-[#05308d]/20"
+              >
+                Got it, Thanks!
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <style>{`
+        @keyframes fadeIn {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+        @keyframes popIn {
+          0% { opacity: 0; transform: scale(0.85) translateY(20px); }
+          60% { transform: scale(1.02) translateY(-2px); }
+          100% { opacity: 1; transform: scale(1) translateY(0); }
+        }
+      `}</style>
 
       {/* Footer */}
       <Footer />
