@@ -27,7 +27,6 @@ import StudentDashboard from "./pages/StudentDashboard";
 import TutorDashboard from "./pages/TutorDashboard";
 import AdminDashboard from "./pages/AdminDashboard";
 import StudentProfile from "./pages/StudentProfile";
-import AdminApplications from "./pages/AdminApplications";
 import AdminStudents from "./pages/AdminStudents";
 import StudentPortal from "./pages/StudentPortal";
 
@@ -56,7 +55,7 @@ import { PaymentPage, PaymentSuccessPage, PaymentHistoryPage } from "@modules/pa
 import { AnnouncementsPage } from "@modules/announcements";
 
 // Admin Management
-import { UsersPage, BatchesPage, CoursesPage, ExamsPage, ExamEditorPage, ApplicationsPage, StudentsPage, ParentsPage, ContentManagementPage, TeachersPage, AdminPaymentsPage, ReportsPage } from "@modules/admin";
+import { UsersPage, BatchesPage, CoursesPage, ExamsPage, ExamEditorPage, StudentsPage, ParentsPage, ContentManagementPage, TeachersPage, AdminPaymentsPage, AdminEnrollmentsPage, ReportsPage } from "@modules/admin";
 
 // Student Pages
 import { MyCoursesPage, StudyMaterialsPage, MyExamsPage, MyResultsPage } from "@modules/student";
@@ -120,7 +119,6 @@ function App() {
           <Route path="announcements" element={<AnnouncementsPage />} />
 
           {/* Admin Management */}
-          <Route path="applications" element={<ApplicationsPage />} />
           <Route path="users" element={<UsersPage />} />
           <Route path="students" element={<StudentsPage />} />
           <Route path="parents" element={<ParentsPage />} />
@@ -131,6 +129,7 @@ function App() {
           <Route path="materials" element={<ContentManagementPage />} />
           <Route path="teachers" element={<TeachersPage />} />
           <Route path="payments" element={<AdminPaymentsPage />} />
+          <Route path="enrollments" element={<AdminEnrollmentsPage />} />
           <Route path="reports" element={<ReportsPage />} />
 
           {/* Student Pages */}
@@ -268,17 +267,6 @@ function App() {
               <Navbar />
               <RoleProtectedRoute allowedRoles={["ADMIN"]}>
                 <AdminStudents />
-              </RoleProtectedRoute>
-            </>
-          }
-        />
-        <Route
-          path="/admin/applications"
-          element={
-            <>
-              <Navbar />
-              <RoleProtectedRoute allowedRoles={["ADMIN"]}>
-                <AdminApplications />
               </RoleProtectedRoute>
             </>
           }

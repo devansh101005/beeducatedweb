@@ -13,5 +13,6 @@ export { ParentsPage } from './components/ParentsPage';
 export { ContentManagementPage } from './components/ContentManagementPage';
 export { TeachersPage } from './components/TeachersPage';
 export { AdminPaymentsPage } from './components/AdminPaymentsPage';
+export { AdminEnrollmentsPage } from './components/AdminEnrollmentsPage';
 export { ExamEditorPage } from './components/ExamEditorPage';
 export { ReportsPage } from './components/ReportsPage';

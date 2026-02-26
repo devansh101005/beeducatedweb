@@ -41,13 +41,24 @@ interface ApproveStudentModalProps {
 }
 
 const studentTypes = [
-  { value: 'coaching_online', label: 'Online Coaching' },
-  { value: 'coaching_offline', label: 'Offline Coaching' },
+  { value: 'coaching_online', label: 'Online Batch' },
+  { value: 'coaching_offline', label: 'Offline Batch' },
   { value: 'test_series', label: 'Test Series' },
   { value: 'home_tuition', label: 'Home Tuition' },
 ];
 
 const classes = [
+  { value: 'nursery', label: 'Nursery' },
+  { value: 'lkg', label: 'LKG' },
+  { value: 'ukg', label: 'UKG' },
+  { value: '1st', label: 'Class 1' },
+  { value: '2nd', label: 'Class 2' },
+  { value: '3rd', label: 'Class 3' },
+  { value: '4th', label: 'Class 4' },
+  { value: '5th', label: 'Class 5' },
+  { value: '6th', label: 'Class 6' },
+  { value: '7th', label: 'Class 7' },
+  { value: '8th', label: 'Class 8' },
   { value: '9th', label: 'Class 9' },
   { value: '10th', label: 'Class 10' },
   { value: '11th', label: 'Class 11' },

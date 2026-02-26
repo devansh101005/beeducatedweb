@@ -11,7 +11,6 @@ import {
   GraduationCap,
   UserCog,
   BookOpen,
-  FileText,
   ClipboardList,
   FolderOpen,
   Settings,
@@ -88,7 +87,6 @@ const navigationByRole: Record<UserRole, NavSection[]> = {
         { name: 'Students', href: '/dashboard/students', icon: GraduationCap },
         { name: 'Teachers', href: '/dashboard/teachers', icon: UserCog },
         { name: 'Parents', href: '/dashboard/parents', icon: Users2 },
-        { name: 'Applications', href: '/dashboard/applications', icon: FileText },
       ],
     },
     {

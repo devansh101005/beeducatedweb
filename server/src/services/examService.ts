@@ -135,8 +135,46 @@ export interface ExamListOptions {
   includeExpired?: boolean;
 }
 
+/**
+ * Compute the effective status of an exam based on its timing fields.
+ * The DB status can be stale (e.g. still "live" after end_time passed).
+ */
+function computeEffectiveStatus(exam: Exam): ExamStatus {
+  // Draft and cancelled are terminal — never auto-change
+  if (exam.status === 'draft' || exam.status === 'cancelled') return exam.status;
+
+  const now = new Date();
+
+  // If end_time has passed → completed
+  if (exam.end_time && new Date(exam.end_time) < now) return 'completed';
+
+  // If start_time has passed (or no start_time) → live
+  if (exam.start_time && new Date(exam.start_time) <= now) return 'live';
+
+  // If start_time is in the future → scheduled
+  if (exam.start_time && new Date(exam.start_time) > now) return 'scheduled';
+
+  return exam.status;
+}
+
 class ExamService {
   private supabase = getSupabase();
+
+  /**
+   * Apply effective status to an exam and batch-update stale DB records
+   */
+  private applyEffectiveStatus(exam: Exam): Exam {
+    const effective = computeEffectiveStatus(exam);
+    if (effective !== exam.status) {
+      // Fire-and-forget DB update for stale status
+      this.supabase
+        .from('exams')
+        .update({ status: effective })
+        .eq('id', exam.id)
+        .then();
+    }
+    return { ...exam, status: effective };
+  }
 
   /**
    * Get exam by ID
@@ -153,7 +191,7 @@ class ExamService {
       throw new Error(`Failed to get exam: ${error.message}`);
     }
 
-    return data as Exam;
+    return this.applyEffectiveStatus(data as Exam);
   }
 
   /**
@@ -184,8 +222,9 @@ class ExamService {
       .select('id', { count: 'exact', head: true })
       .eq('exam_id', id);
 
+    const effectiveExam = this.applyEffectiveStatus(exam as Exam);
     return {
-      ...exam,
+      ...effectiveExam,
       sections: sections || [],
       question_count: count || 0,
     } as Exam & { sections: ExamSection[]; question_count: number };
@@ -299,7 +338,7 @@ class ExamService {
     }
 
     return {
-      exams: data as Exam[],
+      exams: (data as Exam[]).map((e) => this.applyEffectiveStatus(e)),
       total: count || 0,
     };
   }
@@ -329,10 +368,13 @@ class ExamService {
       throw new Error(`Failed to get available exams: ${error.message}`);
     }
 
+    // Apply effective status so stale "live" exams show as "completed"
+    const exams = (data as Exam[]).map((e) => this.applyEffectiveStatus(e));
+
     // Filter access in application code for proper AND logic.
     // If an exam targets offline batch AND class 10th, student must
     // match BOTH — not just one.
-    return (data as Exam[]).filter((exam) => {
+    return exams.filter((exam) => {
       // Free exams → visible to all
       if (exam.is_free) return true;
 

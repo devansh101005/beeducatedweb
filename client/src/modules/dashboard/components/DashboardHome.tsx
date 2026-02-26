@@ -53,7 +53,6 @@ interface DashboardStats {
   totalExams?: number;
   totalQuestions?: number;
   activeEnrollments?: number;
-  pendingApplications?: number;
 }
 
 // ============================================
@@ -365,13 +364,6 @@ function AdminDashboard() {
             <span className="text-xs font-medium text-center">Add Student</span>
           </Link>
           <Link
-            to="/dashboard/applications"
-            className="flex flex-col items-center gap-2 p-4 rounded-xl bg-amber-50 text-amber-700 hover:bg-amber-100 transition-colors"
-          >
-            <FileText className="w-6 h-6" />
-            <span className="text-xs font-medium text-center">Applications</span>
-          </Link>
-          <Link
             to="/dashboard/users"
             className="flex flex-col items-center gap-2 p-4 rounded-xl bg-sky-50 text-sky-700 hover:bg-sky-100 transition-colors"
           >
@@ -506,20 +498,6 @@ function AdminDashboard() {
       <Card className="p-5">
         <h3 className="text-lg font-heading font-semibold text-slate-900 mb-4">Management</h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-          <Link
-            to="/dashboard/applications"
-            className="flex items-center gap-3 p-4 rounded-xl border border-slate-200 hover:border-amber-300 hover:bg-amber-50/50 transition-all group"
-          >
-            <div className="w-12 h-12 rounded-xl bg-amber-100 flex items-center justify-center group-hover:bg-amber-200 transition-colors">
-              <FileText className="w-6 h-6 text-amber-600" />
-            </div>
-            <div className="flex-1">
-              <p className="font-medium text-slate-900">Pending Applications</p>
-              <p className="text-sm text-slate-500">Review new applications</p>
-            </div>
-            <ArrowRight className="w-5 h-5 text-slate-400 group-hover:text-amber-600 transition-colors" />
-          </Link>
-
           <Link
             to="/dashboard/users"
             className="flex items-center gap-3 p-4 rounded-xl border border-slate-200 hover:border-sky-300 hover:bg-sky-50/50 transition-all group"

@@ -85,13 +85,24 @@ interface AcademicClass {
 const API_URL = import.meta.env.VITE_API_URL || '/api';
 
 const studentTypes = [
-  { value: 'coaching_online', label: 'Online Coaching' },
-  { value: 'coaching_offline', label: 'Offline Coaching' },
+  { value: 'coaching_online', label: 'Online Batch' },
+  { value: 'coaching_offline', label: 'Offline Batch' },
   { value: 'test_series', label: 'Test Series' },
   { value: 'home_tuition', label: 'Home Tuition' },
 ];
 
 const classes = [
+  { value: 'nursery', label: 'Nursery' },
+  { value: 'lkg', label: 'LKG' },
+  { value: 'ukg', label: 'UKG' },
+  { value: '1st', label: 'Class 1' },
+  { value: '2nd', label: 'Class 2' },
+  { value: '3rd', label: 'Class 3' },
+  { value: '4th', label: 'Class 4' },
+  { value: '5th', label: 'Class 5' },
+  { value: '6th', label: 'Class 6' },
+  { value: '7th', label: 'Class 7' },
+  { value: '8th', label: 'Class 8' },
   { value: '9th', label: 'Class 9' },
   { value: '10th', label: 'Class 10' },
   { value: '11th', label: 'Class 11' },
@@ -496,17 +507,25 @@ function AddStudentModal({ onClose, onSuccess }: AddStudentModalProps) {
                         value={selectedClassId}
                         onChange={(e) => {
                           setSelectedClassId(e.target.value);
-                          // Auto-detect grade from class name (e.g., "Class 12 JEE" → "12th")
+                          // Auto-detect grade from class name
                           const selectedClass = academicClasses.find(c => c.id === e.target.value);
                           if (selectedClass) {
-                            const match = selectedClass.name.match(/(?:class\s*)?(\d{1,2})(?:th|st|nd|rd)?/i);
-                            if (match) {
-                              const grade = match[1] + 'th';
-                              if (['9th', '10th', '11th', '12th'].includes(grade)) {
-                                setClassGrade(grade);
-                              }
-                            } else if (selectedClass.name.toLowerCase().includes('dropper')) {
+                            const name = selectedClass.name.toLowerCase();
+                            if (name.includes('nursery')) {
+                              setClassGrade('nursery');
+                            } else if (name === 'lkg' || name.includes('lkg') || name.includes('lower kg')) {
+                              setClassGrade('lkg');
+                            } else if (name === 'ukg' || name.includes('ukg') || name.includes('upper kg')) {
+                              setClassGrade('ukg');
+                            } else if (name.includes('dropper')) {
                               setClassGrade('dropper');
+                            } else {
+                              const match = name.match(/(?:class\s*)?(\d{1,2})/i);
+                              if (match) {
+                                const num = parseInt(match[1]);
+                                const suffix = num === 1 ? 'st' : num === 2 ? 'nd' : num === 3 ? 'rd' : 'th';
+                                setClassGrade(num + suffix);
+                              }
                             }
                           }
                         }}
@@ -952,7 +971,7 @@ export function StudentsPage() {
                 <p className="text-2xl font-semibold text-slate-900">
                   {loading ? '--' : (Array.isArray(students) ? students.filter(s => s.student_type === 'coaching_offline').length : 0)}
                 </p>
-                <p className="text-xs text-slate-500">Offline Coaching</p>
+                <p className="text-xs text-slate-500">Offline Batch</p>
               </div>
             </div>
           </Card>
@@ -967,7 +986,7 @@ export function StudentsPage() {
                 <p className="text-2xl font-semibold text-slate-900">
                   {loading ? '--' : (Array.isArray(students) ? students.filter(s => s.student_type === 'coaching_online').length : 0)}
                 </p>
-                <p className="text-xs text-slate-500">Online Coaching</p>
+                <p className="text-xs text-slate-500">Online Batch</p>
               </div>
             </div>
           </Card>

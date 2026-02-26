@@ -38,7 +38,8 @@ router.get('/available', requireAuth, attachUser, async (req: Request, res: Resp
   try {
     const student = await studentService.getByUserId(req.user!.id);
     if (!student) {
-      return sendBadRequest(res, 'Student profile not found');
+      // Non-student users (admin/teacher) — return empty list instead of error
+      return sendSuccess(res, []);
     }
 
     // Get student's batches and courses

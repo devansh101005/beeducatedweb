@@ -517,19 +517,31 @@ const FeeStructure = () => {
           </section>
 
           {/* CTA */}
-          <section className="py-16 sm:py-20 bg-gray-50">
-            <div className="max-w-3xl mx-auto px-5 text-center">
-              <span className="inline-block font-heading text-sm font-semibold text-[#05308d] uppercase tracking-[0.15em] mb-3">Ready to Begin?</span>
-              <h2 className="font-heading text-2xl sm:text-3xl md:text-4xl font-bold text-[#0a1e3d] mb-4">Take the First Step Today</h2>
-              <p className="font-body text-gray-500 text-base sm:text-lg mb-10 max-w-xl mx-auto leading-relaxed">
+          <section className="relative py-16 sm:py-20 overflow-hidden">
+            {/* Background image with overlay */}
+            <div className="absolute inset-0">
+              <img
+                src="https://images.unsplash.com/photo-1427504494785-3a9ca7044f45?w=1600&q=80"
+                alt=""
+                className="w-full h-full object-cover"
+              />
+              <div className="absolute inset-0 bg-[#05308d]/85 backdrop-blur-[2px]" />
+              {/* Decorative pattern overlay */}
+              <div className="absolute inset-0 opacity-[0.04]" style={{ backgroundImage: 'radial-gradient(circle at 1px 1px, white 1px, transparent 0)', backgroundSize: '32px 32px' }} />
+            </div>
+
+            <div className="relative max-w-3xl mx-auto px-5 text-center">
+              <span className="inline-block font-heading text-sm font-semibold text-[#fbbf24] uppercase tracking-[0.15em] mb-3">Ready to Begin?</span>
+              <h2 className="font-heading text-2xl sm:text-3xl md:text-4xl font-bold text-white mb-4">Take the First Step Today</h2>
+              <p className="font-body text-white/70 text-base sm:text-lg mb-10 max-w-xl mx-auto leading-relaxed">
                 Secure your seat with just ₹499 registration fee. Limited seats available for each batch.
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <Link to="/contact" className="group inline-flex items-center justify-center gap-2 bg-[#05308d] text-white px-8 py-4 rounded-xl font-heading font-bold text-sm sm:text-base no-underline transition-all duration-300 hover:bg-[#1a56db] hover:shadow-lg hover:shadow-[#05308d]/25 hover:-translate-y-0.5">
+                <Link to="/contact" className="group inline-flex items-center justify-center gap-2 bg-[#fbbf24] text-[#0a1e3d] px-8 py-4 rounded-xl font-heading font-bold text-sm sm:text-base no-underline transition-all duration-300 hover:bg-[#f5c842] hover:shadow-lg hover:shadow-[#fbbf24]/30 hover:-translate-y-0.5">
                   <span>Enquire Now</span>
                   <svg className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
                 </Link>
-                <a href="tel:+918382970800" className="inline-flex items-center justify-center gap-2 bg-white border-2 border-[#05308d]/15 text-[#05308d] px-8 py-4 rounded-xl font-heading font-bold text-sm sm:text-base no-underline transition-all duration-300 hover:border-[#05308d]/30 hover:shadow-md hover:-translate-y-0.5">
+                <a href="tel:+918382970800" className="inline-flex items-center justify-center gap-2 bg-white/10 border-2 border-white/25 text-white px-8 py-4 rounded-xl font-heading font-bold text-sm sm:text-base no-underline transition-all duration-300 hover:bg-white/20 hover:border-white/40 hover:shadow-md hover:-translate-y-0.5 backdrop-blur-sm">
                   <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" /></svg>
                   Call Us
                 </a>

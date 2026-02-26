@@ -92,7 +92,7 @@ class DashboardService {
       enrollmentsResult,
     ] = await Promise.all([
       this.supabase.from('users').select('id', { count: 'exact', head: true }).eq('is_active', true),
-      this.supabase.from('users').select('id', { count: 'exact', head: true }).eq('role', 'student').eq('is_active', true),
+      this.supabase.from('students').select('id', { count: 'exact', head: true }),
       this.supabase.from('users').select('id', { count: 'exact', head: true }).eq('role', 'teacher').eq('is_active', true),
       this.supabase.from('courses').select('id', { count: 'exact', head: true }).eq('is_active', true),
       this.supabase.from('batches').select('id', { count: 'exact', head: true }).eq('is_active', true),
