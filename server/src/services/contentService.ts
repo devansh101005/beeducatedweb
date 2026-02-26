@@ -399,7 +399,8 @@ class ContentService {
    */
   async getAccessUrl(
     contentId: string,
-    studentId?: string
+    studentId?: string,
+    download = false
   ): Promise<{ url: string; expiresIn: number }> {
     const content = await this.getById(contentId);
     if (!content) {
@@ -416,7 +417,7 @@ class ContentService {
       bucket: BUCKETS.COURSE_CONTENT,
       path: content.file_path,
       expiresIn,
-      download: content.is_downloadable,
+      download: download && content.is_downloadable,
       fileName: content.file_name || undefined,
     });
 

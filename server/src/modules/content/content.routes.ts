@@ -491,7 +491,7 @@ router.get('/:id/signed-url', requireAuth, attachUser, async (req: Request, res:
       studentId = student?.id;
     }
 
-    const result = await contentService.getAccessUrl(contentId, studentId);
+    const result = await contentService.getAccessUrl(contentId, studentId, download);
 
     sendSuccess(res, result);
   } catch (error) {
