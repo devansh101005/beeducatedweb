@@ -250,11 +250,15 @@ const Contact = () => {
                     <textarea
                       id="message" name="message"
                       value={formData.message} onChange={handleChange} required rows="4"
+                      minLength={10}
                       maxLength={MESSAGE_LIMIT}
                       className="w-full px-4 py-3 rounded-xl border border-gray-200 font-body text-sm text-[#0a1e3d] bg-gray-50 outline-none focus:border-[#05308d] focus:ring-2 focus:ring-[#05308d]/10 focus:bg-white transition-all duration-300 resize-none"
-                      placeholder="How can we help you?"
+                      placeholder="How can we help you? (min 10 characters)"
                     ></textarea>
-                    <div className="flex justify-end mt-1">
+                    <div className="flex justify-between mt-1">
+                      {formData.message.length > 0 && formData.message.length < 10 ? (
+                        <span className="font-body text-xs text-red-500">At least 10 characters required</span>
+                      ) : <span />}
                       <span className={`font-body text-xs ${formData.message.length > MESSAGE_LIMIT * 0.9 ? 'text-amber-500' : 'text-gray-400'} ${formData.message.length >= MESSAGE_LIMIT ? '!text-red-500 font-semibold' : ''}`}>
                         {formData.message.length}/{MESSAGE_LIMIT}
                       </span>
