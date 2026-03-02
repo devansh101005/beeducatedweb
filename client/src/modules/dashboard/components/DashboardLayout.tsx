@@ -33,6 +33,7 @@ import {
   Info,
   Pin,
   CheckCheck,
+  Sparkles,
 } from 'lucide-react';
 import { formatDistanceToNow, parseISO, differenceInMinutes, differenceInHours } from 'date-fns';
 import clsx from 'clsx';
@@ -138,6 +139,7 @@ const navigationByRole: Record<UserRole, NavSection[]> = {
         { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
         { name: 'My Enrollments', href: '/dashboard/my-enrollments', icon: GraduationCap },
         { name: 'Study Materials', href: '/dashboard/study-materials', icon: FolderOpen },
+        { name: 'Free Resources', href: '/dashboard/free-resources', icon: Sparkles },
       ],
     },
     {

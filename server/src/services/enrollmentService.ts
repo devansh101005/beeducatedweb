@@ -6,6 +6,7 @@ import Razorpay from 'razorpay';
 import { getSupabase } from '../config/supabase.js';
 import { env } from '../config/env.js';
 import { courseTypeService } from './courseTypeService.js';
+import { feeService } from './feeService.js';
 
 // Lazy initialize Razorpay to avoid crash if env vars not set
 let razorpayInstance: Razorpay | null = null;
@@ -447,6 +448,18 @@ class EnrollmentService {
       throw new Error('Failed to complete enrollment');
     }
 
+    // 7. Create student_fees record so it appears in Fee & Payments page
+    const classInfo = await courseTypeService.getClassById(enrollment.class_id);
+    const feePlanInfo = await courseTypeService.getFeePlanById(enrollment.fee_plan_id);
+    await this.createStudentFeeForEnrollment({
+      studentId: enrollment.student_id,
+      amount: payment.amount,
+      className: classInfo?.name || 'Unknown Class',
+      feePlanName: feePlanInfo?.name || 'Fee Plan',
+      enrollmentId: enrollment.id,
+      paymentType: 'razorpay',
+    });
+
     return enrollment;
   }
 
@@ -709,6 +722,47 @@ class EnrollmentService {
   }
 
   /**
+   * Create a student_fees record for an enrollment so it appears in Fee & Payments
+   */
+  private async createStudentFeeForEnrollment(params: {
+    studentId: string;
+    amount: number;
+    className: string;
+    feePlanName: string;
+    enrollmentId: string;
+    paymentType: string;
+    adminId?: string;
+  }): Promise<void> {
+    try {
+      const { studentId, amount, className, feePlanName, enrollmentId, paymentType, adminId } = params;
+      const now = new Date().toISOString();
+      const today = now.split('T')[0];
+
+      // Create the fee record
+      const fee = await feeService.createStudentFee({
+        student_id: studentId,
+        fee_type: 'tuition',
+        description: `${className} - ${feePlanName}`,
+        base_amount: amount,
+        due_date: today,
+        notes: `Enrollment #${enrollmentId} via ${paymentType}`,
+        created_by: adminId,
+      });
+
+      // Mark it as completed (paid) immediately
+      await feeService.updateStudentFee(fee.id, {
+        status: 'completed',
+        amount_paid: fee.total_amount,
+        amount_due: 0,
+        paid_at: now,
+      });
+    } catch (err) {
+      // Log but don't fail the enrollment — fee record is supplementary
+      console.error('Failed to create student_fees record for enrollment:', err);
+    }
+  }
+
+  /**
    * Manual enrollment by admin (for cash/offline payments)
    * Creates enrollment directly as 'active' without Razorpay
    */
@@ -841,6 +895,17 @@ class EnrollmentService {
         .eq('id', enrollment.id);
       throw new Error('Failed to create payment record');
     }
+
+    // 8. Create student_fees record so it appears in Fee & Payments page
+    await this.createStudentFeeForEnrollment({
+      studentId,
+      amount: amountReceived,
+      className: classInfo.name,
+      feePlanName: feePlan.name,
+      enrollmentId: enrollment.id,
+      paymentType,
+      adminId: receivedBy,
+    });
 
     return {
       enrollment,

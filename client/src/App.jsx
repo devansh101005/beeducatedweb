@@ -58,7 +58,7 @@ import { AnnouncementsPage } from "@modules/announcements";
 import { UsersPage, BatchesPage, CoursesPage, ExamsPage, ExamEditorPage, StudentsPage, ParentsPage, ContentManagementPage, TeachersPage, AdminPaymentsPage, AdminEnrollmentsPage, ReportsPage } from "@modules/admin";
 
 // Student Pages
-import { MyCoursesPage, StudyMaterialsPage, MyExamsPage, MyResultsPage } from "@modules/student";
+import { MyCoursesPage, StudyMaterialsPage, FreeResourcesPage, MyExamsPage, MyResultsPage } from "@modules/student";
 
 // Teacher Pages
 import { MyBatchesPage, MyStudentsPage, GradingPage, SchedulePage } from "@modules/teacher";
@@ -136,6 +136,7 @@ function App() {
           <Route path="my-courses" element={<MyCoursesPage />} />
           <Route path="my-enrollments" element={<MyEnrollmentsPage />} />
           <Route path="study-materials" element={<StudyMaterialsPage />} />
+          <Route path="free-resources" element={<FreeResourcesPage />} />
           <Route path="my-exams" element={<MyExamsPage />} />
           <Route path="my-results" element={<MyResultsPage />} />
 

@@ -3,8 +3,9 @@
 
 import { Router, Request, Response } from 'express';
 import multer from 'multer';
-import { requireAuth, attachUser, requireTeacherOrAdmin, requireAdmin } from '../../middleware/auth.js';
+import { requireAuth, attachUser, optionalAuth, requireTeacherOrAdmin, requireAdmin } from '../../middleware/auth.js';
 import { contentService, ContentType, MaterialType } from '../../services/contentService.js';
+import { getSupabase } from '../../config/supabase.js';
 import { storageService, BUCKETS } from '../../services/storageService.js';
 import { courseService } from '../../services/courseService.js';
 import { studentService } from '../../services/studentService.js';
@@ -95,6 +96,76 @@ router.get('/', requireAuth, attachUser, async (req: Request, res: Response) => 
   } catch (error) {
     console.error('Error listing content:', error);
     sendError(res, 'Failed to list content');
+  }
+});
+
+/**
+ * GET /api/v2/content/browse
+ * Browse all published content for a class (with hierarchy info)
+ * Returns both free and paid content - frontend shows lock on paid items
+ * Optionally authenticated: works for public users (no token) and signed-in users
+ * Free content includes signed file URLs; paid content metadata only
+ */
+router.get('/browse', optionalAuth, async (req: Request, res: Response) => {
+  try {
+    const classId = req.query.classId as string;
+    const subjectId = req.query.subjectId as string | undefined;
+    const materialType = req.query.materialType as MaterialType | undefined;
+
+    if (!classId) {
+      return sendBadRequest(res, 'classId is required');
+    }
+
+    const result = await contentService.listWithHierarchy({
+      classId,
+      subjectId,
+      materialType,
+      isPublished: true,
+      page: 1,
+      limit: 200,
+    });
+
+    // Check if user is enrolled in this class
+    let isEnrolled = false;
+    if (req.user?.role === 'student') {
+      const student = await studentService.getByUserId(req.user.id);
+      if (student) {
+        const { data: enrollment } = await getSupabase()
+          .from('class_enrollments')
+          .select('id')
+          .eq('student_id', student.id)
+          .eq('class_id', classId)
+          .eq('status', 'active')
+          .limit(1);
+        isEnrolled = !!(enrollment && enrollment.length > 0);
+      }
+    } else if (req.user?.role === 'admin' || req.user?.role === 'teacher') {
+      isEnrolled = true;
+    }
+
+    // Generate signed file URLs for free content (or all content if enrolled/admin)
+    const contentWithUrls = await Promise.all(
+      result.content.map(async (item: any) => {
+        if ((item.is_free || isEnrolled) && item.file_path) {
+          try {
+            const { url } = await contentService.getAccessUrl(item.id);
+            return { ...item, file_url: url };
+          } catch {
+            return item;
+          }
+        }
+        return item;
+      })
+    );
+
+    sendSuccess(res, {
+      content: contentWithUrls,
+      total: result.total,
+      isEnrolled,
+    });
+  } catch (error) {
+    console.error('Error browsing content:', error);
+    sendError(res, 'Failed to browse content');
   }
 });
 

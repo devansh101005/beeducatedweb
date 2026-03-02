@@ -10,6 +10,7 @@ import {
   HiOutlineExclamationCircle,
   HiOutlineCreditCard,
   HiOutlineChevronRight,
+  HiOutlineChevronDown,
   HiOutlineAcademicCap,
   HiOutlineShieldCheck,
   HiOutlineDocumentText,
@@ -18,9 +19,52 @@ import {
   HiOutlineClipboardList,
   HiOutlineChartBar,
   HiOutlineDesktopComputer,
+  HiOutlinePlay,
+  HiOutlineDownload,
+  HiOutlineEye,
+  HiOutlineLockClosed,
+  HiOutlineLockOpen,
 } from 'react-icons/hi';
 import type { ClassesResponse, AcademicClass, EnrollmentInitiateResponse } from '../types';
 import Footer from '../../../components/Footer';
+
+/* ── Content types for preview section ── */
+interface BrowseContent {
+  id: string;
+  title: string;
+  description: string | null;
+  content_type: string;
+  material_type: string | null;
+  file_size: number | null;
+  duration_seconds: number | null;
+  is_free: boolean;
+  is_downloadable: boolean;
+  subject_name: string | null;
+  file_url?: string;
+}
+
+/* ── Content type icons & labels ── */
+const materialTypeLabels: Record<string, string> = {
+  lecture: 'Lecture',
+  notes: 'Notes',
+  dpp: 'DPP',
+  dpp_pdf: 'DPP (PDF)',
+  dpp_video: 'DPP (Video)',
+  quiz: 'Quiz',
+};
+
+function formatFileSize(bytes: number | null): string {
+  if (!bytes) return '';
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+function formatDuration(seconds: number | null): string {
+  if (!seconds) return '';
+  const mins = Math.floor(seconds / 60);
+  if (mins < 60) return `${mins} min`;
+  return `${Math.floor(mins / 60)}h ${mins % 60}m`;
+}
 
 /* Declare Razorpay type */
 declare global {
@@ -85,6 +129,9 @@ export function ClassesPage() {
   const [enrollingClassId, setEnrollingClassId] = useState<string | null>(null);
   const [paymentError, setPaymentError] = useState<string | null>(null);
   const [paymentSuccess, setPaymentSuccess] = useState<string | null>(null);
+  // Content preview state
+  const [expandedClassId, setExpandedClassId] = useState<string | null>(null);
+  const [contentData, setContentData] = useState<Record<string, { content: BrowseContent[]; isEnrolled: boolean; loading: boolean }>>({});
 
   useEffect(() => {
     if (slug) {
@@ -107,6 +154,35 @@ export function ClassesPage() {
       setError('Failed to load classes');
     } finally {
       setLoading(false);
+    }
+  };
+
+  /* ── Fetch content preview for a class ── */
+  const toggleContentPreview = async (classId: string) => {
+    if (expandedClassId === classId) {
+      setExpandedClassId(null);
+      return;
+    }
+    setExpandedClassId(classId);
+
+    // Already loaded
+    if (contentData[classId] && !contentData[classId].loading) return;
+
+    setContentData((prev) => ({ ...prev, [classId]: { content: [], isEnrolled: false, loading: true } }));
+
+    try {
+      const res = await fetch(`/api/v2/content/browse?classId=${classId}`);
+      const result = await res.json();
+      if (result.success) {
+        setContentData((prev) => ({
+          ...prev,
+          [classId]: { content: result.data.content, isEnrolled: result.data.isEnrolled, loading: false },
+        }));
+      } else {
+        setContentData((prev) => ({ ...prev, [classId]: { content: [], isEnrolled: false, loading: false } }));
+      }
+    } catch {
+      setContentData((prev) => ({ ...prev, [classId]: { content: [], isEnrolled: false, loading: false } }));
     }
   };
 
@@ -472,6 +548,174 @@ export function ClassesPage() {
                         <span>
                           {classItem.currentStudents} / {classItem.maxStudents} students enrolled
                         </span>
+                      </div>
+                    )}
+
+                    {/* Content Preview Toggle */}
+                    <button
+                      onClick={() => toggleContentPreview(classItem.id)}
+                      className="w-full flex items-center justify-between px-4 py-3 mb-4 rounded-xl border border-dashed border-gray-300 hover:border-[#05308d]/40 hover:bg-[#05308d]/[0.02] transition-all duration-200 cursor-pointer bg-transparent group/preview"
+                    >
+                      <span className="flex items-center gap-2 font-heading text-sm font-semibold text-gray-600 group-hover/preview:text-[#05308d] transition-colors">
+                        <HiOutlineEye className="w-4 h-4" />
+                        Preview Study Material
+                      </span>
+                      <HiOutlineChevronDown
+                        className={`w-4 h-4 text-gray-400 transition-transform duration-300 ${
+                          expandedClassId === classItem.id ? 'rotate-180' : ''
+                        }`}
+                      />
+                    </button>
+
+                    {/* Content Preview Panel */}
+                    {expandedClassId === classItem.id && (
+                      <div className="mb-5 rounded-xl border border-gray-100 overflow-hidden">
+                        {contentData[classItem.id]?.loading ? (
+                          <div className="flex items-center justify-center py-8">
+                            <div className="w-6 h-6 border-2 border-[#05308d] border-t-transparent rounded-full animate-spin"></div>
+                            <span className="ml-3 font-body text-sm text-gray-400">Loading content...</span>
+                          </div>
+                        ) : !contentData[classItem.id]?.content?.length ? (
+                          <div className="text-center py-8 px-4">
+                            <HiOutlineBookOpen className="w-8 h-8 text-gray-300 mx-auto mb-2" />
+                            <p className="font-body text-sm text-gray-400">No study material uploaded yet</p>
+                          </div>
+                        ) : (() => {
+                          const items = contentData[classItem.id].content;
+                          const isEnrolled = contentData[classItem.id].isEnrolled;
+                          // Group by subject
+                          const grouped: Record<string, BrowseContent[]> = {};
+                          items.forEach((item) => {
+                            const key = item.subject_name || 'General';
+                            if (!grouped[key]) grouped[key] = [];
+                            grouped[key].push(item);
+                          });
+                          const freeCount = items.filter((i) => i.is_free).length;
+                          const paidCount = items.length - freeCount;
+
+                          return (
+                            <div>
+                              {/* Stats bar */}
+                              <div className="flex items-center gap-3 px-4 py-2.5 bg-gray-50 border-b border-gray-100">
+                                <span className="inline-flex items-center gap-1 font-heading text-xs font-semibold text-green-700 bg-green-50 px-2 py-0.5 rounded-full">
+                                  <HiOutlineLockOpen className="w-3 h-3" />
+                                  {freeCount} Free
+                                </span>
+                                {paidCount > 0 && (
+                                  <span className="inline-flex items-center gap-1 font-heading text-xs font-semibold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-full">
+                                    <HiOutlineLockClosed className="w-3 h-3" />
+                                    {paidCount} Premium
+                                  </span>
+                                )}
+                              </div>
+
+                              {/* Content list grouped by subject */}
+                              <div className="max-h-[360px] overflow-y-auto">
+                                {Object.entries(grouped).map(([subject, subjectItems]) => (
+                                  <div key={subject}>
+                                    <div className="px-4 py-2 bg-[#05308d]/[0.03] border-b border-gray-100">
+                                      <h5 className="font-heading text-xs font-bold text-[#05308d] uppercase tracking-wide">{subject}</h5>
+                                    </div>
+                                    {subjectItems.map((item) => {
+                                      const isLocked = !item.is_free && !isEnrolled;
+                                      const isVideo = item.content_type === 'video';
+                                      const isPdf = item.content_type === 'pdf' || item.content_type === 'document';
+
+                                      return (
+                                        <div
+                                          key={item.id}
+                                          className={`relative flex items-center gap-3 px-4 py-3 border-b border-gray-50 transition-colors duration-150 ${
+                                            isLocked ? 'bg-gray-50/50' : 'hover:bg-blue-50/30'
+                                          }`}
+                                        >
+                                          {/* Icon */}
+                                          <div
+                                            className={`w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 ${
+                                              isLocked
+                                                ? 'bg-gray-100 text-gray-400'
+                                                : isVideo
+                                                  ? 'bg-red-50 text-red-500'
+                                                  : 'bg-blue-50 text-blue-500'
+                                            }`}
+                                          >
+                                            {isLocked ? (
+                                              <HiOutlineLockClosed className="w-4 h-4" />
+                                            ) : isVideo ? (
+                                              <HiOutlinePlay className="w-4 h-4" />
+                                            ) : (
+                                              <HiOutlineDocumentText className="w-4 h-4" />
+                                            )}
+                                          </div>
+
+                                          {/* Info */}
+                                          <div className="flex-1 min-w-0">
+                                            <p className={`font-heading text-sm font-semibold truncate ${isLocked ? 'text-gray-400' : 'text-[#0a1e3d]'}`}>
+                                              {item.title}
+                                            </p>
+                                            <div className="flex items-center gap-2 mt-0.5">
+                                              {item.material_type && (
+                                                <span className="font-body text-[10px] text-gray-400">
+                                                  {materialTypeLabels[item.material_type] || item.material_type}
+                                                </span>
+                                              )}
+                                              {item.file_size && (
+                                                <span className="font-body text-[10px] text-gray-300">{formatFileSize(item.file_size)}</span>
+                                              )}
+                                              {item.duration_seconds && (
+                                                <span className="font-body text-[10px] text-gray-300">{formatDuration(item.duration_seconds)}</span>
+                                              )}
+                                            </div>
+                                          </div>
+
+                                          {/* Badge & Action */}
+                                          {item.is_free ? (
+                                            <div className="flex items-center gap-2 flex-shrink-0">
+                                              <span className="font-heading text-[10px] font-bold text-green-600 bg-green-50 px-2 py-0.5 rounded-full">FREE</span>
+                                              {item.file_url && (
+                                                isVideo ? (
+                                                  <a href={item.file_url} target="_blank" rel="noopener noreferrer" className="p-1.5 rounded-lg bg-red-50 hover:bg-red-100 text-red-500 transition-colors no-underline">
+                                                    <HiOutlinePlay className="w-3.5 h-3.5" />
+                                                  </a>
+                                                ) : isPdf && item.is_downloadable ? (
+                                                  <a href={item.file_url} target="_blank" rel="noopener noreferrer" className="p-1.5 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-500 transition-colors no-underline">
+                                                    <HiOutlineDownload className="w-3.5 h-3.5" />
+                                                  </a>
+                                                ) : (
+                                                  <a href={item.file_url} target="_blank" rel="noopener noreferrer" className="p-1.5 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-500 transition-colors no-underline">
+                                                    <HiOutlineEye className="w-3.5 h-3.5" />
+                                                  </a>
+                                                )
+                                              )}
+                                            </div>
+                                          ) : (
+                                            <span className="font-heading text-[10px] font-bold text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full flex-shrink-0">
+                                              PREMIUM
+                                            </span>
+                                          )}
+
+                                          {/* Lock overlay gradient for paid */}
+                                          {isLocked && (
+                                            <div className="absolute inset-y-0 right-0 w-20 bg-gradient-to-l from-gray-50 to-transparent pointer-events-none"></div>
+                                          )}
+                                        </div>
+                                      );
+                                    })}
+                                  </div>
+                                ))}
+                              </div>
+
+                              {/* Enroll prompt for locked content */}
+                              {paidCount > 0 && !isEnrolled && (
+                                <div className="px-4 py-3 bg-gradient-to-r from-amber-50 to-orange-50 border-t border-amber-100 flex items-center justify-between">
+                                  <p className="font-body text-xs text-amber-800">
+                                    <span className="font-semibold">Enroll now</span> to unlock all {paidCount} premium materials
+                                  </p>
+                                  <HiOutlineLockOpen className="w-4 h-4 text-amber-500" />
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })()}
                       </div>
                     )}
 

@@ -1,10 +1,14 @@
 // Protected Route using Clerk authentication
-import { useAuth, useUser, SignedIn, SignedOut, RedirectToSignIn } from "@clerk/clerk-react";
+import { useAuth, useUser, RedirectToSignIn } from "@clerk/clerk-react";
 import { Navigate, useLocation } from "react-router-dom";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 
 // Use relative URL to go through Vite's proxy in development
 const API_URL = import.meta.env.VITE_API_URL || "/api";
+
+// Simple in-memory cache for user role (persists across route navigations)
+let cachedRole = null;
+let cacheUserId = null;
 
 /**
  * ClerkProtectedRoute - Protects routes using Clerk authentication
@@ -26,11 +30,19 @@ const ClerkProtectedRoute = ({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const location = useLocation();
+  const retryCount = useRef(0);
 
   // Fetch user role from backend
   useEffect(() => {
     const fetchUserRole = async () => {
       if (!isSignedIn || !clerkUser) {
+        setLoading(false);
+        return;
+      }
+
+      // Use cached role if same user
+      if (cachedRole && cacheUserId === clerkUser.id) {
+        setUserRole(cachedRole);
         setLoading(false);
         return;
       }
@@ -45,12 +57,29 @@ const ClerkProtectedRoute = ({
 
         if (response.ok) {
           const data = await response.json();
-          setUserRole(data.data?.user?.role || null);
-        } else if (response.status === 404) {
+          const role = data.data?.user?.role || null;
+          setUserRole(role);
+          // Cache the role
+          cachedRole = role;
+          cacheUserId = clerkUser.id;
+          retryCount.current = 0;
+        } else if (response.status === 404 && retryCount.current < 3) {
           // User not yet in database (webhook might be processing)
-          // Retry after a short delay
+          // Retry up to 3 times with delay
+          retryCount.current += 1;
           setTimeout(() => fetchUserRole(), 2000);
           return;
+        } else if (response.status === 429) {
+          // Rate limited - use cached role if available, otherwise wait and retry once
+          if (cachedRole && cacheUserId === clerkUser.id) {
+            setUserRole(cachedRole);
+          } else if (retryCount.current < 2) {
+            retryCount.current += 1;
+            setTimeout(() => fetchUserRole(), 5000);
+            return;
+          } else {
+            setError("Too many requests. Please wait a moment and try again.");
+          }
         } else {
           setError("Failed to fetch user info");
         }
@@ -65,7 +94,7 @@ const ClerkProtectedRoute = ({
     if (isLoaded) {
       fetchUserRole();
     }
-  }, [isLoaded, isSignedIn, clerkUser, getToken]);
+  }, [isLoaded, isSignedIn, clerkUser?.id, getToken]);
 
   // Show loading state
   if (!isLoaded || loading) {
@@ -95,7 +124,12 @@ const ClerkProtectedRoute = ({
           </h2>
           <p className="text-gray-600 mb-4">{error}</p>
           <button
-            onClick={() => window.location.reload()}
+            onClick={() => {
+              cachedRole = null;
+              cacheUserId = null;
+              retryCount.current = 0;
+              window.location.reload();
+            }}
             className="px-4 py-2 bg-amber-500 text-white rounded-lg hover:bg-amber-600"
           >
             Try Again

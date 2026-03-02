@@ -4,7 +4,6 @@ import { motion } from 'framer-motion';
 import {
   GraduationCap,
   Calendar,
-  CreditCard,
   Clock,
   CheckCircle,
   AlertCircle,
@@ -108,7 +107,7 @@ export function MyEnrollmentsPage() {
 
       {/* Stats Summary */}
       {enrollments.length > 0 && (
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
           <div className="bg-green-50 rounded-xl p-4 border border-green-100">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
@@ -132,24 +131,7 @@ export function MyEnrollmentsPage() {
                 <p className="text-2xl font-bold text-amber-700">
                   {enrollments.filter((e) => e.status === 'pending').length}
                 </p>
-                <p className="text-sm text-amber-600">Pending Payment</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-blue-50 rounded-xl p-4 border border-blue-100">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                <CreditCard className="w-5 h-5 text-blue-600" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold text-blue-700">
-                  ₹{enrollments
-                    .filter((e) => e.status === 'active')
-                    .reduce((sum, e) => sum + (e.amountPaid || 0), 0)
-                    .toLocaleString()}
-                </p>
-                <p className="text-sm text-blue-600">Total Paid</p>
+                <p className="text-sm text-amber-600">Pending</p>
               </div>
             </div>
           </div>
@@ -201,16 +183,8 @@ export function MyEnrollmentsPage() {
                       </div>
                     </div>
 
-                    {/* Right side - Status and amount */}
-                    <div className="flex items-center gap-6">
-                      {/* Amount */}
-                      <div className="text-right">
-                        <p className="text-sm text-slate-500">Amount Paid</p>
-                        <p className="text-xl font-bold text-slate-900">
-                          ₹{(enrollment.amountPaid || 0).toLocaleString()}
-                        </p>
-                      </div>
-
+                    {/* Right side - Status */}
+                    <div className="flex items-center">
                       {/* Status Badge */}
                       <div
                         className={`
@@ -226,35 +200,6 @@ export function MyEnrollmentsPage() {
                       </div>
                     </div>
                   </div>
-
-                  {/* Payment Details */}
-                  {enrollment.payment && enrollment.payment.status === 'paid' && (
-                    <div className="mt-4 pt-4 border-t border-slate-100">
-                      <div className="flex flex-wrap items-center gap-4 text-sm text-slate-600">
-                        <span className="flex items-center gap-1">
-                          <CreditCard className="w-4 h-4" />
-                          {enrollment.payment.paymentType === 'cash' ? 'Cash Payment' :
-                           enrollment.payment.paymentType === 'bank_transfer' ? 'Bank Transfer' :
-                           enrollment.payment.paymentType === 'cheque' ? 'Cheque' :
-                           enrollment.payment.paymentType === 'upi_direct' ? 'UPI' :
-                           enrollment.payment.paymentMethod || 'Online Payment'}
-                        </span>
-                        {enrollment.payment.receiptNumber && (
-                          <span className="font-mono bg-slate-100 px-2 py-0.5 rounded">
-                            Receipt: {enrollment.payment.receiptNumber}
-                          </span>
-                        )}
-                        {enrollment.payment.razorpayPaymentId && !enrollment.payment.receiptNumber && (
-                          <span>
-                            Payment ID: {enrollment.payment.razorpayPaymentId}
-                          </span>
-                        )}
-                        <span>
-                          Paid on: {formatDate(enrollment.payment.paidAt)}
-                        </span>
-                      </div>
-                    </div>
-                  )}
                 </div>
               </motion.div>
             );

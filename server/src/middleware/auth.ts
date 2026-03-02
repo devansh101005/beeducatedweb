@@ -202,6 +202,42 @@ export const requireOwnerOrAdmin = (
 };
 
 /**
+ * Optional authentication middleware
+ * Tries to authenticate but does not fail if no token is present.
+ * If token exists and is valid, req.auth and req.user will be set.
+ * If no token or invalid token, continues without user context.
+ */
+export const optionalAuth: RequestHandler = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return next();
+  }
+
+  try {
+    await new Promise<void>((resolve, reject) => {
+      const clerkMiddleware = ClerkExpressRequireAuth() as any;
+      clerkMiddleware(req, res, (err?: any) => {
+        if (err) reject(err);
+        else resolve();
+      });
+    });
+    await new Promise<void>((resolve, reject) => {
+      attachUser(req, res, (err?: any) => {
+        if (err) reject(err);
+        else resolve();
+      });
+    });
+  } catch {
+    // Token invalid or user not found — continue without user
+  }
+  next();
+};
+
+/**
  * Combined middleware: requireAuth + attachUser
  * Use this for most protected routes
  */
