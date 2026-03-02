@@ -87,6 +87,9 @@ interface CourseType {
   isActive: boolean;
 }
 
+// Display-friendly course type names (replace "Coaching" with "Batch")
+const formatCourseTypeName = (name: string) => name.replace(/Coaching/gi, 'Batch');
+
 interface AcademicClass {
   id: string;
   name: string;
@@ -548,7 +551,7 @@ function UploadContentModal({ courses, onClose, onSuccess }: UploadModalProps) {
                   onChange={(e) => setSelectedCourseType(e.target.value)}
                   options={[
                     { value: '', label: 'Select Course Type' },
-                    ...courseTypes.map(ct => ({ value: ct.id, label: ct.name })),
+                    ...courseTypes.map(ct => ({ value: ct.id, label: formatCourseTypeName(ct.name) })),
                   ]}
                 />
               </div>
@@ -1055,7 +1058,7 @@ export function ContentManagementPage() {
                 onChange={(e) => setCourseTypeFilter(e.target.value)}
                 options={[
                   { value: '', label: 'All Course Types' },
-                  ...courseTypes.map(ct => ({ value: ct.id, label: ct.name })),
+                  ...courseTypes.map(ct => ({ value: ct.id, label: formatCourseTypeName(ct.name) })),
                 ]}
               />
             </div>
