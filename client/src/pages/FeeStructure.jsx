@@ -25,13 +25,13 @@ import Footer from '../components/Footer';
    OFFLINE BATCH — FEE DATA
    ────────────────────────────────────────────── */
 const classFees = [
-  { class: '6',  originalFee: '9,599',  discountedFee: '8,639',  originalRaw: 9599,  discountedRaw: 8639  },
-  { class: '7',  originalFee: '10,799', discountedFee: '9,719',  originalRaw: 10799, discountedRaw: 9719  },
-  { class: '8',  originalFee: '11,999', discountedFee: '10,799', originalRaw: 11999, discountedRaw: 10799 },
-  { class: '9',  originalFee: '17,000', discountedFee: '15,300', originalRaw: 17000, discountedRaw: 15300 },
-  { class: '10', originalFee: '21,000', discountedFee: '18,900', originalRaw: 21000, discountedRaw: 18900 },
-  { class: '11', originalFee: '26,000', discountedFee: '23,400', originalRaw: 26000, discountedRaw: 23400 },
-  { class: '12', originalFee: '33,000', discountedFee: '29,700', originalRaw: 33000, discountedRaw: 29700 },
+  { class: '6',  annual: 9799  },
+  { class: '7',  annual: 10799 },
+  { class: '8',  annual: 11999 },
+  { class: '9',  annual: 17000 },
+  { class: '10', annual: 21000 },
+  { class: '11', annual: 26000 },
+  { class: '12', annual: 33000 },
 ];
 
 const batchIncludes = [
@@ -44,11 +44,11 @@ const batchIncludes = [
 ];
 
 const offlineTerms = [
-  'Flat 10% OFF is applicable for a limited period only.',
-  'Admission is confirmed only after payment of 70% course fee at the time of admission.',
-  'The remaining 30% course fee must be paid within 60–75 days from the admission date.',
-  'Instalment option is not eligible for any additional discount.',
-  'Delay beyond 75 days will attract a late fine of ₹50 per day.',
+  'Only one payment option can be selected at the time of enrollment.',
+  '10% OFF is available on 2-installment plan; 15% OFF is available on one-time payment.',
+  'Discounts apply on course fee only — registration fee and GST are excluded.',
+  'Discounts cannot be combined.',
+  'Delay beyond the due date will attract a late fine of ₹50 per day.',
   'Fees once paid are non-refundable.',
   'Registration fee is strictly non-refundable.',
   'Course fee once paid is non-transferable and non-adjustable.',
@@ -56,6 +56,7 @@ const offlineTerms = [
   'Admission may be terminated due to misconduct or irregular attendance without any refund.',
   'If a class is cancelled by the institute or faculty, a replacement or extra class will be arranged.',
   'Batch timings or faculty may be changed at the discretion of the institute.',
+  'Fee structure is valid for the current session; may be revised for new admissions.',
   "The management's decision shall be final and binding.",
 ];
 
@@ -133,15 +134,15 @@ function OptionCard({ letter, label, badge, accentColor, children }) {
   return (
     <div className={`relative rounded-2xl border overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-1 ${s.border} ${s.bg}`}>
       <div className={`h-1.5 ${s.bar}`}></div>
-      {accentColor === 'gold' && (
-        <div className="absolute top-4 right-4">
-          <span className="bg-[#fbbf24] text-[#0a1e3d] text-[10px] font-heading font-bold uppercase tracking-wider px-2.5 py-1 rounded-full">Best Value</span>
-        </div>
-      )}
       <div className="p-5 sm:p-6">
         <div className="flex items-center justify-between mb-3">
           <span className="font-heading text-[10px] font-bold text-gray-400 uppercase tracking-widest">Option {letter}</span>
-          <span className={`text-[10px] px-2 py-0.5 rounded-md font-bold ${s.badge}`}>{badge}</span>
+          <div className="flex items-center gap-1.5">
+            <span className={`text-[10px] px-2 py-0.5 rounded-md font-bold ${s.badge}`}>{badge}</span>
+            {accentColor === 'gold' && (
+              <span className="bg-[#fbbf24] text-[#0a1e3d] text-[10px] font-heading font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-md">Best Value</span>
+            )}
+          </div>
         </div>
         <h3 className="font-heading text-base sm:text-lg font-bold text-[#0a1e3d] mb-4">{label}</h3>
         {children}
@@ -167,8 +168,8 @@ function CalcRow({ label, sub, value, highlight }) {
    ────────────────────────────────────────────── */
 const FeeStructure = () => {
   const [searchParams, setSearchParams] = useSearchParams();
-  const [hoveredCard, setHoveredCard] = useState(null);
   const [selectedClass, setSelectedClass] = useState(null);
+  const [selectedOfflineClass, setSelectedOfflineClass] = useState(null);
 
   const activeTab = searchParams.get('tab') === 'home-tuition' ? 'home-tuition' : 'offline';
 
@@ -191,6 +192,24 @@ const FeeStructure = () => {
         const c2 = annualC - c1;
         const annualD = Math.round(annual * 0.85);
         return { monthly, annual, atAdmissionA: 499 + monthly * 2, b1, b2, b3, b4, annualC, c1, c2, annualD };
+      })()
+    : null;
+
+  /* Offline Batch calculator */
+  const selectedOffline = classFees.find((f) => f.class === selectedOfflineClass);
+  const offlineCalc = selectedOffline
+    ? (() => {
+        const { annual } = selectedOffline;
+        // Option A: Full fee, 2 installments (70/30)
+        const a1 = Math.round(annual * 0.7);
+        const a2 = annual - a1;
+        // Option B: 10% OFF, 2 installments (50/50)
+        const annualB = Math.round(annual * 0.9);
+        const b1 = Math.round(annualB / 2);
+        const b2 = annualB - b1;
+        // Option C: 15% OFF, one-time
+        const annualC = Math.round(annual * 0.85);
+        return { annual, a1, a2, annualB, b1, b2, annualC };
       })()
     : null;
 
@@ -282,78 +301,143 @@ const FeeStructure = () => {
             </div>
           </section>
 
-          {/* Class-wise Fee Cards */}
+          {/* Fee Calculator */}
           <section className="py-16 sm:py-20 bg-white">
             <div className="max-w-6xl mx-auto px-5">
-              <div className="text-center mb-14">
-                <span className="inline-block font-heading text-sm font-semibold text-[#05308d] uppercase tracking-[0.15em] mb-3">Course Fee</span>
-                <h2 className="font-heading text-2xl sm:text-3xl md:text-4xl font-bold text-[#0a1e3d] mb-3">Class-Wise Fee Structure</h2>
-                <p className="font-body text-gray-500 max-w-xl mx-auto">Course fee does not include ₹499 registration fee</p>
+              <div className="text-center mb-10">
+                <span className="inline-block font-heading text-sm font-semibold text-[#05308d] uppercase tracking-[0.15em] mb-3">Fee Calculator</span>
+                <h2 className="font-heading text-2xl sm:text-3xl md:text-4xl font-bold text-[#0a1e3d] mb-3">Select Class & See All Options</h2>
+                <p className="font-body text-gray-500 max-w-lg mx-auto">Click your class below — all 3 payment plans update instantly</p>
               </div>
 
-              <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5 justify-items-center [&>*]:w-full">
-                {classFees.map((item, index) => {
-                  const isPopular = item.class === '11' || item.class === '12';
-                  const isHovered = hoveredCard === index;
-                  return (
-                    <div
-                      key={item.class}
-                      onMouseEnter={() => setHoveredCard(index)}
-                      onMouseLeave={() => setHoveredCard(null)}
-                      className={`group/card relative rounded-2xl border overflow-hidden transition-all duration-300 cursor-default ${
-                        isPopular ? 'border-[#05308d]/20 bg-white' : 'border-gray-200 bg-white'
-                      } hover:shadow-xl hover:-translate-y-1.5 hover:border-[#05308d]/30`}
-                    >
-                      <div className={`h-1.5 transition-all duration-500 ${isHovered ? 'bg-gradient-to-r from-[#05308d] to-[#fbbf24]' : isPopular ? 'bg-[#05308d]' : 'bg-gray-200'}`}></div>
-                      {isPopular && (
-                        <div className="absolute top-4 right-4">
-                          <span className="bg-[#fbbf24] text-[#0a1e3d] text-[10px] font-heading font-bold uppercase tracking-wider px-2.5 py-1 rounded-full">Popular</span>
-                        </div>
-                      )}
-                      <div className="absolute -top-10 -right-10 w-24 h-24 bg-[#05308d]/5 rounded-full blur-2xl opacity-0 group-hover/card:opacity-100 transition-opacity duration-500"></div>
+              {/* Class Selector */}
+              <div className="flex flex-wrap gap-2 justify-center mb-12">
+                {classFees.map((f) => (
+                  <button
+                    key={f.class}
+                    onClick={() => setSelectedOfflineClass(f.class)}
+                    className={`px-4 py-2 rounded-xl font-heading font-bold text-sm transition-all duration-200 cursor-pointer border ${
+                      selectedOfflineClass === f.class
+                        ? 'bg-[#05308d] text-white border-[#05308d] shadow-md shadow-[#05308d]/25 scale-105'
+                        : 'bg-white text-[#0a1e3d] border-gray-200 hover:border-[#05308d]/30 hover:text-[#05308d] hover:bg-[#05308d]/5'
+                    }`}
+                  >Class {f.class}</button>
+                ))}
+              </div>
 
-                      <div className="p-6 sm:p-7">
-                        <div className="flex items-center gap-3 mb-5">
-                          <div className={`w-12 h-12 rounded-xl flex items-center justify-center transition-all duration-300 ${isHovered ? 'bg-[#05308d] text-white scale-110' : 'bg-[#05308d]/5 text-[#05308d]'}`}>
-                            <HiOutlineAcademicCap className="w-6 h-6" />
-                          </div>
-                          <div>
-                            <h3 className="font-heading text-lg font-bold text-[#0a1e3d] group-hover/card:text-[#05308d] transition-colors duration-300">Class {item.class}</h3>
-                            <p className="font-body text-xs text-gray-400">Offline Batch</p>
-                          </div>
-                        </div>
+              {/* Empty state */}
+              {!offlineCalc && (
+                <div className="text-center py-16 border-2 border-dashed border-gray-200 rounded-2xl">
+                  <HiOutlineAcademicCap className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+                  <p className="font-body text-gray-400">Select a class above to see all payment options</p>
+                </div>
+              )}
 
-                        <div className="mb-5">
-                          <div className="flex items-center gap-2 mb-1.5">
-                            <span className="font-body text-sm text-gray-400 line-through">₹{item.originalFee}</span>
-                            <span className="inline-block px-2 py-0.5 bg-green-100 text-green-700 text-[10px] font-bold rounded-md tracking-wide">10% OFF</span>
-                          </div>
-                          <p className="font-heading text-3xl font-extrabold text-[#05308d] group-hover/card:text-[#fbbf24] transition-colors duration-300 mb-1">₹{item.discountedFee}</p>
-                          <p className="font-body text-xs text-gray-400">per year / full course</p>
-                        </div>
+              {/* Option Cards */}
+              {offlineCalc && (
+                <>
+                  <div className="text-center mb-6">
+                    <span className="inline-flex items-center gap-2 bg-[#05308d]/5 text-[#05308d] px-4 py-2 rounded-xl font-heading text-sm font-bold">
+                      <HiOutlineAcademicCap className="w-4 h-4" />
+                      Class {selectedOfflineClass} — Annual Fee ₹{fmt(offlineCalc.annual)}
+                    </span>
+                  </div>
+                  <div className="grid sm:grid-cols-2 xl:grid-cols-3 gap-5">
 
-                        <div className="space-y-2 mb-6 p-3 bg-[#05308d]/5 rounded-xl">
-                          <p className="font-body text-xs font-semibold text-[#05308d] mb-2">Installment Breakdown:</p>
-                          <div className="flex justify-between items-center py-2 px-2 rounded-lg bg-white">
-                            <span className="font-body text-xs text-gray-500">1st Installment (70%)</span>
-                            <span className="font-heading text-sm font-bold text-[#0a1e3d]">₹{Math.round(item.discountedRaw * 0.7).toLocaleString('en-IN')}</span>
-                          </div>
-                          <div className="flex justify-between items-center py-2 px-2 rounded-lg bg-white">
-                            <span className="font-body text-xs text-gray-500">2nd Installment (30%)</span>
-                            <span className="font-heading text-sm font-bold text-[#0a1e3d]">₹{Math.round(item.discountedRaw * 0.3).toLocaleString('en-IN')}</span>
-                          </div>
-                        </div>
-
-                        <Link
-                          to="/contact"
-                          className="block w-full py-3 text-center rounded-xl font-heading font-bold text-sm no-underline transition-all duration-300 bg-[#05308d] text-white hover:bg-[#1a56db] hover:shadow-lg hover:shadow-[#05308d]/25"
-                        >
-                          Enroll Now
-                        </Link>
+                    {/* OPTION A: Annual Fee, 2 installments (70/30), No Discount */}
+                    <OptionCard letter="A" label="2-Installment Plan (70/30)" badge="No Discount" accentColor="blue">
+                      <div className="space-y-2 mb-4">
+                        <CalcRow label="1st — At Admission" sub="70% of course fee" value={`₹${fmt(offlineCalc.a1)}`} highlight />
+                        <CalcRow label="2nd — Within 75 days" sub="30% of course fee" value={`₹${fmt(offlineCalc.a2)}`} />
                       </div>
-                    </div>
-                  );
-                })}
+                      <p className="font-body text-[10px] text-gray-400 bg-gray-50 rounded-lg p-2.5">
+                        Total: ₹{fmt(offlineCalc.annual)} (full course fee, no discount). ₹499 registration fee additional.
+                      </p>
+                    </OptionCard>
+
+                    {/* OPTION B: 10% OFF, 2 installments (50/50) */}
+                    <OptionCard letter="B" label="2-Installment Plan" badge="10% OFF" accentColor="green">
+                      <div className="mb-3">
+                        <span className="font-body text-xs text-gray-400 line-through">₹{fmt(offlineCalc.annual)}</span>
+                        <span className="font-heading text-2xl font-extrabold text-[#05308d] ml-2">₹{fmt(offlineCalc.annualB)}</span>
+                        <p className="font-body text-[10px] text-green-600 mt-0.5">Save ₹{fmt(offlineCalc.annual - offlineCalc.annualB)} on course fee</p>
+                      </div>
+                      <div className="space-y-2 mb-4">
+                        <CalcRow label="1st — At Admission" sub="First half" value={`₹${fmt(offlineCalc.b1)}`} highlight />
+                        <CalcRow label="2nd — Within 75 days" sub="Second half" value={`₹${fmt(offlineCalc.b2)}`} />
+                      </div>
+                      <p className="font-body text-[10px] text-gray-400 bg-green-50 rounded-lg p-2.5">
+                        Discount on course fee only. Reg fee & GST excluded.
+                      </p>
+                    </OptionCard>
+
+                    {/* OPTION C: 15% OFF, One-Time */}
+                    <OptionCard letter="C" label="One-Time Full Payment" badge="15% OFF" accentColor="gold">
+                      <p className="font-body text-xs text-gray-400 line-through mb-0.5">₹{fmt(offlineCalc.annual)}</p>
+                      <p className="font-heading text-3xl font-extrabold text-[#05308d] mb-0.5">₹{fmt(offlineCalc.annualC)}</p>
+                      <p className="font-body text-[10px] text-yellow-700 mb-4">Save ₹{fmt(offlineCalc.annual - offlineCalc.annualC)} — maximum savings</p>
+                      <div className="py-3 px-3 rounded-lg bg-[#fbbf24]/10 border border-[#fbbf24]/20 text-center mb-3">
+                        <span className="font-body text-xs text-gray-600 font-semibold">Full payment at admission</span>
+                        <p className="font-body text-[10px] text-gray-400 mt-0.5">No further installments</p>
+                      </div>
+                      <p className="font-body text-[10px] text-gray-400 bg-gray-50 rounded-lg p-2.5">
+                        Discount on course fee only. Reg fee & GST excluded.
+                      </p>
+                    </OptionCard>
+
+                  </div>
+                </>
+              )}
+            </div>
+          </section>
+
+          {/* Full Fee Reference Table */}
+          <section className="py-16 sm:py-20 bg-gray-50">
+            <div className="max-w-5xl mx-auto px-5">
+              <div className="text-center mb-10">
+                <span className="inline-block font-heading text-sm font-semibold text-[#05308d] uppercase tracking-[0.15em] mb-3">Reference Table</span>
+                <h2 className="font-heading text-2xl sm:text-3xl font-bold text-[#0a1e3d] mb-2">All Classes Fee Overview</h2>
+                <p className="font-body text-gray-500 text-sm">Click any row to load it into the calculator above</p>
+              </div>
+              <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+                <div className="overflow-x-auto">
+                  <table className="w-full min-w-[500px]">
+                    <thead>
+                      <tr className="bg-[#0a1e3d]">
+                        <th className="px-5 py-4 text-left font-heading text-xs font-bold text-white uppercase tracking-wider">Class</th>
+                        <th className="px-5 py-4 text-right font-heading text-xs font-bold text-white uppercase tracking-wider">Annual Fee</th>
+                        <th className="px-5 py-4 text-right font-heading text-xs font-bold text-[#fbbf24] uppercase tracking-wider">10% OFF<br/><span className="font-normal normal-case">(2 Inst.)</span></th>
+                        <th className="px-5 py-4 text-right font-heading text-xs font-bold text-[#fbbf24] uppercase tracking-wider">15% OFF<br/><span className="font-normal normal-case">(One-time)</span></th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {classFees.map((f, i) => {
+                        const isSel = selectedOfflineClass === f.class;
+                        return (
+                          <tr
+                            key={f.class}
+                            onClick={() => {
+                              setSelectedOfflineClass(f.class);
+                              window.scrollTo({ top: 0, behavior: 'smooth' });
+                            }}
+                            className={`border-b border-gray-100 cursor-pointer transition-colors duration-150 ${isSel ? 'bg-[#05308d]/5' : i % 2 === 0 ? 'bg-white hover:bg-gray-50' : 'bg-gray-50/50 hover:bg-gray-100/50'}`}
+                          >
+                            <td className="px-5 py-3.5">
+                              <span className={`font-heading font-bold text-sm ${isSel ? 'text-[#05308d]' : 'text-[#0a1e3d]'}`}>Class {f.class}</span>
+                              {isSel && <span className="ml-2 text-[10px] bg-[#05308d] text-white px-1.5 py-0.5 rounded font-bold">↑ Selected</span>}
+                            </td>
+                            <td className="px-5 py-3.5 text-right font-body text-sm text-gray-600">₹{fmt(f.annual)}</td>
+                            <td className="px-5 py-3.5 text-right font-heading text-sm font-semibold text-green-700">₹{fmt(f.annual * 0.9)}</td>
+                            <td className="px-5 py-3.5 text-right font-heading text-sm font-semibold text-[#05308d]">₹{fmt(f.annual * 0.85)}</td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+                <div className="px-5 py-3 bg-gray-50 border-t border-gray-100">
+                  <p className="font-body text-xs text-gray-400">₹499 registration fee is additional · Discounts apply on course fee only</p>
+                </div>
               </div>
             </div>
           </section>
@@ -388,6 +472,46 @@ const FeeStructure = () => {
             </div>
           </section>
 
+          {/* Plan Summary — dark section */}
+          <section className="py-16 sm:py-20 bg-[#0a1e3d] relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-72 h-72 bg-[#05308d]/20 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
+            <div className="absolute bottom-0 left-0 w-56 h-56 bg-[#fbbf24]/10 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2"></div>
+            <div className="relative z-10 max-w-6xl mx-auto px-5">
+              <div className="text-center mb-12">
+                <span className="inline-block font-heading text-sm font-semibold text-[#fbbf24] uppercase tracking-[0.15em] mb-3">Payment Plans</span>
+                <h2 className="font-heading text-2xl sm:text-3xl font-bold text-white">Which Plan Is Right For You?</h2>
+              </div>
+              <div className="grid sm:grid-cols-3 gap-5">
+                {[
+                  { letter: 'A', title: '2 Installments (70/30)', sub: 'No Discount', tag: 'Default', tagColor: 'bg-white/10 text-white/70', points: ['70% at admission', '30% within 75 days', 'Full course fee', 'No discount applied'], icon: HiOutlineClipboardCheck },
+                  { letter: 'B', title: '2 Installments (50/50)', sub: '10% OFF', tag: 'Save 10%', tagColor: 'bg-green-500/20 text-green-300', points: ['50% at admission', '50% within 75 days', '10% off on course fee', 'Reg & GST excluded'], icon: HiOutlineBadgeCheck },
+                  { letter: 'C', title: 'One-Time Payment', sub: '15% OFF', tag: 'Best Value', tagColor: 'bg-[#fbbf24]/20 text-[#fbbf24]', points: ['Full payment at admission', '15% off on course fee', 'Maximum savings', 'No further dues'], icon: HiOutlineCash },
+                ].map((plan) => {
+                  const Icon = plan.icon;
+                  return (
+                    <div key={plan.letter} className="group/plan bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-6 transition-all duration-300 hover:bg-white/10 hover:-translate-y-1 hover:border-white/20">
+                      <div className="flex items-start justify-between mb-4">
+                        <div className="w-12 h-12 rounded-xl bg-[#fbbf24]/10 flex items-center justify-center transition-all duration-300 group-hover/plan:scale-110">
+                          <Icon className="w-6 h-6 text-[#fbbf24]" />
+                        </div>
+                        <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full ${plan.tagColor}`}>{plan.tag}</span>
+                      </div>
+                      <h3 className="font-heading text-base font-bold text-white mb-0.5">Option {plan.letter} — {plan.title}</h3>
+                      <p className="font-body text-xs text-white/50 mb-4">{plan.sub}</p>
+                      <ul className="space-y-1.5">
+                        {plan.points.map((pt, i) => (
+                          <li key={i} className="font-body text-xs text-white/60 flex items-start gap-2">
+                            <span className="w-1.5 h-1.5 rounded-full bg-[#fbbf24]/60 mt-1 flex-shrink-0"></span>{pt}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </section>
+
           {/* Policies */}
           <section className="py-16 sm:py-20 bg-gradient-to-b from-gray-50 to-white">
             <div className="max-w-4xl mx-auto px-5">
@@ -397,26 +521,27 @@ const FeeStructure = () => {
                 <p className="font-body text-gray-500 max-w-xl mx-auto">Please read our payment, refund, and admission policies carefully</p>
               </div>
               <div className="space-y-4">
-                <PolicyAccordion title="Fee Payment Policy (Installment System)" icon={HiOutlineCash} defaultOpen={true}>
+                <PolicyAccordion title="Payment Options" icon={HiOutlineCash} defaultOpen={true}>
                   <div className="space-y-4">
-                    <p className="font-body text-sm text-gray-600 leading-relaxed">Course fee can be paid in <span className="font-semibold text-[#0a1e3d]">two installments</span>:</p>
-                    <div className="grid sm:grid-cols-2 gap-4">
+                    <p className="font-body text-sm text-gray-600 leading-relaxed">Choose from <span className="font-semibold text-[#0a1e3d]">3 payment options</span>:</p>
+                    <div className="grid sm:grid-cols-3 gap-4">
                       {[
-                        { n: '1st', pct: '70% of Course Fee', sub: 'At the time of admission' },
-                        { n: '2nd', pct: '30% of Course Fee', sub: 'Within 75 days from admission' },
-                      ].map((inst) => (
-                        <div key={inst.n} className="group/inst bg-[#05308d]/[0.03] border border-[#05308d]/10 rounded-xl p-5 transition-all duration-300 hover:border-[#05308d]/20 hover:shadow-md">
-                          <div className="w-10 h-10 rounded-lg bg-[#05308d]/10 flex items-center justify-center mb-3 transition-all duration-300 group-hover/inst:bg-[#05308d] group-hover/inst:text-white">
-                            <span className="font-heading font-bold text-sm text-[#05308d] group-hover/inst:text-white">{inst.n}</span>
-                          </div>
-                          <p className="font-heading font-bold text-[#0a1e3d] text-lg mb-1">{inst.pct}</p>
-                          <p className="font-body text-xs text-gray-500">{inst.sub}</p>
+                        { label: 'Option A', title: '2 Installments (70/30)', sub: 'No discount · 70% at admission, 30% within 75 days', color: 'gray' },
+                        { label: 'Option B', title: '2 Installments (50/50)', sub: '10% OFF · Equal halves, 2nd within 75 days', color: 'green' },
+                        { label: 'Option C', title: 'One-Time Payment', sub: '15% OFF · Full payment at admission', color: 'gold' },
+                      ].map((opt) => (
+                        <div key={opt.label} className={`bg-[#05308d]/[0.03] border rounded-xl p-5 transition-all duration-300 hover:shadow-md ${
+                          opt.color === 'green' ? 'border-green-200' : opt.color === 'gold' ? 'border-[#fbbf24]/30' : 'border-[#05308d]/10'
+                        }`}>
+                          <span className="font-heading text-[10px] font-bold text-gray-400 uppercase tracking-widest">{opt.label}</span>
+                          <p className="font-heading font-bold text-[#0a1e3d] text-base mt-1 mb-1">{opt.title}</p>
+                          <p className="font-body text-xs text-gray-500">{opt.sub}</p>
                         </div>
                       ))}
                     </div>
                     <div className="flex items-start gap-3 bg-[#fbbf24]/5 border border-[#fbbf24]/20 rounded-xl p-4">
                       <HiOutlineExclamationCircle className="w-5 h-5 text-[#fbbf24] flex-shrink-0 mt-0.5" />
-                      <p className="font-body text-sm text-gray-700">Admission will be confirmed only after payment of <span className="font-semibold">₹499 registration fee + 70% course fee</span>.</p>
+                      <p className="font-body text-sm text-gray-700">₹499 registration fee is mandatory, non-refundable, and separate from course fee. Only one payment option can be selected.</p>
                     </div>
                   </div>
                 </PolicyAccordion>
