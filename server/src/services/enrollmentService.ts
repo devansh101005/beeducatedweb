@@ -259,10 +259,21 @@ class EnrollmentService {
         .single();
 
       if (error) {
-        console.error('Error creating enrollment:', error);
-        throw new Error('Failed to create enrollment');
+        // Handle unique constraint violation (race condition: duplicate pending/active enrollment)
+        if (error.code === '23505') {
+          const existing = await this.getEnrollmentByStudentAndClass(studentId, classId);
+          if (existing) {
+            enrollment = existing;
+          } else {
+            throw new Error('Failed to create enrollment');
+          }
+        } else {
+          console.error('Error creating enrollment:', error);
+          throw new Error('Failed to create enrollment');
+        }
+      } else {
+        enrollment = data;
       }
-      enrollment = data;
     }
 
     // 6. Create payment record
@@ -280,7 +291,12 @@ class EnrollmentService {
 
     if (paymentError) {
       console.error('Error creating payment record:', paymentError);
-      // Don't throw - enrollment is created, payment record failure shouldn't stop the flow
+      // Rollback enrollment to cancelled since payment record failed
+      await getSupabase()
+        .from('class_enrollments')
+        .update({ status: 'cancelled', cancelled_at: new Date().toISOString() })
+        .eq('id', enrollment.id);
+      throw new Error('Failed to create payment record');
     }
 
     // Store installment info in enrollment metadata
@@ -853,10 +869,24 @@ class EnrollmentService {
         .single();
 
       if (error) {
-        console.error('Error creating enrollment:', error);
-        throw new Error('Failed to create enrollment');
+        // Handle unique constraint violation (race condition: duplicate enrollment)
+        if (error.code === '23505') {
+          const existing = await this.getEnrollmentByStudentAndClass(studentId, classId);
+          if (existing && existing.status === 'active') {
+            throw new Error('Student is already enrolled in this class');
+          }
+          if (existing) {
+            enrollment = existing;
+          } else {
+            throw new Error('Failed to create enrollment');
+          }
+        } else {
+          console.error('Error creating enrollment:', error);
+          throw new Error('Failed to create enrollment');
+        }
+      } else {
+        enrollment = data;
       }
-      enrollment = data;
     }
 
     // 6. Generate receipt number if not provided

@@ -35,6 +35,36 @@ export interface SignedUrlOptions {
   fileName?: string;
 }
 
+// Allowed MIME types for uploads
+const ALLOWED_MIME_TYPES = new Set([
+  // Documents
+  'application/pdf',
+  'application/msword',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  'application/vnd.ms-excel',
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  'application/vnd.ms-powerpoint',
+  'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+  // Images
+  'image/jpeg',
+  'image/png',
+  'image/gif',
+  'image/webp',
+  'image/svg+xml',
+  // Video
+  'video/mp4',
+  'video/webm',
+  'video/quicktime',
+  'video/x-msvideo',
+  // Audio
+  'audio/mpeg',
+  'audio/wav',
+  'audio/ogg',
+  'audio/mp4',
+  // Archives
+  'application/zip',
+]);
+
 class StorageService {
   private supabase = getSupabase();
 
@@ -43,6 +73,11 @@ class StorageService {
    */
   async upload(options: UploadOptions): Promise<UploadResult> {
     const { bucket, path, file, contentType, upsert = false } = options;
+
+    // Validate MIME type
+    if (!ALLOWED_MIME_TYPES.has(contentType)) {
+      throw new Error(`File type not allowed: ${contentType}`);
+    }
 
     const { data, error } = await this.supabase.storage
       .from(bucket)

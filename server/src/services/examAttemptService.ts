@@ -67,6 +67,8 @@ export interface ExamResult {
   rank: number | null;
   percentile: number | null;
   is_passed: boolean | null;
+  batch_type: string | null;
+  class_grade: string | null;
   certificate_issued: boolean;
   certificate_url: string | null;
   created_at: string;
@@ -195,6 +197,11 @@ class ExamAttemptService {
       .single();
 
     if (existingAttempt) {
+      // If exam has ended, auto-submit this attempt instead of returning it
+      if (exam.end_time && new Date(exam.end_time) < now) {
+        await this.submitAttempt(existingAttempt.id, true);
+        throw new Error('Exam has ended');
+      }
       // Return existing attempt
       const questions = await this.getAttemptQuestions(existingAttempt.id, exam);
       return {
@@ -228,6 +235,20 @@ class ExamAttemptService {
       .single();
 
     if (error) {
+      // Handle unique constraint violation (race condition: two simultaneous attempts)
+      if (error.code === '23505') {
+        const { data: raceAttempt } = await this.supabase
+          .from('exam_attempts')
+          .select('*')
+          .eq('exam_id', exam_id)
+          .eq('student_id', student_id)
+          .eq('status', 'in_progress')
+          .single();
+        if (raceAttempt) {
+          const questions = await this.getAttemptQuestions(raceAttempt.id, exam);
+          return { ...raceAttempt, questions } as ExamAttempt & { questions: unknown[] };
+        }
+      }
       throw new Error(`Failed to start attempt: ${error.message}`);
     }
 
@@ -328,7 +349,10 @@ class ExamAttemptService {
 
     const { data, error } = await this.supabase
       .from('exam_responses')
-      .update({
+      .upsert({
+        attempt_id: attemptId,
+        question_id: input.question_id,
+        exam_question_id: input.exam_question_id || null,
         selected_option_ids: input.selected_option_ids,
         numerical_answer: input.numerical_answer,
         text_answer: input.text_answer,
@@ -337,9 +361,7 @@ class ExamAttemptService {
         time_spent_seconds: input.time_spent_seconds || 0,
         answered_at: isAttempted ? new Date().toISOString() : null,
         last_modified_at: new Date().toISOString(),
-      })
-      .eq('attempt_id', attemptId)
-      .eq('question_id', input.question_id)
+      }, { onConflict: 'attempt_id,question_id' })
       .select()
       .single();
 
@@ -595,7 +617,7 @@ class ExamAttemptService {
         })
         .eq('id', existingResult.id);
     } else {
-      // Create new
+      // Create new — include batch_type and class_grade from exam targeting
       await this.supabase
         .from('exam_results')
         .insert({
@@ -609,6 +631,8 @@ class ExamAttemptService {
           average_marks: attempt.marks_obtained,
           average_percentage: attempt.percentage,
           is_passed: isPassed,
+          batch_type: exam.target_batch_type || null,
+          class_grade: exam.target_class || null,
         });
     }
   }
@@ -642,6 +666,43 @@ class ExamAttemptService {
     }
 
     return { count: newCount, exceeded };
+  }
+
+  /**
+   * Auto-submit all expired in-progress attempts
+   * Called periodically by server interval
+   */
+  async autoSubmitExpiredAttempts(): Promise<number> {
+    // Find all in-progress attempts where the exam has ended
+    const { data: expiredAttempts, error } = await this.supabase
+      .from('exam_attempts')
+      .select('id, exam_id')
+      .eq('status', 'in_progress');
+
+    if (error || !expiredAttempts || expiredAttempts.length === 0) {
+      return 0;
+    }
+
+    let submitted = 0;
+    for (const attempt of expiredAttempts) {
+      try {
+        const exam = await examService.getById(attempt.exam_id);
+        if (!exam) continue;
+
+        // Check if exam end_time has passed
+        if (exam.end_time && new Date(exam.end_time) < new Date()) {
+          await this.submitAttempt(attempt.id, true);
+          submitted++;
+        }
+      } catch (err) {
+        console.error(`Failed to auto-submit attempt ${attempt.id}:`, err);
+      }
+    }
+
+    if (submitted > 0) {
+      console.log(`[AUTO_SUBMIT] Auto-submitted ${submitted} expired attempt(s)`);
+    }
+    return submitted;
   }
 
   // ============================================

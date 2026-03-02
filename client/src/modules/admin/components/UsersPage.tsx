@@ -3,7 +3,7 @@
 
 import { useState, useEffect } from 'react';
 import { useAuth } from '@clerk/clerk-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import {
   Users,
   Plus,
@@ -23,13 +23,12 @@ import {
   Badge,
   SearchInput,
   EmptyState,
-  Spinner,
   Skeleton,
   Pagination,
   Input,
   Select,
 } from '@shared/components/ui';
-import { Modal, ModalHeader, ModalBody, ModalFooter } from '@shared/components/ui/Modal';
+import { Modal, ModalHeader, ModalBody, ModalFooter, ConfirmModal } from '@shared/components/ui/Modal';
 import { fadeInUp } from '@shared/components/ui/motion';
 import clsx from 'clsx';
 
@@ -80,7 +79,6 @@ export function UsersPage() {
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [showAddModal, setShowAddModal] = useState(false);
   const [userToDelete, setUserToDelete] = useState<User | null>(null);
-  const [deleting, setDeleting] = useState(false);
   const [stats, setStats] = useState({
     total: 0,
     active: 0,
@@ -191,7 +189,6 @@ export function UsersPage() {
 
   const handleDelete = async () => {
     if (!userToDelete) return;
-    setDeleting(true);
 
     try {
       const token = await getToken();
@@ -209,8 +206,6 @@ export function UsersPage() {
       }
     } catch (error) {
       console.error('Failed to delete user:', error);
-    } finally {
-      setDeleting(false);
     }
   };
 
@@ -506,54 +501,15 @@ export function UsersPage() {
       )}
 
       {/* Delete Confirmation Modal */}
-      {userToDelete && (
-        <AnimatePresence>
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
-            onClick={() => setUserToDelete(null)}
-          >
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className="px-6 py-4 bg-rose-50 flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-rose-100 flex items-center justify-center">
-                  <Trash2 className="w-5 h-5 text-rose-600" />
-                </div>
-                <div>
-                  <h2 className="text-lg font-semibold text-slate-900">Delete User</h2>
-                  <p className="text-sm text-slate-500">This action cannot be undone</p>
-                </div>
-              </div>
-              <div className="p-6">
-                <p className="text-slate-600">
-                  Are you sure you want to delete <span className="font-semibold">{userToDelete.firstName} {userToDelete.lastName}</span>?
-                  This will deactivate their account.
-                </p>
-              </div>
-              <div className="px-6 py-4 border-t border-slate-100 flex justify-end gap-3">
-                <Button variant="ghost" onClick={() => setUserToDelete(null)} disabled={deleting}>
-                  Cancel
-                </Button>
-                <Button
-                  variant="danger"
-                  onClick={handleDelete}
-                  disabled={deleting}
-                  leftIcon={deleting ? <Spinner size="sm" /> : <Trash2 className="w-4 h-4" />}
-                >
-                  {deleting ? 'Deleting...' : 'Delete User'}
-                </Button>
-              </div>
-            </motion.div>
-          </motion.div>
-        </AnimatePresence>
-      )}
+      <ConfirmModal
+        isOpen={!!userToDelete}
+        onClose={() => setUserToDelete(null)}
+        onConfirm={handleDelete}
+        title="Delete User"
+        message={`Are you sure you want to delete ${userToDelete?.firstName} ${userToDelete?.lastName}? This will deactivate their account. This action cannot be undone.`}
+        confirmLabel="Delete User"
+        variant="danger"
+      />
     </div>
   );
 }

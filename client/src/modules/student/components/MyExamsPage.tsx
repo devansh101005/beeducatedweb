@@ -14,6 +14,7 @@ import {
   BarChart3,
   Lock,
   CheckCircle,
+  GraduationCap,
 } from 'lucide-react';
 import { format, formatDistanceToNow, isPast, differenceInMinutes } from 'date-fns';
 import {
@@ -42,6 +43,8 @@ interface Exam {
   scheduledAt?: string;
   endsAt?: string;
   status: 'upcoming' | 'live' | 'completed' | 'missed';
+  targetBatchType?: string | null;
+  targetClass?: string | null;
 }
 
 const typeColors: Record<string, string> = {
@@ -62,6 +65,13 @@ const typeLabels: Record<string, string> = {
   unit_test: 'Unit Test',
   mid_term: 'Mid Term',
   practice: 'Practice',
+};
+
+const batchTypeLabels: Record<string, string> = {
+  coaching_offline: 'Offline Coaching',
+  coaching_online: 'Online Coaching',
+  home_tuition: 'Home Tuition',
+  test_series: 'Test Series',
 };
 
 export function MyExamsPage() {
@@ -110,6 +120,8 @@ export function MyExamsPage() {
             if (e.status === 'live') return 'live' as const;
             return 'upcoming' as const;
           })(),
+          targetBatchType: e.target_batch_type,
+          targetClass: e.target_class,
         }));
         setExams(mapped);
       }
@@ -350,6 +362,23 @@ function ExamCard({ exam, now }: { exam: Exam; now: Date }) {
                 <p className="text-sm text-neutral-600 mt-2 line-clamp-1">
                   {exam.description}
                 </p>
+              )}
+
+              {/* Target Info */}
+              {(exam.targetBatchType || exam.targetClass) && (
+                <div className="flex flex-wrap items-center gap-2 mt-2">
+                  <GraduationCap className="w-3.5 h-3.5 text-indigo-500" />
+                  {exam.targetBatchType && (
+                    <span className="text-xs font-medium text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded-full">
+                      {batchTypeLabels[exam.targetBatchType] || exam.targetBatchType}
+                    </span>
+                  )}
+                  {exam.targetClass && (
+                    <span className="text-xs font-medium text-purple-700 bg-purple-50 px-2 py-0.5 rounded-full">
+                      Class {exam.targetClass}
+                    </span>
+                  )}
+                </div>
               )}
 
               {/* Meta */}

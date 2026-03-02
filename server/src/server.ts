@@ -29,6 +29,7 @@ import { courseTypesRoutes } from './modules/courseTypes/index.js';
 import { teacherRoutes } from './modules/teacher/index.js';
 import clerkWebhook from './webhooks/clerk.js';
 import razorpayWebhook from './webhooks/razorpay.js';
+import { examAttemptService } from './services/examAttemptService.js';
 
 // Validate environment variables
 validateEnv();
@@ -49,6 +50,8 @@ app.set('trust proxy', 1);
 app.use(helmet({
   contentSecurityPolicy: false, // Disable CSP for now (frontend serves its own assets)
   crossOriginEmbedderPolicy: false, // Allow embedded content (videos, images)
+  hsts: { maxAge: 31536000, includeSubDomains: true },
+  referrerPolicy: { policy: 'strict-origin-when-cross-origin' },
 }));
 
 // ============================================
@@ -271,6 +274,15 @@ app.listen(PORT, () => {
   console.log(`  API Base: http://localhost:${PORT}/api/v2`);
   console.log(' ================================');
   console.log('');
+
+  // Auto-submit expired exam attempts every 2 minutes
+  setInterval(async () => {
+    try {
+      await examAttemptService.autoSubmitExpiredAttempts();
+    } catch (err) {
+      console.error('[AUTO_SUBMIT] Error:', err);
+    }
+  }, 2 * 60 * 1000);
 });
 
 // Handle unhandled promise rejections

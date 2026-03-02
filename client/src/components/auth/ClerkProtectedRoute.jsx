@@ -9,6 +9,8 @@ const API_URL = import.meta.env.VITE_API_URL || "/api";
 // Simple in-memory cache for user role (persists across route navigations)
 let cachedRole = null;
 let cacheUserId = null;
+let cacheTimestamp = 0;
+const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 
 /**
  * ClerkProtectedRoute - Protects routes using Clerk authentication
@@ -40,8 +42,8 @@ const ClerkProtectedRoute = ({
         return;
       }
 
-      // Use cached role if same user
-      if (cachedRole && cacheUserId === clerkUser.id) {
+      // Use cached role if same user and cache is fresh
+      if (cachedRole && cacheUserId === clerkUser.id && (Date.now() - cacheTimestamp) < CACHE_TTL) {
         setUserRole(cachedRole);
         setLoading(false);
         return;
@@ -59,9 +61,10 @@ const ClerkProtectedRoute = ({
           const data = await response.json();
           const role = data.data?.user?.role || null;
           setUserRole(role);
-          // Cache the role
+          // Cache the role with timestamp
           cachedRole = role;
           cacheUserId = clerkUser.id;
+          cacheTimestamp = Date.now();
           retryCount.current = 0;
         } else if (response.status === 404 && retryCount.current < 3) {
           // User not yet in database (webhook might be processing)
@@ -127,6 +130,7 @@ const ClerkProtectedRoute = ({
             onClick={() => {
               cachedRole = null;
               cacheUserId = null;
+              cacheTimestamp = 0;
               retryCount.current = 0;
               window.location.reload();
             }}

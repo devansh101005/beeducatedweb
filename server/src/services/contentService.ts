@@ -201,21 +201,16 @@ class ContentService {
       throw new Error('Content not found');
     }
 
-    // Delete the file from storage
-    if (content.file_path) {
-      try {
-        await storageService.delete(BUCKETS.COURSE_CONTENT, content.file_path);
-      } catch (err) {
-        console.error('Failed to delete file from storage:', err);
-      }
-    }
+    // Delete file and thumbnail from storage (best effort)
+    const storagePaths: { bucket: string; path: string }[] = [];
+    if (content.file_path) storagePaths.push({ bucket: BUCKETS.COURSE_CONTENT, path: content.file_path });
+    if (content.thumbnail_path) storagePaths.push({ bucket: BUCKETS.THUMBNAILS, path: content.thumbnail_path });
 
-    // Delete thumbnail if exists
-    if (content.thumbnail_path) {
+    for (const { bucket, path } of storagePaths) {
       try {
-        await storageService.delete(BUCKETS.THUMBNAILS, content.thumbnail_path);
+        await storageService.delete(bucket as any, path);
       } catch (err) {
-        console.error('Failed to delete thumbnail:', err);
+        console.error(`[ORPHANED_FILE] Failed to delete ${bucket}/${path} for content ${id}:`, err);
       }
     }
 

@@ -91,6 +91,8 @@ export interface CreateExamInput {
   enable_fullscreen?: boolean;
   is_free?: boolean;
   access_code?: string;
+  target_batch_type?: string;
+  target_class?: string;
   status?: ExamStatus;
   created_by?: string;
 }

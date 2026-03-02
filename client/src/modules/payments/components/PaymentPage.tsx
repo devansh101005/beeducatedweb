@@ -80,12 +80,22 @@ export function PaymentPage() {
   const [discountCode, setDiscountCode] = useState('');
   const [discountApplied, setDiscountApplied] = useState<number>(0);
   const [paymentMethod, setPaymentMethod] = useState<'online' | 'upi' | 'netbanking'>('online');
+  const [razorpayReady, setRazorpayReady] = useState(false);
+  const [razorpayError, setRazorpayError] = useState(false);
 
   // Load Razorpay script
   useEffect(() => {
+    // Check if already loaded
+    if ((window as any).Razorpay) {
+      setRazorpayReady(true);
+      return;
+    }
+
     const script = document.createElement('script');
     script.src = 'https://checkout.razorpay.com/v1/checkout.js';
     script.async = true;
+    script.onload = () => setRazorpayReady(true);
+    script.onerror = () => setRazorpayError(true);
     document.body.appendChild(script);
 
     return () => {
@@ -464,16 +474,23 @@ export function PaymentPage() {
               </div>
             )}
 
+            {razorpayError && (
+              <div className="mt-4 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                <p className="text-sm text-amber-700">Payment gateway failed to load. Please check your internet connection and refresh the page.</p>
+              </div>
+            )}
+
             <Button
               variant="primary"
               isFullWidth
               size="lg"
               onClick={handlePayment}
               isLoading={processing}
+              disabled={!razorpayReady || razorpayError}
               leftIcon={processing ? undefined : <Lock className="w-4 h-4" />}
               className="mt-6"
             >
-              {processing ? 'Processing...' : `Pay ${formatCurrency(finalAmount)}`}
+              {processing ? 'Processing...' : !razorpayReady ? 'Loading payment gateway...' : `Pay ${formatCurrency(finalAmount)}`}
             </Button>
 
             <div className="mt-4 flex items-center justify-center gap-2">

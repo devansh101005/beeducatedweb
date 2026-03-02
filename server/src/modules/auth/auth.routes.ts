@@ -5,6 +5,7 @@ import { Router, Request, Response } from 'express';
 import { requireAuth, attachUser } from '../../middleware/auth.js';
 import { userService } from '../../services/userService.js';
 import { sendSuccess, sendNotFound, sendError, sendBadRequest } from '../../shared/utils/response.js';
+import { env } from '../../config/env.js';
 
 const router = Router();
 
@@ -99,7 +100,7 @@ router.post('/sync-user', requireAuth, attachUser, async (req: Request, res: Res
 router.patch('/role', requireAuth, attachUser, async (req: Request, res: Response) => {
   try {
     // Only allow in development
-    if (process.env.NODE_ENV === 'production') {
+    if (env.NODE_ENV !== 'development') {
       return res.status(403).json({ success: false, message: 'Not available in production' });
     }
 

@@ -8,6 +8,7 @@ import { examAttemptService } from '../../services/examAttemptService.js';
 import { studentService } from '../../services/studentService.js';
 import { batchService } from '../../services/batchService.js';
 import { courseService } from '../../services/courseService.js';
+import { getSupabase } from '../../config/supabase.js';
 import {
   sendSuccess,
   sendCreated,
@@ -50,6 +51,49 @@ router.get('/available', requireAuth, attachUser, async (req: Request, res: Resp
     const courses = await courseService.getStudentCourses(student.id);
     const courseIds = courses.map((c) => c.enrollment.course_id);
     const classGrades = [...new Set(courses.map((c) => c.course?.class_grade).filter(Boolean))] as string[];
+
+    // Also get class enrollments (for home tuition & offline classes via academic_classes)
+    // This covers students enrolled via class_enrollments who may not be in batch_students/student_courses
+    try {
+      const { data: classEnrollments } = await getSupabase()
+        .from('class_enrollments')
+        .select(`
+          class_id,
+          academic_class:academic_classes(
+            name,
+            course_type:course_types(slug)
+          )
+        `)
+        .eq('student_id', student.id)
+        .eq('status', 'active');
+
+      if (classEnrollments) {
+        for (const enrollment of classEnrollments) {
+          const ac = enrollment.academic_class as any;
+          if (!ac) continue;
+
+          // Extract batch type from course_type slug (e.g. 'coaching_offline', 'home_tuition')
+          const courseTypeSlug = ac.course_type?.slug;
+          if (courseTypeSlug && !batchTypes.includes(courseTypeSlug)) {
+            batchTypes.push(courseTypeSlug);
+          }
+
+          // Extract class grade from academic class name (e.g. "Class 10th" → "10th")
+          const className = ac.name as string;
+          if (className) {
+            // Try to extract grade: "Class 10th" → "10th", "11th Science" → "11th", etc.
+            const gradeMatch = className.match(/(\d{1,2}(?:st|nd|rd|th))/i);
+            const grade = gradeMatch ? gradeMatch[1].toLowerCase() : className.toLowerCase();
+            if (!classGrades.includes(grade)) {
+              classGrades.push(grade);
+            }
+          }
+        }
+      }
+    } catch (err) {
+      // class_enrollments/academic_classes table might not exist yet — continue without
+      console.warn('Could not fetch class enrollments for exam filtering:', err);
+    }
 
     const exams = await examService.getAvailableForStudent(student.id, batchIds, courseIds, batchTypes, classGrades);
 
@@ -450,14 +494,37 @@ router.post('/', requireAuth, attachUser, requireTeacherOrAdmin, async (req: Req
       enableFullscreen,
       isFree,
       accessCode,
+      targetBatchType,
+      targetClass,
     } = req.body;
 
-    if (!title) {
+    if (!title || typeof title !== 'string' || title.trim().length === 0) {
       return sendBadRequest(res, 'title is required');
     }
 
-    if (!durationMinutes) {
-      return sendBadRequest(res, 'durationMinutes is required');
+    if (!durationMinutes || durationMinutes < 1) {
+      return sendBadRequest(res, 'durationMinutes must be at least 1');
+    }
+
+    if (durationMinutes > 600) {
+      return sendBadRequest(res, 'durationMinutes cannot exceed 600 (10 hours)');
+    }
+
+    if (startTime && endTime && new Date(startTime) >= new Date(endTime)) {
+      return sendBadRequest(res, 'startTime must be before endTime');
+    }
+
+    if (passingMarks != null && totalMarks != null && passingMarks > totalMarks) {
+      return sendBadRequest(res, 'passingMarks cannot exceed totalMarks');
+    }
+
+    if (maxAttempts != null && (maxAttempts < 1 || maxAttempts > 100)) {
+      return sendBadRequest(res, 'maxAttempts must be between 1 and 100');
+    }
+
+    const validBatchTypes = ['coaching_offline', 'coaching_online', 'home_tuition', 'test_series'];
+    if (req.body.targetBatchType && !validBatchTypes.includes(req.body.targetBatchType)) {
+      return sendBadRequest(res, `targetBatchType must be one of: ${validBatchTypes.join(', ')}`);
     }
 
     const exam = await examService.create({
@@ -484,6 +551,8 @@ router.post('/', requireAuth, attachUser, requireTeacherOrAdmin, async (req: Req
       enable_fullscreen: enableFullscreen || false,
       is_free: isFree || false,
       access_code: accessCode,
+      target_batch_type: targetBatchType,
+      target_class: targetClass,
       created_by: req.user?.id,
     });
 
@@ -506,6 +575,37 @@ router.put('/:id', requireAuth, attachUser, requireTeacherOrAdmin, async (req: R
     const existingExam = await examService.getById(examId);
     if (!existingExam) {
       return sendNotFound(res, 'Exam');
+    }
+
+    // Validate updates
+    if (updates.title !== undefined && (typeof updates.title !== 'string' || updates.title.trim().length === 0)) {
+      return sendBadRequest(res, 'title cannot be empty');
+    }
+
+    if (updates.durationMinutes !== undefined) {
+      if (updates.durationMinutes < 1) return sendBadRequest(res, 'durationMinutes must be at least 1');
+      if (updates.durationMinutes > 600) return sendBadRequest(res, 'durationMinutes cannot exceed 600 (10 hours)');
+    }
+
+    const effectiveStartTime = updates.startTime !== undefined ? updates.startTime : existingExam.start_time;
+    const effectiveEndTime = updates.endTime !== undefined ? updates.endTime : existingExam.end_time;
+    if (effectiveStartTime && effectiveEndTime && new Date(effectiveStartTime) >= new Date(effectiveEndTime)) {
+      return sendBadRequest(res, 'startTime must be before endTime');
+    }
+
+    const effectivePassingMarks = updates.passingMarks !== undefined ? updates.passingMarks : existingExam.passing_marks;
+    const effectiveTotalMarks = updates.totalMarks !== undefined ? updates.totalMarks : existingExam.total_marks;
+    if (effectivePassingMarks != null && effectiveTotalMarks != null && effectivePassingMarks > effectiveTotalMarks) {
+      return sendBadRequest(res, 'passingMarks cannot exceed totalMarks');
+    }
+
+    if (updates.maxAttempts !== undefined && (updates.maxAttempts < 1 || updates.maxAttempts > 100)) {
+      return sendBadRequest(res, 'maxAttempts must be between 1 and 100');
+    }
+
+    const validBatchTypes = ['coaching_offline', 'coaching_online', 'home_tuition', 'test_series'];
+    if (updates.targetBatchType && !validBatchTypes.includes(updates.targetBatchType)) {
+      return sendBadRequest(res, `targetBatchType must be one of: ${validBatchTypes.join(', ')}`);
     }
 
     // Map camelCase to snake_case

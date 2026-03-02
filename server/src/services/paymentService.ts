@@ -540,6 +540,8 @@ class PaymentService {
         .single();
 
       if (error) {
+        // Razorpay refund was issued but DB update failed — log prominently for manual reconciliation
+        console.error(`[REFUND_DB_FAIL] razorpay_refund_id=${refund.id} payment_id=${paymentId} amount=${refundAmount} — DB update failed: ${error.message}`);
         throw new Error(`Failed to update refund status: ${error.message}`);
       }
 

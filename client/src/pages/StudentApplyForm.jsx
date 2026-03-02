@@ -17,11 +17,30 @@ function StudentApplyForm() {
 
   const handleChange = e => setForm({ ...form, [e.target.name]: e.target.value });
 
+  const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+  const ALLOWED_TYPES = ['application/pdf', 'image/jpeg', 'image/png'];
+
   const handleFileChange = (e) => {
     const { name, files: uploadedFiles } = e.target;
+    const fileList = Array.from(uploadedFiles);
+
+    // Validate each file
+    for (const file of fileList) {
+      if (file.size > MAX_FILE_SIZE) {
+        alert(`File "${file.name}" exceeds 5MB limit. Please choose a smaller file.`);
+        e.target.value = '';
+        return;
+      }
+      if (!ALLOWED_TYPES.includes(file.type)) {
+        alert(`File "${file.name}" is not allowed. Please upload PDF, JPEG, or PNG files only.`);
+        e.target.value = '';
+        return;
+      }
+    }
+
     setFiles(prev => ({
       ...prev,
-      [name]: name === "resume" ? uploadedFiles[0] : Array.from(uploadedFiles)
+      [name]: name === "resume" ? uploadedFiles[0] : fileList
     }));
   };
 
