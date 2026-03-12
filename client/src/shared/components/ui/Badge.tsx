@@ -23,13 +23,13 @@ interface BadgeProps extends HTMLAttributes<HTMLSpanElement> {
 // ============================================
 
 const variantStyles: Record<BadgeVariant, string> = {
-  default: 'bg-slate-100 text-slate-700',
-  primary: 'bg-amber-100 text-amber-700',
-  success: 'bg-emerald-100 text-emerald-700',
-  warning: 'bg-orange-100 text-orange-700',
-  danger: 'bg-rose-100 text-rose-700',
-  error: 'bg-rose-100 text-rose-700',
-  info: 'bg-sky-100 text-sky-700',
+  default: 'bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300',
+  primary: 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300',
+  success: 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300',
+  warning: 'bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300',
+  danger: 'bg-rose-100 dark:bg-rose-900/30 text-rose-700 dark:text-rose-300',
+  error: 'bg-rose-100 dark:bg-rose-900/30 text-rose-700 dark:text-rose-300',
+  info: 'bg-sky-100 dark:bg-sky-900/30 text-sky-700 dark:text-sky-300',
 };
 
 const dotStyles: Record<BadgeVariant, string> = {
@@ -120,7 +120,7 @@ export const StatusBadge = forwardRef<HTMLSpanElement, StatusBadgeProps>(
         ref={ref}
         className={clsx(
           'inline-flex items-center gap-1.5',
-          shouldShowLabel && 'text-xs text-slate-600',
+          shouldShowLabel && 'text-xs text-slate-600 dark:text-slate-400',
           className
         )}
         {...props}

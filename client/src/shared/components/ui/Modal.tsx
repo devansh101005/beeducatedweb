@@ -152,7 +152,7 @@ export function Modal({
               exit="exit"
               className={clsx(
                 'w-full pointer-events-auto',
-                'bg-white rounded-2xl shadow-elevated-lg',
+                'bg-white dark:bg-slate-800 rounded-2xl shadow-elevated-lg',
                 'max-h-[calc(100vh-2rem)] overflow-hidden',
                 'flex flex-col',
                 sizeStyles[size],
@@ -186,16 +186,16 @@ export function ModalHeader({
     <div
       className={clsx(
         'flex items-start justify-between gap-4 px-6 py-4',
-        'border-b border-slate-100',
+        'border-b border-slate-100 dark:border-slate-700',
         className
       )}
     >
       <div className="min-w-0 flex-1">
-        <h2 className="text-lg font-heading font-semibold text-slate-900">
+        <h2 className="text-lg font-heading font-semibold text-slate-900 dark:text-slate-50">
           {displayTitle}
         </h2>
         {subtitle && (
-          <p className="text-sm text-slate-500 mt-0.5">{subtitle}</p>
+          <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">{subtitle}</p>
         )}
       </div>
 
@@ -239,7 +239,7 @@ export function ModalFooter({ children, className }: ModalFooterProps) {
     <div
       className={clsx(
         'flex items-center justify-end gap-3 px-6 py-4',
-        'border-t border-slate-100 bg-slate-50/50',
+        'border-t border-slate-100 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/50',
         className
       )}
     >
@@ -291,7 +291,7 @@ export function ConfirmModal({
     <Modal isOpen={isOpen} onClose={onClose} size="sm">
       <ModalHeader title={title} onClose={onClose} />
       <ModalBody>
-        <p className="text-slate-600">{displayDescription}</p>
+        <p className="text-slate-600 dark:text-slate-400">{displayDescription}</p>
       </ModalBody>
       <ModalFooter>
         <button

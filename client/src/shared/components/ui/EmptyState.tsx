@@ -74,19 +74,19 @@ export function EmptyState({
         initial={{ scale: 0.8, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         transition={{ duration: durations.slow, ease: easings.bounce }}
-        className="w-20 h-20 text-slate-300 mb-6"
+        className="w-20 h-20 text-slate-300 dark:text-slate-600 mb-6"
       >
         {IconComponent}
       </motion.div>
 
       {/* Title */}
-      <h3 className="text-lg font-heading font-semibold text-slate-900 mb-2">
+      <h3 className="text-lg font-heading font-semibold text-slate-900 dark:text-slate-50 mb-2">
         {title}
       </h3>
 
       {/* Description */}
       {description && (
-        <p className="text-sm text-slate-500 max-w-sm mb-6">
+        <p className="text-sm text-slate-500 dark:text-slate-400 max-w-sm mb-6">
           {description}
         </p>
       )}

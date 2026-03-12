@@ -145,12 +145,12 @@ export function Table<T>({
   const isSomeSelected = selectedRows.length > 0 && selectedRows.length < data.length;
 
   return (
-    <div className={clsx('w-full overflow-hidden rounded-xl border border-slate-200', className)}>
+    <div className={clsx('w-full overflow-hidden rounded-xl border border-slate-200 dark:border-slate-700', className)}>
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
           {/* Header */}
           <thead>
-            <tr className="bg-slate-50 border-b border-slate-200">
+            <tr className="bg-slate-50 dark:bg-slate-900 border-b border-slate-200 dark:border-slate-700">
               {/* Selection checkbox */}
               {onSelectionChange && (
                 <th className="w-12 px-4 py-3">
@@ -170,8 +170,8 @@ export function Table<T>({
                 <th
                   key={column.key}
                   className={clsx(
-                    'px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider',
-                    column.sortable && 'cursor-pointer select-none hover:bg-slate-100',
+                    'px-4 py-3 text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider',
+                    column.sortable && 'cursor-pointer select-none hover:bg-slate-100 dark:hover:bg-slate-700',
                     column.align === 'center' && 'text-center',
                     column.align === 'right' && 'text-right',
                     column.className
@@ -186,7 +186,7 @@ export function Table<T>({
                   )}>
                     <span>{column.header}</span>
                     {column.sortable && (
-                      <span className="text-slate-400">
+                      <span className="text-slate-400 dark:text-slate-500">
                         {sortKey === column.key ? (
                           sortDirection === 'asc' ? (
                             <ChevronUp className="w-4 h-4" />
@@ -205,19 +205,19 @@ export function Table<T>({
           </thead>
 
           {/* Body */}
-          <tbody className="bg-white divide-y divide-slate-100">
+          <tbody className="bg-white dark:bg-slate-800 divide-y divide-slate-100 dark:divide-slate-700">
             {isLoading ? (
               // Loading skeleton
               Array.from({ length: 5 }).map((_, i) => (
                 <tr key={i}>
                   {onSelectionChange && (
                     <td className="px-4 py-4">
-                      <div className="w-4 h-4 bg-slate-200 rounded animate-pulse" />
+                      <div className="w-4 h-4 bg-slate-200 dark:bg-slate-700 rounded animate-pulse" />
                     </td>
                   )}
                   {columns.map((column) => (
                     <td key={column.key} className="px-4 py-4">
-                      <div className="h-4 bg-slate-200 rounded animate-pulse" style={{ width: '60%' }} />
+                      <div className="h-4 bg-slate-200 dark:bg-slate-700 rounded animate-pulse" style={{ width: '60%' }} />
                     </td>
                   ))}
                 </tr>
@@ -227,7 +227,7 @@ export function Table<T>({
               <tr>
                 <td
                   colSpan={columns.length + (onSelectionChange ? 1 : 0)}
-                  className="px-4 py-12 text-center text-slate-500"
+                  className="px-4 py-12 text-center text-slate-500 dark:text-slate-400"
                 >
                   {emptyMessage}
                 </td>
@@ -248,7 +248,7 @@ export function Table<T>({
                       className={clsx(
                         'transition-colors duration-150',
                         onRowClick && 'cursor-pointer',
-                        isSelected ? 'bg-amber-50' : 'hover:bg-slate-50/50'
+                        isSelected ? 'bg-amber-50 dark:bg-amber-900/20' : 'hover:bg-slate-50/50 dark:hover:bg-slate-700/50'
                       )}
                       onClick={() => onRowClick?.(row)}
                     >
@@ -267,7 +267,7 @@ export function Table<T>({
                         <td
                           key={column.key}
                           className={clsx(
-                            'px-4 py-3.5 text-slate-700',
+                            'px-4 py-3.5 text-slate-700 dark:text-slate-300',
                             column.align === 'center' && 'text-center',
                             column.align === 'right' && 'text-right',
                             column.className
@@ -352,15 +352,15 @@ export function Pagination({
     >
       {/* Info text */}
       {hasItemInfo ? (
-        <p className="text-sm text-slate-500">
-          Showing <span className="font-medium text-slate-700">{startItem}</span> to{' '}
-          <span className="font-medium text-slate-700">{endItem}</span> of{' '}
-          <span className="font-medium text-slate-700">{totalItems}</span> results
+        <p className="text-sm text-slate-500 dark:text-slate-400">
+          Showing <span className="font-medium text-slate-700 dark:text-slate-300">{startItem}</span> to{' '}
+          <span className="font-medium text-slate-700 dark:text-slate-300">{endItem}</span> of{' '}
+          <span className="font-medium text-slate-700 dark:text-slate-300">{totalItems}</span> results
         </p>
       ) : (
-        <p className="text-sm text-slate-500">
-          Page <span className="font-medium text-slate-700">{currentPage}</span> of{' '}
-          <span className="font-medium text-slate-700">{totalPages}</span>
+        <p className="text-sm text-slate-500 dark:text-slate-400">
+          Page <span className="font-medium text-slate-700 dark:text-slate-300">{currentPage}</span> of{' '}
+          <span className="font-medium text-slate-700 dark:text-slate-300">{totalPages}</span>
         </p>
       )}
 
@@ -377,7 +377,7 @@ export function Pagination({
 
         {getPageNumbers().map((page, index) =>
           page === 'ellipsis' ? (
-            <span key={`ellipsis-${index}`} className="px-2 text-slate-400">
+            <span key={`ellipsis-${index}`} className="px-2 text-slate-400 dark:text-slate-500">
               ...
             </span>
           ) : (
@@ -388,7 +388,7 @@ export function Pagination({
                 'min-w-[32px] h-8 px-2 text-sm font-medium rounded-lg transition-colors',
                 page === currentPage
                   ? 'bg-amber-500 text-white'
-                  : 'text-slate-600 hover:bg-slate-100'
+                  : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700'
               )}
             >
               {page}

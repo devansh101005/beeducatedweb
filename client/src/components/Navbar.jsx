@@ -3,6 +3,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '@clerk/clerk-react';
 import { HiOutlineMenu, HiOutlineX } from 'react-icons/hi';
 import logo from '../assets/logo.png';
+import ThemeToggle from './ThemeToggle';
 
 const NAV_LINKS = [
   { to: '/', label: 'Home' },
@@ -47,8 +48,8 @@ function Navbar() {
       <nav
         className={`fixed top-0 left-0 right-0 w-full z-[1000] transition-all duration-300 ${
           scrolled
-            ? 'bg-white/98 backdrop-blur-md shadow-md'
-            : 'bg-white/95 backdrop-blur-sm'
+            ? 'bg-white/98 backdrop-blur-md shadow-md dark:bg-slate-900/98'
+            : 'bg-white/95 backdrop-blur-sm dark:bg-slate-900/95'
         }`}
       >
         <div
@@ -66,10 +67,10 @@ function Navbar() {
               }`}
             />
             <div className="flex flex-col">
-              <span className="font-heading text-xl font-bold text-[#0a1e3d] leading-tight">
+              <span className="font-heading text-xl font-bold text-[#0a1e3d] dark:text-white leading-tight">
                 Be Educated
               </span>
-              <span className="font-body text-[10px] text-gray-400 -mt-0.5 tracking-wide hidden sm:block">
+              <span className="font-body text-[10px] text-gray-400 dark:text-gray-500 -mt-0.5 tracking-wide hidden sm:block">
                 Achieve Beyond Limits
               </span>
             </div>
@@ -83,14 +84,14 @@ function Navbar() {
                 to={to}
                 className={`relative font-body text-[13.5px] font-medium no-underline px-3 py-2 rounded-lg transition-all duration-200 ${
                   isActive(to)
-                    ? 'text-[#05308d] bg-[#05308d]/5'
-                    : 'text-gray-600 hover:text-[#05308d] hover:bg-gray-50'
+                    ? 'text-[#05308d] bg-[#05308d]/5 dark:text-amber-400 dark:bg-amber-400/10'
+                    : 'text-gray-600 hover:text-[#05308d] hover:bg-gray-50 dark:text-gray-300 dark:hover:text-amber-400 dark:hover:bg-slate-800'
                 }`}
               >
                 {label}
                 {/* Active underline indicator */}
                 {isActive(to) && (
-                  <span className="absolute bottom-0.5 left-3 right-3 h-[2px] bg-[#05308d] rounded-full" />
+                  <span className="absolute bottom-0.5 left-3 right-3 h-[2px] bg-[#05308d] dark:bg-amber-400 rounded-full" />
                 )}
               </Link>
             ))}
@@ -98,10 +99,11 @@ function Navbar() {
 
           {/* ---- Desktop Right Actions ---- */}
           <div className="hidden lg:flex items-center gap-3">
+            <ThemeToggle />
             {isLoaded && isSignedIn ? (
               <Link
                 to="/dashboard"
-                className="inline-flex items-center gap-2 bg-[#05308d] text-white px-5 py-2 rounded-lg no-underline font-heading font-semibold text-sm hover:bg-[#1648b8] transition-colors duration-300 shadow-sm"
+                className="inline-flex items-center gap-2 bg-[#05308d] text-white px-5 py-2 rounded-lg no-underline font-heading font-semibold text-sm hover:bg-[#1648b8] transition-colors duration-300 shadow-sm dark:bg-amber-500 dark:text-slate-900 dark:hover:bg-amber-400"
               >
                 Dashboard
               </Link>
@@ -109,13 +111,13 @@ function Navbar() {
               <>
                 <Link
                   to="/sign-in"
-                  className="font-body text-sm font-medium text-gray-600 no-underline hover:text-[#05308d] transition-colors duration-200 px-3 py-2"
+                  className="font-body text-sm font-medium text-gray-600 no-underline hover:text-[#05308d] transition-colors duration-200 px-3 py-2 dark:text-gray-300 dark:hover:text-amber-400"
                 >
                   Sign In
                 </Link>
                 <Link
                   to="/contact"
-                  className="inline-flex items-center bg-[#05308d] text-white px-5 py-2 rounded-lg no-underline font-heading font-semibold text-sm hover:bg-[#1648b8] transition-colors duration-300 shadow-sm"
+                  className="inline-flex items-center bg-[#05308d] text-white px-5 py-2 rounded-lg no-underline font-heading font-semibold text-sm hover:bg-[#1648b8] transition-colors duration-300 shadow-sm dark:bg-amber-500 dark:text-slate-900 dark:hover:bg-amber-400"
                 >
                   Enquire Now
                 </Link>
@@ -126,7 +128,7 @@ function Navbar() {
           {/* ---- Mobile Hamburger Button ---- */}
           <button
             onClick={() => setMobileOpen(!mobileOpen)}
-            className="lg:hidden flex items-center justify-center w-10 h-10 rounded-lg text-[#0a1e3d] hover:bg-gray-100 transition-colors duration-200 border-none bg-transparent cursor-pointer"
+            className="lg:hidden flex items-center justify-center w-10 h-10 rounded-lg text-[#0a1e3d] hover:bg-gray-100 transition-colors duration-200 border-none bg-transparent cursor-pointer dark:text-white dark:hover:bg-slate-800"
             aria-label={mobileOpen ? 'Close menu' : 'Open menu'}
           >
             {mobileOpen ? (
@@ -143,7 +145,7 @@ function Navbar() {
             mobileOpen ? 'max-h-[500px] opacity-100' : 'max-h-0 opacity-0'
           }`}
         >
-          <div className="px-5 pb-6 pt-2 border-t border-gray-100 bg-white">
+          <div className="px-5 pb-6 pt-2 border-t border-gray-100 bg-white dark:bg-slate-900 dark:border-slate-800">
             {/* Nav Links */}
             <div className="flex flex-col gap-1 mb-5">
               {NAV_LINKS.map(({ to, label }) => (
@@ -152,8 +154,8 @@ function Navbar() {
                   to={to}
                   className={`font-body text-[15px] font-medium no-underline px-4 py-3 rounded-lg transition-all duration-200 ${
                     isActive(to)
-                      ? 'text-[#05308d] bg-[#05308d]/5 font-semibold'
-                      : 'text-gray-600 hover:text-[#05308d] hover:bg-gray-50'
+                      ? 'text-[#05308d] bg-[#05308d]/5 font-semibold dark:text-amber-400 dark:bg-amber-400/10'
+                      : 'text-gray-600 hover:text-[#05308d] hover:bg-gray-50 dark:text-gray-300 dark:hover:text-amber-400 dark:hover:bg-slate-800'
                   }`}
                 >
                   {label}
@@ -162,14 +164,19 @@ function Navbar() {
             </div>
 
             {/* Divider */}
-            <div className="h-px bg-gray-100 mb-4" />
+            <div className="h-px bg-gray-100 dark:bg-slate-800 mb-4" />
 
-            {/* Auth Actions */}
+            {/* Theme toggle + Auth Actions */}
+            <div className="flex items-center justify-between mb-4">
+              <span className="text-sm text-gray-500 dark:text-gray-400">Appearance</span>
+              <ThemeToggle />
+            </div>
+
             <div className="flex flex-col gap-2">
               {isLoaded && isSignedIn ? (
                 <Link
                   to="/dashboard"
-                  className="text-center bg-[#05308d] text-white px-5 py-3 rounded-lg no-underline font-heading font-semibold text-sm hover:bg-[#1648b8] transition-colors duration-300"
+                  className="text-center bg-[#05308d] text-white px-5 py-3 rounded-lg no-underline font-heading font-semibold text-sm hover:bg-[#1648b8] transition-colors duration-300 dark:bg-amber-500 dark:text-slate-900 dark:hover:bg-amber-400"
                 >
                   Dashboard
                 </Link>
@@ -177,13 +184,13 @@ function Navbar() {
                 <>
                   <Link
                     to="/sign-in"
-                    className="text-center font-body text-sm font-medium text-gray-600 no-underline border border-gray-200 px-5 py-3 rounded-lg hover:bg-gray-50 transition-colors duration-200"
+                    className="text-center font-body text-sm font-medium text-gray-600 no-underline border border-gray-200 px-5 py-3 rounded-lg hover:bg-gray-50 transition-colors duration-200 dark:text-gray-300 dark:border-slate-700 dark:hover:bg-slate-800"
                   >
                     Sign In
                   </Link>
                   <Link
                     to="/contact"
-                    className="text-center bg-[#05308d] text-white px-5 py-3 rounded-lg no-underline font-heading font-semibold text-sm hover:bg-[#1648b8] transition-colors duration-300"
+                    className="text-center bg-[#05308d] text-white px-5 py-3 rounded-lg no-underline font-heading font-semibold text-sm hover:bg-[#1648b8] transition-colors duration-300 dark:bg-amber-500 dark:text-slate-900 dark:hover:bg-amber-400"
                   >
                     Enquire Now
                   </Link>

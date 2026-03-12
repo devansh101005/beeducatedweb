@@ -47,8 +47,8 @@ function PolicyAccordion({ title, icon: Icon, children, defaultOpen = false }) {
     <div
       className={`group/acc border rounded-2xl transition-all duration-300 overflow-hidden ${
         isOpen
-          ? 'border-[#05308d]/20 shadow-lg shadow-[#05308d]/5 bg-white'
-          : 'border-gray-200 bg-white hover:shadow-md hover:border-[#05308d]/10'
+          ? 'border-[#05308d]/20 shadow-lg shadow-[#05308d]/5 bg-white dark:bg-slate-800 dark:border-[#05308d]/30'
+          : 'border-gray-200 bg-white hover:shadow-md hover:border-[#05308d]/10 dark:bg-slate-800 dark:border-slate-700 dark:hover:border-[#05308d]/20'
       }`}
     >
       <button
@@ -59,14 +59,14 @@ function PolicyAccordion({ title, icon: Icon, children, defaultOpen = false }) {
           className={`w-11 h-11 rounded-xl flex items-center justify-center transition-all duration-300 ${
             isOpen
               ? 'bg-[#05308d] text-white'
-              : 'bg-[#05308d]/5 text-[#05308d] group-hover/acc:bg-[#05308d]/10'
+              : 'bg-[#05308d]/5 dark:bg-[#05308d]/20 text-[#05308d] dark:text-blue-300 group-hover/acc:bg-[#05308d]/10'
           }`}
         >
           <Icon className="w-5 h-5" />
         </div>
         <span
           className={`flex-1 font-heading font-bold text-lg transition-colors duration-300 ${
-            isOpen ? 'text-[#05308d]' : 'text-[#0a1e3d]'
+            isOpen ? 'text-[#05308d] dark:text-blue-400' : 'text-[#0a1e3d] dark:text-slate-50'
           }`}
         >
           {title}
@@ -75,7 +75,7 @@ function PolicyAccordion({ title, icon: Icon, children, defaultOpen = false }) {
           className={`w-8 h-8 rounded-full flex items-center justify-center transition-all duration-300 ${
             isOpen
               ? 'bg-[#05308d] text-white rotate-180'
-              : 'bg-gray-100 text-gray-400 group-hover/acc:bg-[#05308d]/10 group-hover/acc:text-[#05308d]'
+              : 'bg-gray-100 text-gray-400 group-hover/acc:bg-[#05308d]/10 group-hover/acc:text-[#05308d] dark:bg-slate-700 dark:text-slate-400'
           }`}
         >
           <HiOutlineChevronDown className="w-4 h-4" />
@@ -111,10 +111,10 @@ function OptionCard({ letter, label, badge, badgeColor, accentColor, children })
     <div
       className={`relative rounded-2xl border overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-1 ${
         accentColor === 'gold'
-          ? 'border-[#fbbf24]/30 bg-gradient-to-br from-[#fbbf24]/5 to-white hover:border-[#fbbf24]/50'
+          ? 'border-[#fbbf24]/30 bg-gradient-to-br from-[#fbbf24]/5 to-white hover:border-[#fbbf24]/50 dark:to-slate-800 dark:from-[#fbbf24]/10'
           : accentColor === 'green'
-          ? 'border-green-200 bg-white hover:border-green-300'
-          : 'border-gray-200 bg-white hover:border-[#05308d]/30'
+          ? 'border-green-200 bg-white hover:border-green-300 dark:bg-slate-800 dark:border-green-800 dark:hover:border-green-700'
+          : 'border-gray-200 bg-white hover:border-[#05308d]/30 dark:bg-slate-800 dark:border-slate-700'
       }`}
     >
       {/* Top accent bar */}
@@ -131,14 +131,14 @@ function OptionCard({ letter, label, badge, badgeColor, accentColor, children })
 
       <div className="p-5 sm:p-6">
         <div className="flex items-center justify-between mb-3">
-          <span className="font-heading text-[10px] font-bold text-gray-400 uppercase tracking-widest">
+          <span className="font-heading text-[10px] font-bold text-gray-400 dark:text-slate-500 uppercase tracking-widest">
             Option {letter}
           </span>
           <span className={`text-[10px] px-2 py-0.5 rounded-md font-bold ${c.badge}`}>
             {badge}
           </span>
         </div>
-        <h3 className="font-heading text-base sm:text-lg font-bold text-[#0a1e3d] mb-4">{label}</h3>
+        <h3 className="font-heading text-base sm:text-lg font-bold text-[#0a1e3d] dark:text-slate-50 mb-4">{label}</h3>
         {children}
       </div>
     </div>
@@ -150,16 +150,16 @@ function Row({ label, sub, value, highlight }) {
   return (
     <div
       className={`flex justify-between items-center py-2 px-3 rounded-lg ${
-        highlight ? 'bg-[#05308d]/5 border border-[#05308d]/10' : 'bg-gray-50'
+        highlight ? 'bg-[#05308d]/5 dark:bg-[#05308d]/20 border border-[#05308d]/10 dark:border-[#05308d]/30' : 'bg-gray-50 dark:bg-slate-700/50'
       }`}
     >
       <div>
-        <span className={`font-body text-xs block ${highlight ? 'font-semibold text-[#05308d]' : 'text-gray-500'}`}>
+        <span className={`font-body text-xs block ${highlight ? 'font-semibold text-[#05308d] dark:text-blue-300' : 'text-gray-500 dark:text-slate-400'}`}>
           {label}
         </span>
-        {sub && <span className="font-body text-[10px] text-gray-400">{sub}</span>}
+        {sub && <span className="font-body text-[10px] text-gray-400 dark:text-slate-500">{sub}</span>}
       </div>
-      <span className={`font-heading text-sm font-bold ${highlight ? 'text-[#05308d]' : 'text-[#0a1e3d]'}`}>
+      <span className={`font-heading text-sm font-bold ${highlight ? 'text-[#05308d] dark:text-blue-300' : 'text-[#0a1e3d] dark:text-slate-200'}`}>
         {value}
       </span>
     </div>
@@ -195,7 +195,7 @@ const HomeTuitionFees = () => {
     : null;
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-white dark:bg-slate-900">
       {/* ============================================ */}
       {/* HERO */}
       {/* ============================================ */}
@@ -226,17 +226,17 @@ const HomeTuitionFees = () => {
       {/* ============================================ */}
       <section className="relative -mt-10 z-10 px-5">
         <div className="max-w-4xl mx-auto">
-          <div className="group relative bg-white rounded-2xl shadow-xl border border-gray-100 p-6 sm:p-8 overflow-hidden transition-all duration-300 hover:shadow-2xl">
+          <div className="group relative bg-white dark:bg-slate-800 rounded-2xl shadow-xl border border-gray-100 dark:border-slate-700 p-6 sm:p-8 overflow-hidden transition-all duration-300 hover:shadow-2xl">
             <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-[#05308d] via-[#fbbf24] to-[#05308d]"></div>
             <div className="flex flex-col sm:flex-row items-center gap-5">
               <div className="w-16 h-16 rounded-2xl bg-[#fbbf24]/10 flex items-center justify-center flex-shrink-0 transition-transform duration-300 group-hover:scale-110">
                 <HiOutlineCash className="w-8 h-8 text-[#fbbf24]" />
               </div>
               <div className="flex-1 text-center sm:text-left">
-                <h3 className="font-heading text-xl sm:text-2xl font-bold text-[#0a1e3d] mb-1">
+                <h3 className="font-heading text-xl sm:text-2xl font-bold text-[#0a1e3d] dark:text-slate-50 mb-1">
                   ₹499 Registration Fee
                 </h3>
-                <p className="font-body text-sm text-gray-500">
+                <p className="font-body text-sm text-gray-500 dark:text-slate-400">
                   One-Time · Mandatory · Non-Refundable — payable at admission, separate from tuition fee.
                 </p>
               </div>
@@ -254,16 +254,16 @@ const HomeTuitionFees = () => {
       {/* ============================================ */}
       {/* FEE CALCULATOR */}
       {/* ============================================ */}
-      <section className="py-16 sm:py-20 bg-white">
+      <section className="py-16 sm:py-20 bg-white dark:bg-slate-900">
         <div className="max-w-6xl mx-auto px-5">
           <div className="text-center mb-10">
-            <span className="inline-block font-heading text-sm font-semibold text-[#05308d] uppercase tracking-[0.15em] mb-3">
+            <span className="inline-block font-heading text-sm font-semibold text-[#05308d] dark:text-blue-400 uppercase tracking-[0.15em] mb-3">
               Fee Calculator
             </span>
-            <h2 className="font-heading text-2xl sm:text-3xl md:text-4xl font-bold text-[#0a1e3d] mb-3">
+            <h2 className="font-heading text-2xl sm:text-3xl md:text-4xl font-bold text-[#0a1e3d] dark:text-slate-50 mb-3">
               Select Class & See All Options
             </h2>
-            <p className="font-body text-gray-500 max-w-lg mx-auto">
+            <p className="font-body text-gray-500 dark:text-slate-400 max-w-lg mx-auto">
               Click your class below — all 4 payment plans update instantly
             </p>
           </div>
@@ -277,7 +277,7 @@ const HomeTuitionFees = () => {
                 className={`px-4 py-2 rounded-xl font-heading font-bold text-sm transition-all duration-200 cursor-pointer border ${
                   selectedClass === f.class
                     ? 'bg-[#05308d] text-white border-[#05308d] shadow-md shadow-[#05308d]/25 scale-105'
-                    : 'bg-white text-[#0a1e3d] border-gray-200 hover:border-[#05308d]/30 hover:text-[#05308d] hover:bg-[#05308d]/5'
+                    : 'bg-white dark:bg-slate-800 text-[#0a1e3d] dark:text-slate-200 border-gray-200 dark:border-slate-700 hover:border-[#05308d]/30 hover:text-[#05308d] hover:bg-[#05308d]/5 dark:hover:bg-slate-700'
                 }`}
               >
                 {f.class}
@@ -287,9 +287,9 @@ const HomeTuitionFees = () => {
 
           {/* Empty state */}
           {!calc && (
-            <div className="text-center py-16 border-2 border-dashed border-gray-200 rounded-2xl">
-              <HiOutlineAcademicCap className="w-12 h-12 mx-auto mb-3 text-gray-300" />
-              <p className="font-body text-gray-400">Select a class above to see all payment options</p>
+            <div className="text-center py-16 border-2 border-dashed border-gray-200 dark:border-slate-700 rounded-2xl">
+              <HiOutlineAcademicCap className="w-12 h-12 mx-auto mb-3 text-gray-300 dark:text-slate-600" />
+              <p className="font-body text-gray-400 dark:text-slate-500">Select a class above to see all payment options</p>
             </div>
           )}
 
@@ -297,7 +297,7 @@ const HomeTuitionFees = () => {
           {calc && (
             <>
               <div className="text-center mb-6">
-                <span className="inline-flex items-center gap-2 bg-[#05308d]/5 text-[#05308d] px-4 py-2 rounded-xl font-heading text-sm font-bold">
+                <span className="inline-flex items-center gap-2 bg-[#05308d]/5 dark:bg-[#05308d]/20 text-[#05308d] dark:text-blue-300 px-4 py-2 rounded-xl font-heading text-sm font-bold">
                   <HiOutlineAcademicCap className="w-4 h-4" />
                   Class {selectedClass} — Monthly ₹{fmt(calc.monthly)} · Annual ₹{fmt(calc.annual)}
                 </span>
@@ -312,7 +312,7 @@ const HomeTuitionFees = () => {
                     <Row label="Security Deposit" sub="1 month advance" value={`₹${fmt(calc.monthly)}`} />
                     <Row label="At Admission Total" sub="Reg + Month + Deposit" value={`₹${fmt(calc.atAdmissionA)}`} highlight />
                   </div>
-                  <p className="font-body text-[10px] text-gray-400 leading-relaxed bg-gray-50 rounded-lg p-2.5">
+                  <p className="font-body text-[10px] text-gray-400 dark:text-slate-500 leading-relaxed bg-gray-50 dark:bg-slate-700/50 rounded-lg p-2.5">
                     Security deposit is interest-free and adjusted against the last month's fee on course completion.
                   </p>
                 </OptionCard>
@@ -325,7 +325,7 @@ const HomeTuitionFees = () => {
                     <Row label="3rd — Day 150" sub="~32% of annual" value={`₹${fmt(calc.b3)}`} />
                     <Row label="4th — Day 225" sub="10% of annual" value={`₹${fmt(calc.b4)}`} />
                   </div>
-                  <p className="font-body text-[10px] text-gray-400 bg-gray-50 rounded-lg p-2.5">
+                  <p className="font-body text-[10px] text-gray-400 dark:text-slate-500 bg-gray-50 dark:bg-slate-700/50 rounded-lg p-2.5">
                     Total: ₹{fmt(calc.annual)} (full annual fee, no discount)
                   </p>
                 </OptionCard>
@@ -333,8 +333,8 @@ const HomeTuitionFees = () => {
                 {/* OPTION C: 2-Installment */}
                 <OptionCard letter="C" label="2-Installment Plan" badge="10% OFF" accentColor="green">
                   <div className="mb-3">
-                    <span className="font-body text-xs text-gray-400 line-through">₹{fmt(calc.annual)}</span>
-                    <span className="font-heading text-2xl font-extrabold text-[#05308d] ml-2">
+                    <span className="font-body text-xs text-gray-400 dark:text-slate-500 line-through">₹{fmt(calc.annual)}</span>
+                    <span className="font-heading text-2xl font-extrabold text-[#05308d] dark:text-blue-400 ml-2">
                       ₹{fmt(calc.annualC)}
                     </span>
                     <p className="font-body text-[10px] text-green-600 mt-0.5">
@@ -345,7 +345,7 @@ const HomeTuitionFees = () => {
                     <Row label="1st — At Admission" sub="First 6 months" value={`₹${fmt(calc.c1)}`} highlight />
                     <Row label="2nd — Day 180" sub="Last 6 months" value={`₹${fmt(calc.c2)}`} />
                   </div>
-                  <p className="font-body text-[10px] text-gray-400 bg-green-50 rounded-lg p-2.5">
+                  <p className="font-body text-[10px] text-gray-400 dark:text-slate-500 bg-green-50 dark:bg-green-900/20 rounded-lg p-2.5">
                     Discount on tuition only. Reg fee & GST excluded.
                   </p>
                 </OptionCard>
@@ -353,17 +353,17 @@ const HomeTuitionFees = () => {
                 {/* OPTION D: One-Time */}
                 <OptionCard letter="D" label="One-Time Full Payment" badge="15% OFF" accentColor="gold">
                   <div className="mb-3">
-                    <p className="font-body text-xs text-gray-400 line-through">₹{fmt(calc.annual)}</p>
-                    <p className="font-heading text-3xl font-extrabold text-[#05308d]">₹{fmt(calc.annualD)}</p>
+                    <p className="font-body text-xs text-gray-400 dark:text-slate-500 line-through">₹{fmt(calc.annual)}</p>
+                    <p className="font-heading text-3xl font-extrabold text-[#05308d] dark:text-blue-400">₹{fmt(calc.annualD)}</p>
                     <p className="font-body text-[10px] text-yellow-700 mt-0.5">
                       Save ₹{fmt(calc.annual - calc.annualD)} — maximum savings
                     </p>
                   </div>
                   <div className="py-3 px-3 rounded-lg bg-[#fbbf24]/10 border border-[#fbbf24]/20 text-center mb-3">
-                    <span className="font-body text-xs text-gray-600 font-semibold">Full payment at admission</span>
-                    <p className="font-body text-[10px] text-gray-400 mt-0.5">No further installments</p>
+                    <span className="font-body text-xs text-gray-600 dark:text-slate-300 font-semibold">Full payment at admission</span>
+                    <p className="font-body text-[10px] text-gray-400 dark:text-slate-500 mt-0.5">No further installments</p>
                   </div>
-                  <p className="font-body text-[10px] text-gray-400 bg-gray-50 rounded-lg p-2.5">
+                  <p className="font-body text-[10px] text-gray-400 dark:text-slate-500 bg-gray-50 dark:bg-slate-700/50 rounded-lg p-2.5">
                     Discount on tuition only. Reg fee & GST excluded.
                   </p>
                 </OptionCard>
@@ -377,21 +377,21 @@ const HomeTuitionFees = () => {
       {/* ============================================ */}
       {/* FULL FEE TABLE */}
       {/* ============================================ */}
-      <section className="py-16 sm:py-20 bg-gray-50">
+      <section className="py-16 sm:py-20 bg-gray-50 dark:bg-slate-800">
         <div className="max-w-5xl mx-auto px-5">
           <div className="text-center mb-10">
-            <span className="inline-block font-heading text-sm font-semibold text-[#05308d] uppercase tracking-[0.15em] mb-3">
+            <span className="inline-block font-heading text-sm font-semibold text-[#05308d] dark:text-blue-400 uppercase tracking-[0.15em] mb-3">
               Reference Table
             </span>
-            <h2 className="font-heading text-2xl sm:text-3xl font-bold text-[#0a1e3d] mb-2">
+            <h2 className="font-heading text-2xl sm:text-3xl font-bold text-[#0a1e3d] dark:text-slate-50 mb-2">
               All Classes Fee Overview
             </h2>
-            <p className="font-body text-gray-500 text-sm">
+            <p className="font-body text-gray-500 dark:text-slate-400 text-sm">
               Click any row to load it into the calculator above
             </p>
           </div>
 
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+          <div className="bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700 shadow-sm overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full min-w-[600px]">
                 <thead>
@@ -413,16 +413,16 @@ const HomeTuitionFees = () => {
                           setSelectedClass(f.class);
                           window.scrollTo({ top: 0, behavior: 'smooth' });
                         }}
-                        className={`border-b border-gray-100 cursor-pointer transition-colors duration-150 ${
+                        className={`border-b border-gray-100 dark:border-slate-700 cursor-pointer transition-colors duration-150 ${
                           isSelected
-                            ? 'bg-[#05308d]/5'
+                            ? 'bg-[#05308d]/5 dark:bg-[#05308d]/20'
                             : i % 2 === 0
-                            ? 'bg-white hover:bg-gray-50'
-                            : 'bg-gray-50/50 hover:bg-gray-100/50'
+                            ? 'bg-white dark:bg-slate-800 hover:bg-gray-50 dark:hover:bg-slate-700'
+                            : 'bg-gray-50/50 dark:bg-slate-700/30 hover:bg-gray-100/50 dark:hover:bg-slate-700'
                         }`}
                       >
                         <td className="px-5 py-3.5">
-                          <span className={`font-heading font-bold text-sm ${isSelected ? 'text-[#05308d]' : 'text-[#0a1e3d]'}`}>
+                          <span className={`font-heading font-bold text-sm ${isSelected ? 'text-[#05308d] dark:text-blue-400' : 'text-[#0a1e3d] dark:text-slate-200'}`}>
                             {f.class}
                           </span>
                           {isSelected && (
@@ -431,18 +431,18 @@ const HomeTuitionFees = () => {
                             </span>
                           )}
                         </td>
-                        <td className="px-5 py-3.5 text-right font-body text-sm text-gray-600">₹{fmt(f.monthly)}</td>
-                        <td className="px-5 py-3.5 text-right font-body text-sm text-gray-600">₹{fmt(f.annual)}</td>
-                        <td className="px-5 py-3.5 text-right font-heading text-sm font-semibold text-green-700">₹{fmt(f.annual * 0.9)}</td>
-                        <td className="px-5 py-3.5 text-right font-heading text-sm font-semibold text-[#05308d]">₹{fmt(f.annual * 0.85)}</td>
+                        <td className="px-5 py-3.5 text-right font-body text-sm text-gray-600 dark:text-slate-400">₹{fmt(f.monthly)}</td>
+                        <td className="px-5 py-3.5 text-right font-body text-sm text-gray-600 dark:text-slate-400">₹{fmt(f.annual)}</td>
+                        <td className="px-5 py-3.5 text-right font-heading text-sm font-semibold text-green-700 dark:text-green-400">₹{fmt(f.annual * 0.9)}</td>
+                        <td className="px-5 py-3.5 text-right font-heading text-sm font-semibold text-[#05308d] dark:text-blue-400">₹{fmt(f.annual * 0.85)}</td>
                       </tr>
                     );
                   })}
                 </tbody>
               </table>
             </div>
-            <div className="px-5 py-3 bg-gray-50 border-t border-gray-100">
-              <p className="font-body text-xs text-gray-400">
+            <div className="px-5 py-3 bg-gray-50 dark:bg-slate-700/50 border-t border-gray-100 dark:border-slate-700">
+              <p className="font-body text-xs text-gray-400 dark:text-slate-500">
                 ₹499 registration fee is additional and not included · Discounts apply on tuition fee only
               </p>
             </div>
@@ -545,16 +545,16 @@ const HomeTuitionFees = () => {
       {/* ============================================ */}
       {/* POLICIES */}
       {/* ============================================ */}
-      <section className="py-16 sm:py-20 bg-gradient-to-b from-gray-50 to-white">
+      <section className="py-16 sm:py-20 bg-gradient-to-b from-gray-50 to-white dark:from-slate-900 dark:to-slate-900">
         <div className="max-w-4xl mx-auto px-5">
           <div className="text-center mb-14">
-            <span className="inline-block font-heading text-sm font-semibold text-[#05308d] uppercase tracking-[0.15em] mb-3">
+            <span className="inline-block font-heading text-sm font-semibold text-[#05308d] dark:text-blue-400 uppercase tracking-[0.15em] mb-3">
               Policies
             </span>
-            <h2 className="font-heading text-2xl sm:text-3xl md:text-4xl font-bold text-[#0a1e3d] mb-3">
+            <h2 className="font-heading text-2xl sm:text-3xl md:text-4xl font-bold text-[#0a1e3d] dark:text-slate-50 mb-3">
               Important Policies
             </h2>
-            <p className="font-body text-gray-500 max-w-xl mx-auto">
+            <p className="font-body text-gray-500 dark:text-slate-400 max-w-xl mx-auto">
               Please read all policies carefully before enrolling
             </p>
           </div>
@@ -570,7 +570,7 @@ const HomeTuitionFees = () => {
                   'For monthly plan students, payment is due by the 5th of each month.',
                   'Installment due dates are calculated automatically from the date of admission.',
                 ].map((item, i) => (
-                  <div key={i} className="flex items-start gap-3 font-body text-sm text-gray-600 leading-relaxed">
+                  <div key={i} className="flex items-start gap-3 font-body text-sm text-gray-600 dark:text-slate-300 leading-relaxed">
                     <span className="w-2 h-2 rounded-full bg-red-400 mt-1.5 flex-shrink-0"></span>
                     {item}
                   </div>
@@ -588,7 +588,7 @@ const HomeTuitionFees = () => {
                   'In case of early discontinuation, the security deposit may be partially or fully forfeited.',
                   'The institute may adjust the security deposit against any pending dues or misconduct penalties.',
                 ].map((item, i) => (
-                  <div key={i} className="flex items-start gap-3 font-body text-sm text-gray-600 leading-relaxed">
+                  <div key={i} className="flex items-start gap-3 font-body text-sm text-gray-600 dark:text-slate-300 leading-relaxed">
                     <span className="w-2 h-2 rounded-full bg-blue-400 mt-1.5 flex-shrink-0"></span>
                     {item}
                   </div>
@@ -606,7 +606,7 @@ const HomeTuitionFees = () => {
                   'The institute reserves the right to change the assigned teacher or class schedule.',
                   'Course fee is non-transferable and cannot be adjusted for another student or session.',
                 ].map((item, i) => (
-                  <div key={i} className="flex items-start gap-3 font-body text-sm text-gray-600 leading-relaxed">
+                  <div key={i} className="flex items-start gap-3 font-body text-sm text-gray-600 dark:text-slate-300 leading-relaxed">
                     <span className="w-2 h-2 rounded-full bg-red-400 mt-1.5 flex-shrink-0"></span>
                     {item}
                   </div>
@@ -626,23 +626,23 @@ const HomeTuitionFees = () => {
                   <div
                     key={i}
                     className={`flex items-center justify-between p-4 rounded-xl border ${
-                      item.color === 'green' ? 'bg-green-50 border-green-200' :
-                      item.color === 'gold' ? 'bg-[#fbbf24]/5 border-[#fbbf24]/20' :
-                      'bg-gray-50 border-gray-200'
+                      item.color === 'green' ? 'bg-green-50 border-green-200 dark:bg-green-900/20 dark:border-green-800' :
+                      item.color === 'gold' ? 'bg-[#fbbf24]/5 border-[#fbbf24]/20 dark:bg-[#fbbf24]/10' :
+                      'bg-gray-50 border-gray-200 dark:bg-slate-700/50 dark:border-slate-600'
                     }`}
                   >
-                    <span className="font-body text-sm text-gray-700">{item.plan}</span>
+                    <span className="font-body text-sm text-gray-700 dark:text-slate-300">{item.plan}</span>
                     <span className={`font-heading text-sm font-bold ${
-                      item.color === 'green' ? 'text-green-700' :
-                      item.color === 'gold' ? 'text-yellow-700' :
-                      'text-gray-500'
+                      item.color === 'green' ? 'text-green-700 dark:text-green-400' :
+                      item.color === 'gold' ? 'text-yellow-700 dark:text-amber-400' :
+                      'text-gray-500 dark:text-slate-400'
                     }`}>{item.discount}</span>
                   </div>
                 ))}
               </div>
               <div className="flex items-start gap-3 bg-[#fbbf24]/5 border border-[#fbbf24]/20 rounded-xl p-4">
                 <HiOutlineExclamationCircle className="w-5 h-5 text-[#fbbf24] flex-shrink-0 mt-0.5" />
-                <p className="font-body text-sm text-gray-700">
+                <p className="font-body text-sm text-gray-700 dark:text-slate-300">
                   Only one payment option can be selected. Discounts cannot be combined. Discount applies on tuition fee only — registration fee and GST are excluded.
                 </p>
               </div>
@@ -662,8 +662,8 @@ const HomeTuitionFees = () => {
                   'All disputes are subject to local jurisdiction only.',
                   'The management\'s decision shall be final and binding in all matters.',
                 ].map((item, i) => (
-                  <li key={i} className="flex items-start gap-3 font-body text-sm text-gray-600 leading-relaxed">
-                    <span className="flex-shrink-0 w-6 h-6 rounded-lg bg-[#05308d]/5 flex items-center justify-center text-[10px] font-heading font-bold text-[#05308d] mt-0.5">
+                  <li key={i} className="flex items-start gap-3 font-body text-sm text-gray-600 dark:text-slate-300 leading-relaxed">
+                    <span className="flex-shrink-0 w-6 h-6 rounded-lg bg-[#05308d]/5 dark:bg-[#05308d]/20 flex items-center justify-center text-[10px] font-heading font-bold text-[#05308d] dark:text-blue-300 mt-0.5">
                       {i + 1}
                     </span>
                     {item}
@@ -678,15 +678,15 @@ const HomeTuitionFees = () => {
       {/* ============================================ */}
       {/* CTA */}
       {/* ============================================ */}
-      <section className="py-16 sm:py-20 bg-gray-50">
+      <section className="py-16 sm:py-20 bg-gray-50 dark:bg-slate-800">
         <div className="max-w-3xl mx-auto px-5 text-center">
-          <span className="inline-block font-heading text-sm font-semibold text-[#05308d] uppercase tracking-[0.15em] mb-3">
+          <span className="inline-block font-heading text-sm font-semibold text-[#05308d] dark:text-blue-400 uppercase tracking-[0.15em] mb-3">
             Get Started
           </span>
-          <h2 className="font-heading text-2xl sm:text-3xl md:text-4xl font-bold text-[#0a1e3d] mb-4">
+          <h2 className="font-heading text-2xl sm:text-3xl md:text-4xl font-bold text-[#0a1e3d] dark:text-slate-50 mb-4">
             Book Your Home Tuition Today
           </h2>
-          <p className="font-body text-gray-500 text-base sm:text-lg mb-10 max-w-xl mx-auto leading-relaxed">
+          <p className="font-body text-gray-500 dark:text-slate-400 text-base sm:text-lg mb-10 max-w-xl mx-auto leading-relaxed">
             Personalised one-on-one learning by experienced faculty — at your doorstep. Limited slots available.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
@@ -701,7 +701,7 @@ const HomeTuitionFees = () => {
             </Link>
             <a
               href="tel:+918382970800"
-              className="inline-flex items-center justify-center gap-2 bg-white border-2 border-[#05308d]/15 text-[#05308d] px-8 py-4 rounded-xl font-heading font-bold text-sm sm:text-base no-underline transition-all duration-300 hover:border-[#05308d]/30 hover:shadow-md hover:-translate-y-0.5"
+              className="inline-flex items-center justify-center gap-2 bg-white dark:bg-slate-700 border-2 border-[#05308d]/15 dark:border-slate-600 text-[#05308d] dark:text-slate-200 px-8 py-4 rounded-xl font-heading font-bold text-sm sm:text-base no-underline transition-all duration-300 hover:border-[#05308d]/30 dark:hover:border-slate-500 hover:shadow-md hover:-translate-y-0.5"
             >
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />

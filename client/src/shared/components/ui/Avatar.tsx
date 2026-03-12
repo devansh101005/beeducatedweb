@@ -131,7 +131,7 @@ export const Avatar = forwardRef<HTMLDivElement, AvatarProps>(
         {showStatus && status && (
           <span
             className={clsx(
-              'absolute bottom-0 right-0 rounded-full border-white',
+              'absolute bottom-0 right-0 rounded-full border-white dark:border-slate-800',
               sizeConfig.status,
               statusStyles[status]
             )}
@@ -173,7 +173,7 @@ export const AvatarGroup = forwardRef<HTMLDivElement, AvatarGroupProps>(
             name={avatar.name}
             alt={avatar.alt}
             size={size}
-            className="ring-2 ring-white"
+            className="ring-2 ring-white dark:ring-slate-800"
           />
         ))}
 
@@ -181,11 +181,11 @@ export const AvatarGroup = forwardRef<HTMLDivElement, AvatarGroupProps>(
           <div
             className={clsx(
               'inline-flex items-center justify-center rounded-full',
-              'bg-slate-200 ring-2 ring-white',
+              'bg-slate-200 dark:bg-slate-700 ring-2 ring-white dark:ring-slate-800',
               sizeConfig.container
             )}
           >
-            <span className={clsx('font-medium text-slate-600', sizeConfig.text)}>
+            <span className={clsx('font-medium text-slate-600 dark:text-slate-400', sizeConfig.text)}>
               +{remainingCount}
             </span>
           </div>
@@ -229,11 +229,11 @@ export const AvatarWithName = forwardRef<HTMLDivElement, AvatarWithNameProps>(
           showStatus={!!status}
         />
         <div className="min-w-0 flex-1">
-          <div className={clsx('font-medium text-slate-900 truncate', config.name)}>
+          <div className={clsx('font-medium text-slate-900 dark:text-slate-50 truncate', config.name)}>
             {name}
           </div>
           {subtitle && (
-            <div className={clsx('text-slate-500 truncate', config.subtitle)}>
+            <div className={clsx('text-slate-500 dark:text-slate-400 truncate', config.subtitle)}>
               {subtitle}
             </div>
           )}

@@ -37,30 +37,30 @@ const variantStyles: Record<ButtonVariant, string> = {
     focus-visible:ring-amber-500
   `,
   secondary: `
-    bg-slate-800 text-white
-    hover:bg-slate-900
-    active:bg-slate-950
+    bg-slate-800 dark:bg-slate-700 text-white
+    hover:bg-slate-900 dark:hover:bg-slate-600
+    active:bg-slate-950 dark:active:bg-slate-500
     shadow-soft-sm hover:shadow-soft-md
     focus-visible:ring-slate-500
   `,
   ghost: `
-    bg-transparent text-slate-700
-    hover:bg-slate-100
-    active:bg-slate-200
+    bg-transparent text-slate-700 dark:text-slate-300
+    hover:bg-slate-100 dark:hover:bg-slate-700
+    active:bg-slate-200 dark:active:bg-slate-600
     focus-visible:ring-slate-500
   `,
   outline: `
-    bg-transparent text-slate-700
-    border border-slate-300
-    hover:bg-slate-50 hover:border-slate-400
-    active:bg-slate-100
+    bg-transparent text-slate-700 dark:text-slate-300
+    border border-slate-300 dark:border-slate-600
+    hover:bg-slate-50 dark:hover:bg-slate-700 hover:border-slate-400 dark:hover:border-slate-500
+    active:bg-slate-100 dark:active:bg-slate-600
     focus-visible:ring-slate-500
   `,
   'outline-primary': `
-    bg-transparent text-amber-600
-    border border-amber-300
-    hover:bg-amber-50 hover:border-amber-400
-    active:bg-amber-100
+    bg-transparent text-amber-600 dark:text-amber-400
+    border border-amber-300 dark:border-amber-600
+    hover:bg-amber-50 dark:hover:bg-amber-900/30 hover:border-amber-400 dark:hover:border-amber-500
+    active:bg-amber-100 dark:active:bg-amber-900/50
     focus-visible:ring-amber-500
   `,
   success: `

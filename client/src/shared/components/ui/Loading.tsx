@@ -151,13 +151,13 @@ export function LoadingOverlay({
           exit={{ opacity: 0 }}
           className={clsx(
             'absolute inset-0 flex flex-col items-center justify-center',
-            'bg-white/80 z-10',
+            'bg-white/80 dark:bg-slate-900/80 z-10',
             blur && 'backdrop-blur-sm'
           )}
         >
           <Spinner size="lg" />
           {text && (
-            <p className="mt-3 text-sm text-slate-600">{text}</p>
+            <p className="mt-3 text-sm text-slate-600 dark:text-slate-400">{text}</p>
           )}
         </motion.div>
       )}
@@ -177,7 +177,7 @@ export function Skeleton({ className }: SkeletonProps) {
   return (
     <div
       className={clsx(
-        'animate-pulse bg-slate-200 rounded',
+        'animate-pulse bg-slate-200 dark:bg-slate-700 rounded',
         className
       )}
     />
@@ -202,7 +202,7 @@ export function SkeletonText({ lines = 3, className }: { lines?: number; classNa
 
 export function SkeletonCard({ className }: SkeletonProps) {
   return (
-    <div className={clsx('p-5 rounded-2xl border border-slate-200 bg-white', className)}>
+    <div className={clsx('p-5 rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800', className)}>
       <div className="flex items-start gap-4">
         <Skeleton className="w-12 h-12 rounded-xl shrink-0" />
         <div className="flex-1 space-y-2">
@@ -220,7 +220,7 @@ export function SkeletonCard({ className }: SkeletonProps) {
 
 export function SkeletonStatCard({ className }: SkeletonProps) {
   return (
-    <div className={clsx('p-5 rounded-2xl border border-slate-200 bg-white', className)}>
+    <div className={clsx('p-5 rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800', className)}>
       <Skeleton className="w-12 h-12 rounded-xl mb-4" />
       <Skeleton className="h-8 w-24 mb-2" />
       <Skeleton className="h-4 w-16" />
@@ -230,9 +230,9 @@ export function SkeletonStatCard({ className }: SkeletonProps) {
 
 export function SkeletonTable({ rows = 5, columns = 4, className }: { rows?: number; columns?: number; className?: string }) {
   return (
-    <div className={clsx('rounded-xl border border-slate-200 overflow-hidden', className)}>
+    <div className={clsx('rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden', className)}>
       {/* Header */}
-      <div className="bg-slate-50 border-b border-slate-200 px-4 py-3 flex gap-4">
+      <div className="bg-slate-50 dark:bg-slate-900 border-b border-slate-200 dark:border-slate-700 px-4 py-3 flex gap-4">
         {Array.from({ length: columns }).map((_, i) => (
           <Skeleton key={i} className="h-4 flex-1" />
         ))}
@@ -240,7 +240,7 @@ export function SkeletonTable({ rows = 5, columns = 4, className }: { rows?: num
 
       {/* Rows */}
       {Array.from({ length: rows }).map((_, rowIndex) => (
-        <div key={rowIndex} className="px-4 py-4 flex gap-4 border-b border-slate-100 last:border-0">
+        <div key={rowIndex} className="px-4 py-4 flex gap-4 border-b border-slate-100 dark:border-slate-700 last:border-0">
           {Array.from({ length: columns }).map((_, colIndex) => (
             <Skeleton
               key={colIndex}
@@ -269,7 +269,7 @@ export function SkeletonAvatar({ size = 'md', className }: { size?: 'sm' | 'md' 
 
 export function PageLoader({ text = 'Loading...' }: { text?: string }) {
   return (
-    <div className="fixed inset-0 flex flex-col items-center justify-center bg-slate-50">
+    <div className="fixed inset-0 flex flex-col items-center justify-center bg-slate-50 dark:bg-slate-900">
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
@@ -282,7 +282,7 @@ export function PageLoader({ text = 'Loading...' }: { text?: string }) {
 
         <DotsLoader />
 
-        <p className="mt-4 text-sm text-slate-500">{text}</p>
+        <p className="mt-4 text-sm text-slate-500 dark:text-slate-400">{text}</p>
       </motion.div>
     </div>
   );

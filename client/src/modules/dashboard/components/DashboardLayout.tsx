@@ -38,6 +38,7 @@ import {
 import { formatDistanceToNow, parseISO, differenceInMinutes, differenceInHours } from 'date-fns';
 import clsx from 'clsx';
 import { IconButton, Badge, Spinner, PageLoader } from '@shared/components/ui';
+import ThemeToggle from '@/components/ThemeToggle';
 
 // ============================================
 // TYPES
@@ -224,6 +225,7 @@ function Sidebar({ navigation, currentPath, isOpen, onClose, userData }: Sidebar
         className={clsx(
           'fixed inset-y-0 left-0 z-50 w-[260px]',
           'bg-white border-r border-slate-200',
+          'dark:bg-slate-800 dark:border-slate-700',
           'flex flex-col',
           'transform transition-transform duration-300 ease-smooth',
           'lg:translate-x-0',
@@ -231,10 +233,10 @@ function Sidebar({ navigation, currentPath, isOpen, onClose, userData }: Sidebar
         )}
       >
         {/* Logo */}
-        <div className="h-[72px] px-5 flex items-center justify-between border-b border-slate-100">
+        <div className="h-[72px] px-5 flex items-center justify-between border-b border-slate-100 dark:border-slate-700">
           <Link to="/" className="flex items-center gap-2.5">
             <img src="/logo.png" alt="Be Educated" className="w-9 h-9 rounded-xl object-contain" />
-            <span className="text-lg font-heading font-semibold text-slate-900">
+            <span className="text-lg font-heading font-semibold text-slate-900 dark:text-white">
               Be Educated
             </span>
           </Link>
@@ -247,8 +249,8 @@ function Sidebar({ navigation, currentPath, isOpen, onClose, userData }: Sidebar
         </div>
 
         {/* User Info */}
-        <div className="p-4 border-b border-slate-100">
-          <div className="flex items-center gap-3 p-3 rounded-xl bg-slate-50">
+        <div className="p-4 border-b border-slate-100 dark:border-slate-700">
+          <div className="flex items-center gap-3 p-3 rounded-xl bg-slate-50 dark:bg-slate-700/50">
             <UserButton
               appearance={{
                 elements: {
@@ -257,10 +259,10 @@ function Sidebar({ navigation, currentPath, isOpen, onClose, userData }: Sidebar
               }}
             />
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-slate-900 truncate">
+              <p className="text-sm font-medium text-slate-900 dark:text-slate-100 truncate">
                 {userData?.user?.firstName} {userData?.user?.lastName}
               </p>
-              <p className="text-xs text-slate-500 truncate capitalize">
+              <p className="text-xs text-slate-500 dark:text-slate-400 truncate capitalize">
                 {userData?.user?.role?.replace('_', ' ') || 'User'}
               </p>
             </div>
@@ -290,8 +292,8 @@ function Sidebar({ navigation, currentPath, isOpen, onClose, userData }: Sidebar
                         'flex items-center gap-3 px-3 py-2.5 rounded-xl',
                         'text-sm transition-all duration-200',
                         isActive
-                          ? 'bg-amber-50 text-amber-700 font-medium'
-                          : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
+                          ? 'bg-amber-50 text-amber-700 font-medium dark:bg-amber-900/20 dark:text-amber-400'
+                          : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-700 dark:hover:text-slate-200'
                       )}
                     >
                       <Icon className="w-5 h-5 shrink-0" />
@@ -310,10 +312,14 @@ function Sidebar({ navigation, currentPath, isOpen, onClose, userData }: Sidebar
         </nav>
 
         {/* Footer */}
-        <div className="p-4 border-t border-slate-100">
+        <div className="p-4 border-t border-slate-100 dark:border-slate-700">
+          <div className="flex items-center justify-between px-3 py-2 mb-2">
+            <span className="text-xs text-slate-400">Theme</span>
+            <ThemeToggle />
+          </div>
           <Link
             to="/"
-            className="flex items-center gap-3 px-3 py-2.5 text-sm text-slate-600 hover:text-amber-600 rounded-xl hover:bg-slate-50 transition-colors"
+            className="flex items-center gap-3 px-3 py-2.5 text-sm text-slate-600 hover:text-amber-600 rounded-xl hover:bg-slate-50 transition-colors dark:text-slate-400 dark:hover:text-amber-400 dark:hover:bg-slate-700"
           >
             <Home className="w-5 h-5" />
             <span>Back to Home</span>
@@ -490,7 +496,7 @@ function AnnouncementPanel({ isOpen, onClose, getToken, onUnreadChange }: Announ
             animate={{ x: 0 }}
             exit={{ x: '100%' }}
             transition={{ type: 'spring', damping: 30, stiffness: 300 }}
-            className="fixed right-0 top-0 bottom-0 w-full max-w-md bg-white shadow-2xl z-50 flex flex-col"
+            className="fixed right-0 top-0 bottom-0 w-full max-w-md bg-white shadow-2xl z-50 flex flex-col dark:bg-slate-800"
           >
             {/* Header */}
             <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between shrink-0">
@@ -714,7 +720,7 @@ interface TopBarProps {
 
 function TopBar({ title, onMenuClick, onBellClick, notificationCount = 0 }: TopBarProps) {
   return (
-    <header className="sticky top-0 z-30 h-[72px] px-4 lg:px-6 bg-white border-b border-slate-200 flex items-center justify-between">
+    <header className="sticky top-0 z-30 h-[72px] px-4 lg:px-6 bg-white border-b border-slate-200 flex items-center justify-between dark:bg-slate-800 dark:border-slate-700">
       {/* Left side */}
       <div className="flex items-center gap-4">
         <IconButton
@@ -729,7 +735,7 @@ function TopBar({ title, onMenuClick, onBellClick, notificationCount = 0 }: TopB
         <div className="flex items-center gap-2 text-sm">
           <span className="text-slate-400 hidden sm:inline">Dashboard</span>
           <ChevronRight className="w-4 h-4 text-slate-300 hidden sm:inline" />
-          <h1 className="font-heading font-semibold text-slate-900">{title}</h1>
+          <h1 className="font-heading font-semibold text-slate-900 dark:text-white">{title}</h1>
         </div>
       </div>
 
@@ -744,12 +750,12 @@ function TopBar({ title, onMenuClick, onBellClick, notificationCount = 0 }: TopB
         />
 
         {/* Search input (desktop) */}
-        <div className="hidden sm:flex items-center gap-2 px-4 h-10 bg-slate-100 rounded-xl w-64 text-sm text-slate-500 transition-all focus-within:bg-white focus-within:ring-2 focus-within:ring-amber-100 focus-within:border-amber-300">
+        <div className="hidden sm:flex items-center gap-2 px-4 h-10 bg-slate-100 rounded-xl w-64 text-sm text-slate-500 transition-all focus-within:bg-white focus-within:ring-2 focus-within:ring-amber-100 focus-within:border-amber-300 dark:bg-slate-700 dark:text-slate-300 dark:focus-within:bg-slate-800 dark:focus-within:ring-amber-900/30">
           <Search className="w-4 h-4 shrink-0" />
           <input
             type="text"
             placeholder="Search..."
-            className="flex-1 bg-transparent outline-none placeholder:text-slate-400"
+            className="flex-1 bg-transparent outline-none placeholder:text-slate-400 dark:placeholder:text-slate-500 dark:text-slate-200"
           />
         </div>
 
@@ -916,7 +922,7 @@ export function DashboardLayout() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-900">
       {/* Sidebar */}
       <Sidebar
         navigation={navigation}

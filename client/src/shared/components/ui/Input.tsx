@@ -40,17 +40,17 @@ const sizeStyles: Record<InputSize, string> = {
 };
 
 const stateStyles: Record<InputState, string> = {
-  default: 'border-slate-300 focus:border-amber-400 focus:ring-amber-100',
-  error: 'border-rose-400 focus:border-rose-400 focus:ring-rose-100',
-  success: 'border-emerald-400 focus:border-emerald-400 focus:ring-emerald-100',
+  default: 'border-slate-300 dark:border-slate-600 focus:border-amber-400 dark:focus:border-amber-500 focus:ring-amber-100 dark:focus:ring-amber-900/30',
+  error: 'border-rose-400 focus:border-rose-400 focus:ring-rose-100 dark:focus:ring-rose-900/30',
+  success: 'border-emerald-400 focus:border-emerald-400 focus:ring-emerald-100 dark:focus:ring-emerald-900/30',
 };
 
 const baseInputStyles = `
-  w-full bg-white text-slate-800
+  w-full bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100
   border transition-all duration-200
-  placeholder:text-slate-400
+  placeholder:text-slate-400 dark:placeholder:text-slate-500
   focus:outline-none focus:ring-2
-  disabled:bg-slate-50 disabled:text-slate-400 disabled:cursor-not-allowed
+  disabled:bg-slate-50 dark:disabled:bg-slate-900 disabled:text-slate-400 disabled:cursor-not-allowed
 `;
 
 // ============================================
@@ -89,7 +89,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
           <label
             htmlFor={inputId}
             className={clsx(
-              'block text-sm font-medium text-slate-700 mb-1.5',
+              'block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5',
               isRequired && "after:content-['*'] after:ml-0.5 after:text-rose-500"
             )}
           >
@@ -99,7 +99,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
 
         <div className="relative">
           {leftIcon && (
-            <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">
+            <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 pointer-events-none">
               {leftIcon}
             </div>
           )}
@@ -130,7 +130,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="text-slate-400 hover:text-slate-600 focus:outline-none"
+                className="text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 focus:outline-none"
                 tabIndex={-1}
               >
                 {showPassword ? (
@@ -141,7 +141,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
               </button>
             )}
             {!error && !isPassword && rightIcon && (
-              <span className="text-slate-400">{rightIcon}</span>
+              <span className="text-slate-400 dark:text-slate-500">{rightIcon}</span>
             )}
           </div>
         </div>
@@ -165,7 +165,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
               id={`${inputId}-helper`}
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              className="text-xs text-slate-500 mt-1.5"
+              className="text-xs text-slate-500 dark:text-slate-400 mt-1.5"
             >
               {helperText}
             </motion.p>
@@ -237,7 +237,7 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
           <label
             htmlFor={textareaId}
             className={clsx(
-              'block text-sm font-medium text-slate-700 mb-1.5',
+              'block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5',
               isRequired && "after:content-['*'] after:ml-0.5 after:text-rose-500"
             )}
           >
@@ -279,7 +279,7 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
               id={`${textareaId}-helper`}
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              className="text-xs text-slate-500 mt-1.5"
+              className="text-xs text-slate-500 dark:text-slate-400 mt-1.5"
             >
               {helperText}
             </motion.p>
@@ -337,7 +337,7 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
           <label
             htmlFor={selectId}
             className={clsx(
-              'block text-sm font-medium text-slate-700 mb-1.5',
+              'block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5',
               isRequired && "after:content-['*'] after:ml-0.5 after:text-rose-500"
             )}
           >
@@ -388,7 +388,7 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
               key="helper"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              className="text-xs text-slate-500 mt-1.5"
+              className="text-xs text-slate-500 dark:text-slate-400 mt-1.5"
             >
               {helperText}
             </motion.p>

@@ -223,10 +223,10 @@ const categories = [
 function AccordionItem({ question, answer, list, isOpen, onClick, index }) {
   return (
     <div
-      className={`group/faq border border-gray-200 rounded-xl transition-all duration-300 ${
+      className={`group/faq border border-gray-200 dark:border-slate-700 rounded-xl transition-all duration-300 ${
         isOpen
-          ? 'bg-white shadow-lg shadow-[#05308d]/5 border-[#05308d]/20'
-          : 'bg-white hover:shadow-md hover:border-[#05308d]/10'
+          ? 'bg-white dark:bg-slate-800 shadow-lg shadow-[#05308d]/5 border-[#05308d]/20 dark:border-[#05308d]/30'
+          : 'bg-white dark:bg-slate-800 hover:shadow-md hover:border-[#05308d]/10'
       }`}
     >
       <button
@@ -238,7 +238,7 @@ function AccordionItem({ question, answer, list, isOpen, onClick, index }) {
           className={`flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center text-xs font-heading font-bold transition-all duration-300 ${
             isOpen
               ? 'bg-[#05308d] text-white scale-110'
-              : 'bg-[#05308d]/5 text-[#05308d] group-hover/faq:bg-[#05308d]/10'
+              : 'bg-[#05308d]/5 text-[#05308d] dark:bg-[#05308d]/20 dark:text-blue-300 group-hover/faq:bg-[#05308d]/10'
           }`}
         >
           {String(index + 1).padStart(2, '0')}
@@ -247,7 +247,7 @@ function AccordionItem({ question, answer, list, isOpen, onClick, index }) {
         {/* Question text */}
         <span
           className={`flex-1 font-heading font-semibold text-[15px] sm:text-base leading-relaxed transition-colors duration-300 ${
-            isOpen ? 'text-[#05308d]' : 'text-[#0a1e3d] group-hover/faq:text-[#05308d]'
+            isOpen ? 'text-[#05308d] dark:text-blue-300' : 'text-[#0a1e3d] dark:text-slate-50 group-hover/faq:text-[#05308d]'
           }`}
         >
           {question}
@@ -258,7 +258,7 @@ function AccordionItem({ question, answer, list, isOpen, onClick, index }) {
           className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center transition-all duration-300 ${
             isOpen
               ? 'bg-[#05308d] text-white rotate-180'
-              : 'bg-gray-100 text-gray-400 group-hover/faq:bg-[#05308d]/10 group-hover/faq:text-[#05308d]'
+              : 'bg-gray-100 text-gray-400 dark:bg-slate-700 dark:text-slate-400 group-hover/faq:bg-[#05308d]/10 group-hover/faq:text-[#05308d]'
           }`}
         >
           <HiOutlineChevronDown className="w-4 h-4" />
@@ -273,13 +273,13 @@ function AccordionItem({ question, answer, list, isOpen, onClick, index }) {
       >
         <div className="px-5 sm:px-6 pb-5 sm:pb-6 pl-[4.25rem] sm:pl-[4.75rem]">
           <div className="w-10 h-[2px] bg-[#fbbf24] rounded-full mb-3"></div>
-          <p className="font-body text-sm sm:text-[15px] text-gray-600 leading-relaxed">
+          <p className="font-body text-sm sm:text-[15px] text-gray-600 dark:text-slate-300 leading-relaxed">
             {answer}
           </p>
           {list && (
             <ul className="mt-3 space-y-2">
               {list.map((item, i) => (
-                <li key={i} className="flex items-start gap-2 font-body text-sm text-gray-600">
+                <li key={i} className="flex items-start gap-2 font-body text-sm text-gray-600 dark:text-slate-300">
                   <span className="w-1.5 h-1.5 rounded-full bg-[#fbbf24] mt-1.5 flex-shrink-0"></span>
                   {item}
                 </li>
@@ -325,7 +325,7 @@ function FAQ() {
   let globalIndex = 0;
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-white dark:bg-slate-900">
       {/* ============================================ */}
       {/* HERO SECTION */}
       {/* ============================================ */}
@@ -366,7 +366,7 @@ function FAQ() {
       {/* ============================================ */}
       {/* CATEGORY FILTER PILLS */}
       {/* ============================================ */}
-      <section className="bg-gray-50 border-b border-gray-100">
+      <section className="bg-gray-50 dark:bg-slate-800 border-b border-gray-100 dark:border-slate-700">
         <div className="max-w-6xl mx-auto px-5 py-6">
           <div className="flex flex-wrap gap-2 sm:gap-3 justify-center">
             {/* "All" pill */}
@@ -375,7 +375,7 @@ function FAQ() {
               className={`group/pill relative px-4 sm:px-5 py-2.5 rounded-xl font-heading text-xs sm:text-sm font-semibold transition-all duration-300 cursor-pointer border-none overflow-hidden ${
                 activeCategory === 'all'
                   ? 'bg-[#05308d] text-white shadow-lg shadow-[#05308d]/25'
-                  : 'bg-white text-[#0a1e3d] hover:bg-[#05308d]/5 shadow-sm hover:shadow-md'
+                  : 'bg-white dark:bg-slate-700 text-[#0a1e3d] dark:text-slate-200 hover:bg-[#05308d]/5 shadow-sm hover:shadow-md'
               }`}
             >
               <span className="relative z-10">All Questions</span>
@@ -394,7 +394,7 @@ function FAQ() {
                   className={`group/pill relative flex items-center gap-1.5 sm:gap-2 px-4 sm:px-5 py-2.5 rounded-xl font-heading text-xs sm:text-sm font-semibold transition-all duration-300 cursor-pointer border-none overflow-hidden ${
                     isActive
                       ? 'bg-[#05308d] text-white shadow-lg shadow-[#05308d]/25'
-                      : 'bg-white text-[#0a1e3d] hover:bg-[#05308d]/5 shadow-sm hover:shadow-md'
+                      : 'bg-white dark:bg-slate-700 text-[#0a1e3d] dark:text-slate-200 hover:bg-[#05308d]/5 shadow-sm hover:shadow-md'
                   }`}
                 >
                   <Icon
@@ -417,15 +417,15 @@ function FAQ() {
       {/* ============================================ */}
       {/* FAQ CONTENT */}
       {/* ============================================ */}
-      <section className="py-16 sm:py-20 bg-gradient-to-b from-gray-50 to-white">
+      <section className="py-16 sm:py-20 bg-gradient-to-b from-gray-50 to-white dark:from-slate-900 dark:to-slate-900">
         <div className="max-w-4xl mx-auto px-5">
           {filteredCategories.length === 0 ? (
             <div className="text-center py-20">
-              <HiOutlineSearch className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-              <h3 className="font-heading text-xl font-bold text-[#0a1e3d] mb-2">
+              <HiOutlineSearch className="w-16 h-16 text-gray-300 dark:text-slate-600 mx-auto mb-4" />
+              <h3 className="font-heading text-xl font-bold text-[#0a1e3d] dark:text-slate-50 mb-2">
                 No results found
               </h3>
-              <p className="font-body text-gray-500">
+              <p className="font-body text-gray-500 dark:text-slate-400">
                 Try searching with different keywords or browse by category.
               </p>
             </div>
@@ -436,18 +436,18 @@ function FAQ() {
                 <div key={cat.id} className="mb-14 last:mb-0">
                   {/* Category header */}
                   <div className="flex items-center gap-3 mb-6">
-                    <div className="w-10 h-10 rounded-xl bg-[#05308d]/5 flex items-center justify-center">
-                      <Icon className="w-5 h-5 text-[#05308d]" />
+                    <div className="w-10 h-10 rounded-xl bg-[#05308d]/5 dark:bg-[#05308d]/20 flex items-center justify-center">
+                      <Icon className="w-5 h-5 text-[#05308d] dark:text-blue-300" />
                     </div>
                     <div>
-                      <h2 className="font-heading text-xl sm:text-2xl font-bold text-[#0a1e3d]">
+                      <h2 className="font-heading text-xl sm:text-2xl font-bold text-[#0a1e3d] dark:text-slate-50">
                         {cat.label}
                       </h2>
-                      <p className="font-body text-xs text-gray-400 mt-0.5">
+                      <p className="font-body text-xs text-gray-400 dark:text-slate-500 mt-0.5">
                         {cat.questions.length} question{cat.questions.length > 1 ? 's' : ''}
                       </p>
                     </div>
-                    <div className="flex-1 h-px bg-gradient-to-r from-[#05308d]/10 to-transparent ml-4"></div>
+                    <div className="flex-1 h-px bg-gradient-to-r from-[#05308d]/10 dark:from-slate-700 to-transparent ml-4"></div>
                   </div>
 
                   {/* Questions */}

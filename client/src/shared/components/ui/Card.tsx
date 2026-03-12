@@ -24,10 +24,10 @@ interface CardProps extends HTMLAttributes<HTMLDivElement> {
 // ============================================
 
 const variantStyles: Record<CardVariant, string> = {
-  default: 'bg-white border border-slate-200/60 shadow-soft-sm',
-  elevated: 'bg-white shadow-elevated border-0',
-  outlined: 'bg-transparent border border-slate-200',
-  ghost: 'bg-slate-50/50 border-0',
+  default: 'bg-white dark:bg-slate-800 border border-slate-200/60 dark:border-slate-700 shadow-soft-sm',
+  elevated: 'bg-white dark:bg-slate-800 shadow-elevated border-0',
+  outlined: 'bg-transparent border border-slate-200 dark:border-slate-700',
+  ghost: 'bg-slate-50/50 dark:bg-slate-800/50 border-0',
 };
 
 const baseStyles = 'rounded-2xl transition-all duration-250';
@@ -53,7 +53,7 @@ export const Card = forwardRef<HTMLDivElement, CardProps>(
       baseStyles,
       variantStyles[variant],
       !noPadding && 'p-5',
-      (isHoverable || isClickable) && 'hover:shadow-elevated hover:border-slate-200',
+      (isHoverable || isClickable) && 'hover:shadow-elevated hover:border-slate-200 dark:hover:border-slate-600',
       isClickable && 'cursor-pointer',
       className
     );
@@ -99,7 +99,7 @@ export const CardHeader = forwardRef<HTMLDivElement, CardHeaderProps>(
     <div
       ref={ref}
       className={clsx(
-        'flex items-start justify-between gap-4 pb-4 border-b border-slate-100',
+        'flex items-start justify-between gap-4 pb-4 border-b border-slate-100 dark:border-slate-700',
         className
       )}
       {...props}
@@ -107,10 +107,10 @@ export const CardHeader = forwardRef<HTMLDivElement, CardHeaderProps>(
       {(title || subtitle) ? (
         <div className="min-w-0 flex-1">
           {title && (
-            <h3 className="text-heading-md text-slate-900 truncate">{title}</h3>
+            <h3 className="text-heading-md text-slate-900 dark:text-slate-50 truncate">{title}</h3>
           )}
           {subtitle && (
-            <p className="text-body-sm text-slate-500 mt-0.5">{subtitle}</p>
+            <p className="text-body-sm text-slate-500 dark:text-slate-400 mt-0.5">{subtitle}</p>
           )}
         </div>
       ) : children}
@@ -144,7 +144,7 @@ export const CardFooter = forwardRef<HTMLDivElement, HTMLAttributes<HTMLDivEleme
     <div
       ref={ref}
       className={clsx(
-        'flex items-center gap-3 pt-4 border-t border-slate-100',
+        'flex items-center gap-3 pt-4 border-t border-slate-100 dark:border-slate-700',
         className
       )}
       {...props}
@@ -174,11 +174,11 @@ interface StatCardProps extends HTMLAttributes<HTMLDivElement> {
 }
 
 const iconColorStyles = {
-  amber: 'bg-amber-100 text-amber-600',
-  emerald: 'bg-emerald-100 text-emerald-600',
-  sky: 'bg-sky-100 text-sky-600',
-  rose: 'bg-rose-100 text-rose-600',
-  slate: 'bg-slate-100 text-slate-600',
+  amber: 'bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-300',
+  emerald: 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-300',
+  sky: 'bg-sky-100 dark:bg-sky-900/30 text-sky-600 dark:text-sky-300',
+  rose: 'bg-rose-100 dark:bg-rose-900/30 text-rose-600 dark:text-rose-300',
+  slate: 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-400',
 };
 
 export const StatCard = forwardRef<HTMLDivElement, StatCardProps>(
@@ -201,7 +201,7 @@ export const StatCard = forwardRef<HTMLDivElement, StatCardProps>(
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: durations.slow, ease: easings.smooth }}
       className={clsx(
-        'bg-white rounded-2xl border border-slate-200/60 shadow-soft-sm p-5',
+        'bg-white dark:bg-slate-800 rounded-2xl border border-slate-200/60 dark:border-slate-700 shadow-soft-sm p-5',
         'hover:shadow-soft-md transition-shadow duration-250',
         className
       )}
@@ -218,15 +218,15 @@ export const StatCard = forwardRef<HTMLDivElement, StatCardProps>(
 
       {isLoading ? (
         <>
-          <div className="h-8 w-24 bg-slate-200 rounded animate-pulse mb-1" />
-          <div className="h-4 w-16 bg-slate-100 rounded animate-pulse" />
+          <div className="h-8 w-24 bg-slate-200 dark:bg-slate-700 rounded animate-pulse mb-1" />
+          <div className="h-4 w-16 bg-slate-100 dark:bg-slate-700 rounded animate-pulse" />
         </>
       ) : (
         <>
-          <div className="text-2xl font-heading font-semibold text-slate-900 mb-1">
+          <div className="text-2xl font-heading font-semibold text-slate-900 dark:text-slate-50 mb-1">
             {value}
           </div>
-          <div className="text-sm text-slate-500">{title}</div>
+          <div className="text-sm text-slate-500 dark:text-slate-400">{title}</div>
 
           {trend && (
             <div className={clsx(
@@ -235,7 +235,7 @@ export const StatCard = forwardRef<HTMLDivElement, StatCardProps>(
             )}>
               <span>{trend.isPositive ? '+' : ''}{trend.value}%</span>
               {trend.label && (
-                <span className="text-slate-400">{trend.label}</span>
+                <span className="text-slate-400 dark:text-slate-500">{trend.label}</span>
               )}
             </div>
           )}
@@ -264,7 +264,7 @@ export const MetricCard = forwardRef<HTMLDivElement, MetricCardProps>(
     <div
       ref={ref}
       className={clsx(
-        'flex items-center gap-4 p-4 rounded-xl bg-slate-50/50',
+        'flex items-center gap-4 p-4 rounded-xl bg-slate-50/50 dark:bg-slate-800/50',
         className
       )}
       {...props}
@@ -278,10 +278,10 @@ export const MetricCard = forwardRef<HTMLDivElement, MetricCardProps>(
         </div>
       )}
       <div className="min-w-0 flex-1">
-        <div className="text-lg font-semibold text-slate-900">{value}</div>
-        <div className="text-xs text-slate-500 truncate">{label}</div>
+        <div className="text-lg font-semibold text-slate-900 dark:text-slate-50">{value}</div>
+        <div className="text-xs text-slate-500 dark:text-slate-400 truncate">{label}</div>
         {subValue && (
-          <div className="text-xs text-slate-400 mt-0.5">{subValue}</div>
+          <div className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">{subValue}</div>
         )}
       </div>
     </div>

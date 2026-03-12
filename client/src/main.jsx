@@ -4,6 +4,7 @@ import ReactDOM from "react-dom/client";
 import { ClerkProvider } from "@clerk/clerk-react";
 import App from "./App.jsx";
 import { AuthProvider } from "./context/AuthContext.jsx";
+import { ThemeProvider } from "./context/ThemeContext.jsx";
 import { ApiSetup } from "./components/ApiSetup.tsx";
 import { DevTools } from "./components/DevTools.tsx";
 
@@ -22,17 +23,19 @@ if (!CLERK_PUBLISHABLE_KEY) {
 // Render app - always with ClerkProvider
 const AppWithProviders = () => {
   return (
-    <ClerkProvider publishableKey={CLERK_PUBLISHABLE_KEY}>
-      {/* ApiSetup initializes the API client with Clerk token */}
-      <ApiSetup>
-        {/* Keep legacy AuthProvider during migration */}
-        <AuthProvider>
-          <App />
-          {/* Dev Tools - Role Switcher (only shows in dev mode) */}
-          <DevTools />
-        </AuthProvider>
-      </ApiSetup>
-    </ClerkProvider>
+    <ThemeProvider>
+      <ClerkProvider publishableKey={CLERK_PUBLISHABLE_KEY}>
+        {/* ApiSetup initializes the API client with Clerk token */}
+        <ApiSetup>
+          {/* Keep legacy AuthProvider during migration */}
+          <AuthProvider>
+            <App />
+            {/* Dev Tools - Role Switcher (only shows in dev mode) */}
+            <DevTools />
+          </AuthProvider>
+        </ApiSetup>
+      </ClerkProvider>
+    </ThemeProvider>
   );
 };
 

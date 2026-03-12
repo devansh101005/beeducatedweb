@@ -3,7 +3,7 @@ import Footer from '../components/Footer';
 
 const FacultyPage = () => {
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-white dark:bg-slate-900">
       {/* HERO */}
       <section
         className="relative pt-[80px] min-h-[50vh] flex items-center justify-center text-center"
@@ -28,22 +28,22 @@ const FacultyPage = () => {
       </section>
 
       {/* COMING SOON */}
-      <section className="py-24 sm:py-32 bg-white">
+      <section className="py-24 sm:py-32 bg-white dark:bg-slate-900">
         <div className="max-w-3xl mx-auto px-5 text-center">
           {/* Animated icon */}
-          <div className="w-20 h-20 rounded-2xl bg-[#05308d]/5 flex items-center justify-center mx-auto mb-8">
+          <div className="w-20 h-20 rounded-2xl bg-[#05308d]/5 dark:bg-[#05308d]/20 flex items-center justify-center mx-auto mb-8">
             <svg className="w-10 h-10 text-[#05308d]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
             </svg>
           </div>
 
-          <span className="inline-block font-heading text-sm font-semibold text-[#05308d] uppercase tracking-[0.15em] mb-3">
+          <span className="inline-block font-heading text-sm font-semibold text-[#05308d] dark:text-[#fbbf24] uppercase tracking-[0.15em] mb-3">
             Coming Soon
           </span>
-          <h2 className="font-heading text-2xl sm:text-3xl md:text-4xl font-bold text-[#0a1e3d] mb-4">
+          <h2 className="font-heading text-2xl sm:text-3xl md:text-4xl font-bold text-[#0a1e3d] dark:text-slate-50 mb-4">
             Faculty Profiles Are on the Way
           </h2>
-          <p className="font-body text-gray-500 text-base sm:text-lg max-w-xl mx-auto leading-relaxed mb-10">
+          <p className="font-body text-gray-500 dark:text-slate-400 text-base sm:text-lg max-w-xl mx-auto leading-relaxed mb-10">
             We're preparing detailed profiles of our experienced educators. Check back soon to meet the team behind your academic success.
           </p>
 
@@ -65,7 +65,7 @@ const FacultyPage = () => {
             </Link>
             <Link
               to="/courses"
-              className="group inline-flex items-center justify-center gap-2 bg-transparent border-2 border-[#05308d]/15 text-[#05308d] px-8 py-4 rounded-xl font-heading font-bold text-sm sm:text-base no-underline transition-all duration-300 hover:border-[#05308d]/30 hover:bg-[#05308d]/5 hover:-translate-y-0.5"
+              className="group inline-flex items-center justify-center gap-2 bg-transparent border-2 border-[#05308d]/15 dark:border-slate-600 text-[#05308d] dark:text-slate-200 px-8 py-4 rounded-xl font-heading font-bold text-sm sm:text-base no-underline transition-all duration-300 hover:border-[#05308d]/30 dark:hover:border-slate-500 hover:bg-[#05308d]/5 dark:hover:bg-slate-800 hover:-translate-y-0.5"
             >
               Explore Courses
             </Link>

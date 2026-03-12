@@ -29,7 +29,7 @@ function Home() {
   }, []);
 
   return (
-    <div className="overflow-x-hidden w-full pt-0 mt-0 bg-white">
+    <div className="overflow-x-hidden w-full pt-0 mt-0 bg-white dark:bg-slate-900">
 
       {showAnnouncement && (
         <AnnouncementModal
@@ -104,21 +104,21 @@ function Home() {
       {/* ============================================ */}
       {/* SECTION 2 - OUR PROGRAMS */}
       {/* ============================================ */}
-      <section className="py-20 bg-white">
+      <section className="py-20 bg-white dark:bg-slate-900">
         <div className="max-w-7xl mx-auto px-5 w-full">
           <div className="text-center mb-14">
-            <h2 className="font-heading text-3xl md:text-4xl font-bold text-[#0a1e3d] mb-3">Our Programs</h2>
-            <p className="font-body text-[15px] md:text-base text-gray-500 max-w-xl mx-auto">Structured programs designed to build strong fundamentals and competitive edge</p>
+            <h2 className="font-heading text-3xl md:text-4xl font-bold text-[#0a1e3d] dark:text-slate-50 mb-3">Our Programs</h2>
+            <p className="font-body text-[15px] md:text-base text-gray-500 dark:text-slate-400 max-w-xl mx-auto">Structured programs designed to build strong fundamentals and competitive edge</p>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             {/* IIT-JEE & NEET Foundation */}
-            <div className="bg-gray-50 rounded-2xl p-8 md:p-10 border border-gray-100 hover:shadow-xl transition-shadow duration-300">
+            <div className="bg-gray-50 dark:bg-slate-800 rounded-2xl p-8 md:p-10 border border-gray-100 dark:border-slate-700 hover:shadow-xl transition-shadow duration-300">
               <div className="flex items-center gap-4 mb-6">
                 <div className="w-14 h-14 bg-[#0a1e3d] rounded-xl flex items-center justify-center flex-shrink-0">
                   <span className="text-2xl">🎯</span>
                 </div>
-                <h3 className="font-heading text-xl md:text-2xl font-bold text-[#0a1e3d]">IIT-JEE & NEET Foundation (Class 6–12)</h3>
+                <h3 className="font-heading text-xl md:text-2xl font-bold text-[#0a1e3d] dark:text-slate-50">IIT-JEE & NEET Foundation (Class 6–12)</h3>
               </div>
               <ul className="space-y-3">
                 {[
@@ -131,19 +131,19 @@ function Home() {
                 ].map((item, i) => (
                   <li key={i} className="flex items-start gap-3">
                     <span className="text-[#1a56db] mt-0.5 flex-shrink-0 font-bold">&#10003;</span>
-                    <span className="font-body text-[14px] md:text-[15px] text-gray-600">{item}</span>
+                    <span className="font-body text-[14px] md:text-[15px] text-gray-600 dark:text-slate-300">{item}</span>
                   </li>
                 ))}
               </ul>
             </div>
 
             {/* Home Tuition Service */}
-            <div className="bg-gray-50 rounded-2xl p-8 md:p-10 border border-gray-100 hover:shadow-xl transition-shadow duration-300">
+            <div className="bg-gray-50 dark:bg-slate-800 rounded-2xl p-8 md:p-10 border border-gray-100 dark:border-slate-700 hover:shadow-xl transition-shadow duration-300">
               <div className="flex items-center gap-4 mb-6">
                 <div className="w-14 h-14 bg-[#0a1e3d] rounded-xl flex items-center justify-center flex-shrink-0">
                   <span className="text-2xl">🏠</span>
                 </div>
-                <h3 className="font-heading text-xl md:text-2xl font-bold text-[#0a1e3d]">Home Tuition Service (Nursery–12)</h3>
+                <h3 className="font-heading text-xl md:text-2xl font-bold text-[#0a1e3d] dark:text-slate-50">Home Tuition Service (Nursery–12)</h3>
               </div>
               <ul className="space-y-3">
                 {[
@@ -155,7 +155,7 @@ function Home() {
                 ].map((item, i) => (
                   <li key={i} className="flex items-start gap-3">
                     <span className="text-[#1a56db] mt-0.5 flex-shrink-0 font-bold">&#10003;</span>
-                    <span className="font-body text-[14px] md:text-[15px] text-gray-600">{item}</span>
+                    <span className="font-body text-[14px] md:text-[15px] text-gray-600 dark:text-slate-300">{item}</span>
                   </li>
                 ))}
               </ul>
@@ -167,11 +167,11 @@ function Home() {
       {/* ============================================ */}
       {/* SECTION 3 - WHY CHOOSE US */}
       {/* ============================================ */}
-      <section className="py-20 bg-gray-50">
+      <section className="py-20 bg-gray-50 dark:bg-slate-800">
         <div className="max-w-7xl mx-auto px-5 w-full">
           <div className="text-center mb-14">
-            <h2 className="font-heading text-3xl md:text-4xl font-bold text-[#0a1e3d] mb-3">Why Choose Be Educated?</h2>
-            <p className="font-body text-[15px] md:text-base text-gray-500 max-w-xl mx-auto">What sets us apart from the rest</p>
+            <h2 className="font-heading text-3xl md:text-4xl font-bold text-[#0a1e3d] dark:text-slate-50 mb-3">Why Choose Be Educated?</h2>
+            <p className="font-body text-[15px] md:text-base text-gray-500 dark:text-slate-400 max-w-xl mx-auto">What sets us apart from the rest</p>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -183,12 +183,12 @@ function Home() {
               { icon: '🎓', title: 'Experienced & Dedicated Faculty', desc: 'Teachers with years of experience in competitive and board exam coaching.' },
               { icon: '💡', title: 'Concept-Based Teaching', desc: 'Focus on deep understanding of fundamentals rather than rote memorization.' },
             ].map((item, i) => (
-              <div key={i} className="bg-white p-7 rounded-xl border border-gray-100 hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
+              <div key={i} className="bg-white dark:bg-slate-900 p-7 rounded-xl border border-gray-100 dark:border-slate-700 hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
                 <div className="w-12 h-12 bg-[#0a1e3d] rounded-lg flex items-center justify-center mb-5">
                   <span className="text-2xl">{item.icon}</span>
                 </div>
-                <h3 className="font-heading text-lg font-semibold text-[#0a1e3d] mb-2">{item.title}</h3>
-                <p className="font-body text-[14px] md:text-[15px] text-gray-500 leading-relaxed">{item.desc}</p>
+                <h3 className="font-heading text-lg font-semibold text-[#0a1e3d] dark:text-slate-50 mb-2">{item.title}</h3>
+                <p className="font-body text-[14px] md:text-[15px] text-gray-500 dark:text-slate-400 leading-relaxed">{item.desc}</p>
               </div>
             ))}
           </div>
@@ -198,12 +198,12 @@ function Home() {
       {/* ============================================ */}
       {/* SECTION 4 - ACADEMIC EXCELLENCE */}
       {/* ============================================ */}
-      <section className="py-20 bg-white">
+      <section className="py-20 bg-white dark:bg-slate-900">
         <div className="max-w-7xl mx-auto px-5 w-full">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
             <div>
-              <h2 className="font-heading text-3xl md:text-4xl font-bold text-[#0a1e3d] mb-6">Academic Excellence</h2>
-              <p className="font-body text-[14px] md:text-base text-gray-500 mb-8 leading-relaxed">
+              <h2 className="font-heading text-3xl md:text-4xl font-bold text-[#0a1e3d] dark:text-slate-50 mb-6">Academic Excellence</h2>
+              <p className="font-body text-[14px] md:text-base text-gray-500 dark:text-slate-400 mb-8 leading-relaxed">
                 Our results-driven approach ensures every student is prepared not just for exams, but for academic success at every level.
               </p>
               <div className="space-y-5">
@@ -213,11 +213,11 @@ function Home() {
                   { icon: '📊', text: 'Weekly Performance Reports' },
                   { icon: '🏆', text: 'Targeting 90%+ Academic Results' },
                 ].map((item, i) => (
-                  <div key={i} className="flex items-center gap-4 bg-gray-50 p-4 rounded-xl border border-gray-100">
+                  <div key={i} className="flex items-center gap-4 bg-gray-50 dark:bg-slate-800 p-4 rounded-xl border border-gray-100 dark:border-slate-700">
                     <div className="w-11 h-11 bg-[#0a1e3d] rounded-lg flex items-center justify-center flex-shrink-0">
                       <span className="text-xl">{item.icon}</span>
                     </div>
-                    <span className="font-body text-[15px] md:text-base font-medium text-gray-700">{item.text}</span>
+                    <span className="font-body text-[15px] md:text-base font-medium text-gray-700 dark:text-slate-200">{item.text}</span>
                   </div>
                 ))}
               </div>

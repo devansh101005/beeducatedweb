@@ -67,7 +67,7 @@
     --shadow-elevated: 0 0 0 1px rgb(0 0 0 / 0.03), 0 2px 4px rgb(0 0 0 / 0.03), 0 12px 24px rgb(0 0 0 / 0.05);
   }
 
-  /* Dark mode tokens (future support) */
+  /* Dark mode tokens */
   .dark {
     --color-background: 15 23 42; /* slate-900 */
     --color-surface: 30 41 59; /* slate-800 */
@@ -77,6 +77,15 @@
     --color-text-primary: 248 250 252; /* slate-50 */
     --color-text-secondary: 203 213 225; /* slate-300 */
     --color-text-muted: 100 116 139; /* slate-500 */
+    --color-text-inverted: 15 23 42; /* slate-900 */
+    --color-brand-secondary: 203 213 225; /* slate-300 */
+
+    /* Shadows — subtler on dark backgrounds */
+    --shadow-xs: 0 1px 2px 0 rgb(0 0 0 / 0.2);
+    --shadow-sm: 0 1px 3px 0 rgb(0 0 0 / 0.25), 0 1px 2px -1px rgb(0 0 0 / 0.2);
+    --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.3), 0 2px 4px -2px rgb(0 0 0 / 0.2);
+    --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.3), 0 4px 6px -4px rgb(0 0 0 / 0.2);
+    --shadow-elevated: 0 0 0 1px rgb(255 255 255 / 0.05), 0 2px 4px rgb(0 0 0 / 0.2), 0 12px 24px rgb(0 0 0 / 0.3);
   }
 
   /* Base reset and defaults */
@@ -97,7 +106,7 @@
   }
 
   body {
-    @apply h-full font-body text-slate-800 bg-slate-50;
+    @apply h-full font-body text-slate-800 bg-slate-50 dark:text-slate-200 dark:bg-slate-900;
     font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
   }
 
@@ -108,7 +117,7 @@
 
   /* Typography defaults */
   h1, h2, h3, h4, h5, h6 {
-    @apply font-heading text-slate-900;
+    @apply font-heading text-slate-900 dark:text-slate-50;
     text-wrap: balance;
   }
 
@@ -126,6 +135,10 @@
     @apply bg-amber-100 text-amber-900;
   }
 
+  .dark ::selection {
+    @apply bg-amber-900/50 text-amber-200;
+  }
+
   /* Smooth scrollbar */
   ::-webkit-scrollbar {
     @apply w-2 h-2;
@@ -141,6 +154,18 @@
 
   ::-webkit-scrollbar-thumb:hover {
     @apply bg-slate-400;
+  }
+
+  .dark ::-webkit-scrollbar-track {
+    @apply bg-slate-800;
+  }
+
+  .dark ::-webkit-scrollbar-thumb {
+    @apply bg-slate-600;
+  }
+
+  .dark ::-webkit-scrollbar-thumb:hover {
+    @apply bg-slate-500;
   }
 
   /* Remove default button styles */
@@ -228,7 +253,8 @@
            bg-transparent text-slate-700
            hover:bg-slate-100
            active:bg-slate-200
-           focus-visible:ring-slate-500;
+           focus-visible:ring-slate-500
+           dark:text-slate-300 dark:hover:bg-slate-700 dark:active:bg-slate-600;
   }
 
   /* Outline button */
@@ -238,7 +264,8 @@
            border border-slate-300
            hover:bg-slate-50 hover:border-slate-400
            active:bg-slate-100
-           focus-visible:ring-slate-500;
+           focus-visible:ring-slate-500
+           dark:text-slate-300 dark:border-slate-600 dark:hover:bg-slate-800 dark:hover:border-slate-500;
   }
 
   /* Outline primary */
@@ -295,12 +322,14 @@
   .card {
     @apply bg-white rounded-2xl border border-slate-200/60
            shadow-soft-sm
-           transition-all duration-250 ease-smooth;
+           transition-all duration-250 ease-smooth
+           dark:bg-slate-800 dark:border-slate-700/60;
   }
 
   .card-hover {
     @apply card hover:shadow-elevated hover:border-slate-200
-           hover:-translate-y-0.5;
+           hover:-translate-y-0.5
+           dark:hover:border-slate-600;
   }
 
   .card-interactive {
@@ -309,7 +338,7 @@
   }
 
   .card-header {
-    @apply px-5 py-4 border-b border-slate-100;
+    @apply px-5 py-4 border-b border-slate-100 dark:border-slate-700;
   }
 
   .card-body {
@@ -317,7 +346,7 @@
   }
 
   .card-footer {
-    @apply px-5 py-4 border-t border-slate-100 bg-slate-50/50 rounded-b-2xl;
+    @apply px-5 py-4 border-t border-slate-100 bg-slate-50/50 rounded-b-2xl dark:border-slate-700 dark:bg-slate-800/50;
   }
 
   /* ----------------------------------------
@@ -331,7 +360,11 @@
            placeholder:text-slate-400
            transition-all duration-200 ease-smooth
            focus:outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-100
-           disabled:bg-slate-50 disabled:text-slate-400 disabled:cursor-not-allowed;
+           disabled:bg-slate-50 disabled:text-slate-400 disabled:cursor-not-allowed
+           dark:bg-slate-800 dark:text-slate-200 dark:border-slate-600
+           dark:placeholder:text-slate-500
+           dark:focus:border-amber-500 dark:focus:ring-amber-900/30
+           dark:disabled:bg-slate-900 dark:disabled:text-slate-600;
   }
 
   .input-lg {
@@ -380,7 +413,7 @@
      ---------------------------------------- */
 
   .label {
-    @apply block text-label-md text-slate-700 mb-1.5;
+    @apply block text-label-md text-slate-700 mb-1.5 dark:text-slate-300;
   }
 
   .label-required::after {
@@ -389,7 +422,7 @@
   }
 
   .helper-text {
-    @apply text-body-xs text-slate-500 mt-1.5;
+    @apply text-body-xs text-slate-500 mt-1.5 dark:text-slate-400;
   }
 
   .error-text {
@@ -408,27 +441,27 @@
   }
 
   .badge-default {
-    @apply badge bg-slate-100 text-slate-700;
+    @apply badge bg-slate-100 text-slate-700 dark:bg-slate-700 dark:text-slate-300;
   }
 
   .badge-primary {
-    @apply badge bg-amber-100 text-amber-700;
+    @apply badge bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300;
   }
 
   .badge-success {
-    @apply badge bg-emerald-100 text-emerald-700;
+    @apply badge bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300;
   }
 
   .badge-warning {
-    @apply badge bg-orange-100 text-orange-700;
+    @apply badge bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-300;
   }
 
   .badge-danger {
-    @apply badge bg-rose-100 text-rose-700;
+    @apply badge bg-rose-100 text-rose-700 dark:bg-rose-900/40 dark:text-rose-300;
   }
 
   .badge-info {
-    @apply badge bg-sky-100 text-sky-700;
+    @apply badge bg-sky-100 text-sky-700 dark:bg-sky-900/40 dark:text-sky-300;
   }
 
   /* Dot indicator */
@@ -480,11 +513,11 @@
   }
 
   .stat-card-value {
-    @apply text-display-sm font-heading text-slate-900 mb-1;
+    @apply text-display-sm font-heading text-slate-900 mb-1 dark:text-slate-50;
   }
 
   .stat-card-label {
-    @apply text-body-sm text-slate-500;
+    @apply text-body-sm text-slate-500 dark:text-slate-400;
   }
 
   .stat-card-trend {
@@ -513,11 +546,13 @@
 
   .table th {
     @apply px-4 py-3 text-left text-label-sm font-medium text-slate-500
-           bg-slate-50 border-b border-slate-200;
+           bg-slate-50 border-b border-slate-200
+           dark:bg-slate-800 dark:text-slate-400 dark:border-slate-700;
   }
 
   .table td {
-    @apply px-4 py-3.5 text-slate-700 border-b border-slate-100;
+    @apply px-4 py-3.5 text-slate-700 border-b border-slate-100
+           dark:text-slate-300 dark:border-slate-700;
   }
 
   .table tbody tr {
@@ -525,7 +560,7 @@
   }
 
   .table tbody tr:hover {
-    @apply bg-slate-50/50;
+    @apply bg-slate-50/50 dark:bg-slate-700/30;
   }
 
   .table tbody tr:last-child td {
@@ -545,11 +580,11 @@
   }
 
   .empty-state-title {
-    @apply text-heading-lg text-slate-900 mb-2;
+    @apply text-heading-lg text-slate-900 mb-2 dark:text-slate-100;
   }
 
   .empty-state-description {
-    @apply text-body-md text-slate-500 max-w-md;
+    @apply text-body-md text-slate-500 max-w-md dark:text-slate-400;
   }
 
   /* ----------------------------------------
@@ -557,7 +592,7 @@
      ---------------------------------------- */
 
   .skeleton {
-    @apply bg-slate-200 animate-pulse rounded;
+    @apply bg-slate-200 animate-pulse rounded dark:bg-slate-700;
   }
 
   .skeleton-text {
@@ -594,11 +629,11 @@
      ---------------------------------------- */
 
   .divider {
-    @apply h-px w-full bg-slate-200;
+    @apply h-px w-full bg-slate-200 dark:bg-slate-700;
   }
 
   .divider-vertical {
-    @apply w-px h-full bg-slate-200;
+    @apply w-px h-full bg-slate-200 dark:bg-slate-700;
   }
 
   .divider-text {
@@ -608,7 +643,7 @@
   .divider-text::before,
   .divider-text::after {
     content: '';
-    @apply flex-1 h-px bg-slate-200;
+    @apply flex-1 h-px bg-slate-200 dark:bg-slate-700;
   }
 
   /* ----------------------------------------
@@ -619,14 +654,16 @@
     @apply absolute z-50 mt-2 min-w-[200px]
            bg-white rounded-xl border border-slate-200
            shadow-elevated
-           py-1.5;
+           py-1.5
+           dark:bg-slate-800 dark:border-slate-700;
   }
 
   .dropdown-item {
     @apply flex items-center gap-3 px-3.5 py-2.5
            text-body-sm text-slate-700
            transition-colors duration-150
-           hover:bg-slate-50 cursor-pointer;
+           hover:bg-slate-50 cursor-pointer
+           dark:text-slate-300 dark:hover:bg-slate-700;
   }
 
   .dropdown-item-icon {
@@ -634,7 +671,7 @@
   }
 
   .dropdown-divider {
-    @apply my-1.5 mx-3.5 h-px bg-slate-100;
+    @apply my-1.5 mx-3.5 h-px bg-slate-100 dark:bg-slate-700;
   }
 
   /* ----------------------------------------
@@ -649,15 +686,16 @@
     @apply fixed z-50 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2
            w-full max-w-lg max-h-[90vh]
            bg-white rounded-2xl shadow-elevated-lg
-           overflow-hidden;
+           overflow-hidden
+           dark:bg-slate-800;
   }
 
   .modal-header {
-    @apply flex items-center justify-between px-6 py-4 border-b border-slate-100;
+    @apply flex items-center justify-between px-6 py-4 border-b border-slate-100 dark:border-slate-700;
   }
 
   .modal-title {
-    @apply text-heading-lg text-slate-900;
+    @apply text-heading-lg text-slate-900 dark:text-slate-50;
   }
 
   .modal-body {
@@ -665,7 +703,8 @@
   }
 
   .modal-footer {
-    @apply flex items-center justify-end gap-3 px-6 py-4 border-t border-slate-100 bg-slate-50/50;
+    @apply flex items-center justify-end gap-3 px-6 py-4 border-t border-slate-100 bg-slate-50/50
+           dark:border-slate-700 dark:bg-slate-800/50;
   }
 
   /* ----------------------------------------
@@ -673,7 +712,7 @@
      ---------------------------------------- */
 
   .tabs {
-    @apply flex items-center gap-1 border-b border-slate-200;
+    @apply flex items-center gap-1 border-b border-slate-200 dark:border-slate-700;
   }
 
   .tab {
@@ -681,26 +720,28 @@
            border-b-2 border-transparent -mb-px
            transition-all duration-200
            hover:text-slate-700 hover:border-slate-300
-           cursor-pointer;
+           cursor-pointer
+           dark:text-slate-400 dark:hover:text-slate-200 dark:hover:border-slate-500;
   }
 
   .tab-active {
-    @apply text-amber-600 border-amber-500;
+    @apply text-amber-600 border-amber-500 dark:text-amber-400 dark:border-amber-400;
   }
 
   /* Pills variant */
   .tabs-pills {
-    @apply flex items-center gap-1 p-1 bg-slate-100 rounded-xl;
+    @apply flex items-center gap-1 p-1 bg-slate-100 rounded-xl dark:bg-slate-800;
   }
 
   .tab-pill {
     @apply px-4 py-2 text-body-sm font-medium text-slate-600
            rounded-lg transition-all duration-200
-           hover:text-slate-800 cursor-pointer;
+           hover:text-slate-800 cursor-pointer
+           dark:text-slate-400 dark:hover:text-slate-200;
   }
 
   .tab-pill-active {
-    @apply bg-white text-slate-900 shadow-soft-sm;
+    @apply bg-white text-slate-900 shadow-soft-sm dark:bg-slate-700 dark:text-slate-100;
   }
 
   /* ----------------------------------------
@@ -728,19 +769,19 @@
   }
 
   .alert-info {
-    @apply bg-sky-50 border-sky-200 text-sky-800;
+    @apply bg-sky-50 border-sky-200 text-sky-800 dark:bg-sky-900/20 dark:border-sky-800 dark:text-sky-300;
   }
 
   .alert-success {
-    @apply bg-emerald-50 border-emerald-200 text-emerald-800;
+    @apply bg-emerald-50 border-emerald-200 text-emerald-800 dark:bg-emerald-900/20 dark:border-emerald-800 dark:text-emerald-300;
   }
 
   .alert-warning {
-    @apply bg-orange-50 border-orange-200 text-orange-800;
+    @apply bg-orange-50 border-orange-200 text-orange-800 dark:bg-orange-900/20 dark:border-orange-800 dark:text-orange-300;
   }
 
   .alert-error {
-    @apply bg-rose-50 border-rose-200 text-rose-800;
+    @apply bg-rose-50 border-rose-200 text-rose-800 dark:bg-rose-900/20 dark:border-rose-800 dark:text-rose-300;
   }
 
   /* ----------------------------------------
@@ -748,7 +789,7 @@
      ---------------------------------------- */
 
   .progress {
-    @apply h-2 w-full bg-slate-200 rounded-full overflow-hidden;
+    @apply h-2 w-full bg-slate-200 rounded-full overflow-hidden dark:bg-slate-700;
   }
 
   .progress-bar {
@@ -786,11 +827,11 @@
   }
 
   .page-title {
-    @apply text-display-sm font-heading text-slate-900 mb-2;
+    @apply text-display-sm font-heading text-slate-900 mb-2 dark:text-slate-50;
   }
 
   .page-description {
-    @apply text-body-lg text-slate-600;
+    @apply text-body-lg text-slate-600 dark:text-slate-400;
   }
 
   /* ----------------------------------------
@@ -800,11 +841,12 @@
   .sidebar {
     @apply fixed left-0 top-0 h-screen w-[var(--sidebar-width)]
            bg-white border-r border-slate-200
-           flex flex-col z-40;
+           flex flex-col z-40
+           dark:bg-slate-800 dark:border-slate-700;
   }
 
   .sidebar-header {
-    @apply h-[var(--navbar-height)] px-5 flex items-center border-b border-slate-100;
+    @apply h-[var(--navbar-height)] px-5 flex items-center border-b border-slate-100 dark:border-slate-700;
   }
 
   .sidebar-nav {
@@ -825,12 +867,14 @@
            rounded-xl
            transition-all duration-200
            hover:bg-slate-100 hover:text-slate-900
-           cursor-pointer;
+           cursor-pointer
+           dark:text-slate-400 dark:hover:bg-slate-700 dark:hover:text-slate-200;
   }
 
   .sidebar-nav-item-active {
     @apply bg-amber-50 text-amber-700 font-medium
-           hover:bg-amber-100;
+           hover:bg-amber-100
+           dark:bg-amber-900/20 dark:text-amber-400 dark:hover:bg-amber-900/30;
   }
 
   .sidebar-nav-item-icon {
@@ -838,7 +882,7 @@
   }
 
   .sidebar-footer {
-    @apply p-4 border-t border-slate-100;
+    @apply p-4 border-t border-slate-100 dark:border-slate-700;
   }
 
   /* ----------------------------------------
@@ -849,7 +893,8 @@
     @apply h-[var(--navbar-height)] px-6
            bg-white border-b border-slate-200
            flex items-center justify-between
-           sticky top-0 z-30;
+           sticky top-0 z-30
+           dark:bg-slate-800 dark:border-slate-700;
   }
 
   .topbar-search {
@@ -857,7 +902,9 @@
            bg-slate-100 rounded-xl
            text-body-sm text-slate-600
            transition-all duration-200
-           focus-within:bg-white focus-within:ring-2 focus-within:ring-amber-100 focus-within:border-amber-300;
+           focus-within:bg-white focus-within:ring-2 focus-within:ring-amber-100 focus-within:border-amber-300
+           dark:bg-slate-700 dark:text-slate-300
+           dark:focus-within:bg-slate-800 dark:focus-within:ring-amber-900/30;
   }
 
   .topbar-actions {
@@ -912,7 +959,7 @@
 
   /* Glass effect */
   .glass {
-    @apply bg-white/80 backdrop-blur-md;
+    @apply bg-white/80 backdrop-blur-md dark:bg-slate-800/80;
   }
 
   .glass-dark {

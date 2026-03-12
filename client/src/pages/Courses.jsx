@@ -65,7 +65,7 @@ const Courses = () => {
   const [activeTab, setActiveTab] = useState('offline');
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-white dark:bg-slate-900">
       {/* ============================================ */}
       {/* HERO SECTION */}
       {/* ============================================ */}
@@ -94,7 +94,7 @@ const Courses = () => {
       {/* ============================================ */}
       {/* TAB SWITCHER */}
       {/* ============================================ */}
-      <section className="bg-gray-50 border-b border-gray-100">
+      <section className="bg-gray-50 dark:bg-slate-900 border-b border-gray-100 dark:border-slate-700">
         <div className="max-w-4xl mx-auto px-5 py-6">
           <div className="flex gap-3 sm:gap-4 justify-center">
             <button
@@ -102,7 +102,7 @@ const Courses = () => {
               className={`group/tab relative flex items-center gap-2 px-6 sm:px-8 py-3.5 rounded-xl font-heading text-sm sm:text-base font-bold transition-all duration-300 cursor-pointer border-none overflow-hidden ${
                 activeTab === 'offline'
                   ? 'bg-[#05308d] text-white shadow-lg shadow-[#05308d]/25'
-                  : 'bg-white text-[#0a1e3d] hover:bg-[#05308d]/5 shadow-sm hover:shadow-md'
+                  : 'bg-white dark:bg-slate-800 text-[#0a1e3d] dark:text-slate-200 hover:bg-[#05308d]/5 shadow-sm hover:shadow-md dark:border dark:border-slate-700'
               }`}
             >
               <HiOutlineAcademicCap
@@ -121,7 +121,7 @@ const Courses = () => {
               className={`group/tab relative flex items-center gap-2 px-6 sm:px-8 py-3.5 rounded-xl font-heading text-sm sm:text-base font-bold transition-all duration-300 cursor-pointer border-none overflow-hidden ${
                 activeTab === 'online'
                   ? 'bg-[#05308d] text-white shadow-lg shadow-[#05308d]/25'
-                  : 'bg-white text-[#0a1e3d] hover:bg-[#05308d]/5 shadow-sm hover:shadow-md'
+                  : 'bg-white dark:bg-slate-800 text-[#0a1e3d] dark:text-slate-200 hover:bg-[#05308d]/5 shadow-sm hover:shadow-md dark:border dark:border-slate-700'
               }`}
             >
               <HiOutlineDesktopComputer
@@ -145,16 +145,16 @@ const Courses = () => {
       {activeTab === 'offline' && (
         <>
           {/* Program Header */}
-          <section className="py-16 sm:py-20 bg-white">
+          <section className="py-16 sm:py-20 bg-white dark:bg-slate-900">
             <div className="max-w-6xl mx-auto px-5">
               <div className="text-center mb-14">
                 <span className="inline-block font-heading text-sm font-semibold text-[#05308d] uppercase tracking-[0.15em] mb-3">
                   Currently Active
                 </span>
-                <h2 className="font-heading text-2xl sm:text-3xl md:text-[38px] font-bold text-[#0a1e3d] mb-3 leading-tight">
+                <h2 className="font-heading text-2xl sm:text-3xl md:text-[38px] font-bold text-[#0a1e3d] dark:text-slate-50 mb-3 leading-tight">
                   Offline Batch — Hybrid Classroom Program
                 </h2>
-                <p className="font-body text-gray-500 max-w-2xl mx-auto">
+                <p className="font-body text-gray-500 dark:text-slate-400 max-w-2xl mx-auto">
                   IIT-JEE / NEET Foundation | Class 6–12
                 </p>
               </div>
@@ -166,13 +166,13 @@ const Courses = () => {
                   return (
                     <div
                       key={item.class}
-                      className={`group/card relative rounded-2xl border overflow-hidden transition-all duration-300 cursor-default bg-white hover:shadow-xl hover:-translate-y-1.5 hover:border-[#05308d]/30 ${
-                        isAdvanced ? 'border-[#05308d]/20' : 'border-gray-200'
+                      className={`group/card relative rounded-2xl border overflow-hidden transition-all duration-300 cursor-default bg-white dark:bg-slate-800 hover:shadow-xl hover:-translate-y-1.5 hover:border-[#05308d]/30 ${
+                        isAdvanced ? 'border-[#05308d]/20' : 'border-gray-200 dark:border-slate-700'
                       }`}
                     >
                       {/* Top accent bar */}
                       <div className={`h-1.5 transition-all duration-500 group-hover/card:bg-gradient-to-r group-hover/card:from-[#05308d] group-hover/card:to-[#fbbf24] ${
-                        isAdvanced ? 'bg-[#05308d]' : 'bg-gray-200'
+                        isAdvanced ? 'bg-[#05308d]' : 'bg-gray-200 dark:bg-slate-700'
                       }`}></div>
 
                       {/* Popular tag for 11, 12 */}
@@ -194,11 +194,11 @@ const Courses = () => {
                             <HiOutlineAcademicCap className="w-6 h-6" />
                           </div>
                           <div>
-                            <h3 className="font-heading text-xl font-bold text-[#0a1e3d] group-hover/card:text-[#05308d] transition-colors duration-300">
+                            <h3 className="font-heading text-xl font-bold text-[#0a1e3d] dark:text-slate-50 group-hover/card:text-[#05308d] transition-colors duration-300">
                               Class {item.class}
                             </h3>
                             {!isAdvanced && (
-                              <p className="font-body text-[11px] text-gray-400">{item.tag}</p>
+                              <p className="font-body text-[11px] text-gray-400 dark:text-slate-500">{item.tag}</p>
                             )}
                           </div>
                         </div>
@@ -288,16 +288,16 @@ const Courses = () => {
       {activeTab === 'online' && (
         <>
           {/* Coming Soon Banner */}
-          <section className="py-16 sm:py-20 bg-white">
+          <section className="py-16 sm:py-20 bg-white dark:bg-slate-900">
             <div className="max-w-4xl mx-auto px-5">
               <div className="text-center mb-14">
                 <span className="inline-block font-heading text-sm font-semibold text-[#05308d] uppercase tracking-[0.15em] mb-3">
                   Coming Soon
                 </span>
-                <h2 className="font-heading text-2xl sm:text-3xl md:text-[38px] font-bold text-[#0a1e3d] mb-3 leading-tight">
+                <h2 className="font-heading text-2xl sm:text-3xl md:text-[38px] font-bold text-[#0a1e3d] dark:text-slate-50 mb-3 leading-tight">
                   Online Batch — Live Interactive Program
                 </h2>
-                <p className="font-body text-gray-500 max-w-2xl mx-auto">
+                <p className="font-body text-gray-500 dark:text-slate-400 max-w-2xl mx-auto">
                   Our online program is being designed to deliver the same quality education with the convenience of learning from home.
                 </p>
               </div>
@@ -336,7 +336,7 @@ const Courses = () => {
                 <span className="inline-block font-heading text-sm font-semibold text-[#05308d] uppercase tracking-[0.15em] mb-3">
                   What to Expect
                 </span>
-                <h3 className="font-heading text-xl sm:text-2xl font-bold text-[#0a1e3d]">
+                <h3 className="font-heading text-xl sm:text-2xl font-bold text-[#0a1e3d] dark:text-slate-50">
                   Planned Features
                 </h3>
               </div>
@@ -347,7 +347,7 @@ const Courses = () => {
                   return (
                     <div
                       key={index}
-                      className="group/feat relative flex items-start gap-4 bg-white border border-gray-200 rounded-xl p-5 transition-all duration-300 hover:shadow-lg hover:-translate-y-1 hover:border-[#05308d]/20 overflow-hidden"
+                      className="group/feat relative flex items-start gap-4 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl p-5 transition-all duration-300 hover:shadow-lg hover:-translate-y-1 hover:border-[#05308d]/20 overflow-hidden"
                     >
                       {/* Top accent */}
                       <div className="absolute top-0 left-0 w-0 h-[2px] bg-gradient-to-r from-[#05308d] to-[#fbbf24] group-hover/feat:w-full transition-all duration-500"></div>
@@ -358,7 +358,7 @@ const Courses = () => {
                         <Icon className="w-5 h-5 text-[#05308d] group-hover/feat:text-white transition-colors duration-300" />
                       </div>
                       <div className="pt-1.5">
-                        <p className="font-body text-sm text-gray-600 group-hover/feat:text-[#0a1e3d] transition-colors duration-300">
+                        <p className="font-body text-sm text-gray-600 dark:text-slate-300 group-hover/feat:text-[#0a1e3d] dark:group-hover/feat:text-slate-50 transition-colors duration-300">
                           {item.text}
                         </p>
                       </div>
@@ -374,13 +374,13 @@ const Courses = () => {
       {/* ============================================ */}
       {/* WHY CHOOSE US */}
       {/* ============================================ */}
-      <section className="py-16 sm:py-20 bg-gray-50">
+      <section className="py-16 sm:py-20 bg-gray-50 dark:bg-slate-800">
         <div className="max-w-6xl mx-auto px-5">
           <div className="text-center mb-14">
             <span className="inline-block font-heading text-sm font-semibold text-[#05308d] uppercase tracking-[0.15em] mb-3">
               Why Be Educated
             </span>
-            <h2 className="font-heading text-2xl sm:text-3xl md:text-4xl font-bold text-[#0a1e3d] mb-3">
+            <h2 className="font-heading text-2xl sm:text-3xl md:text-4xl font-bold text-[#0a1e3d] dark:text-slate-50 mb-3">
               The Be Educated Advantage
             </h2>
           </div>
@@ -396,7 +396,7 @@ const Courses = () => {
               return (
                 <div
                   key={index}
-                  className="group/adv relative bg-white rounded-2xl border border-gray-100 p-7 transition-all duration-300 hover:shadow-xl hover:-translate-y-1.5 hover:border-[#05308d]/20 overflow-hidden text-center"
+                  className="group/adv relative bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700 p-7 transition-all duration-300 hover:shadow-xl hover:-translate-y-1.5 hover:border-[#05308d]/20 overflow-hidden text-center"
                 >
                   {/* Top accent bar */}
                   <div className="absolute top-0 left-0 w-0 h-1 bg-gradient-to-r from-[#05308d] to-[#fbbf24] group-hover/adv:w-full transition-all duration-500"></div>
@@ -407,10 +407,10 @@ const Courses = () => {
                     <div className="w-14 h-14 rounded-2xl bg-[#05308d]/5 flex items-center justify-center mx-auto mb-5 transition-all duration-300 group-hover/adv:bg-[#05308d] group-hover/adv:scale-110 group-hover/adv:rotate-3">
                       <Icon className="w-7 h-7 text-[#05308d] group-hover/adv:text-white transition-colors duration-300" />
                     </div>
-                    <h3 className="font-heading text-lg font-bold text-[#0a1e3d] mb-2 group-hover/adv:text-[#05308d] transition-colors duration-300">
+                    <h3 className="font-heading text-lg font-bold text-[#0a1e3d] dark:text-slate-50 mb-2 group-hover/adv:text-[#05308d] transition-colors duration-300">
                       {item.title}
                     </h3>
-                    <p className="font-body text-sm text-gray-500 leading-relaxed">
+                    <p className="font-body text-sm text-gray-500 dark:text-slate-400 leading-relaxed">
                       {item.desc}
                     </p>
                   </div>

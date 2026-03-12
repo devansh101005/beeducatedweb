@@ -5,7 +5,7 @@ import Footer from '../components/Footer';
 
 function About() {
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-white dark:bg-slate-900">
 
       {/* ============================================ */}
       {/* HERO SECTION - Image + overlay */}
@@ -35,7 +35,7 @@ function About() {
       {/* ============================================ */}
       {/* ABOUT CONTENT - Story Section */}
       {/* ============================================ */}
-      <section className="py-20 bg-white">
+      <section className="py-20 bg-white dark:bg-slate-900">
         <div className="max-w-6xl mx-auto px-5">
           <div className="grid lg:grid-cols-2 gap-14 items-center">
             {/* Left: Image */}
@@ -56,13 +56,13 @@ function About() {
 
             {/* Right: Content */}
             <div>
-              <span className="inline-block font-heading text-xs font-semibold text-[#05308d] uppercase tracking-[0.2em] mb-3">
+              <span className="inline-block font-heading text-xs font-semibold text-[#05308d] dark:text-[#fbbf24] uppercase tracking-[0.2em] mb-3">
                 Our Story
               </span>
-              <h2 className="font-heading text-[28px] sm:text-[34px] font-bold text-[#0a1e3d] mb-6 leading-tight">
+              <h2 className="font-heading text-[28px] sm:text-[34px] font-bold text-[#0a1e3d] dark:text-slate-50 mb-6 leading-tight">
                 Dedicated to Academic Excellence
               </h2>
-              <div className="space-y-4 font-body text-[15px] text-gray-600 leading-relaxed">
+              <div className="space-y-4 font-body text-[15px] text-gray-600 dark:text-slate-300 leading-relaxed">
                 <p>
                   Be Educated is a dedicated IIT-JEE & NEET Foundation Institute focused on building strong academic foundations from Class 6 onwards. Our teaching approach is centered on conceptual clarity, disciplined study patterns, and consistent practice.
                 </p>
@@ -75,7 +75,7 @@ function About() {
                 <p>
                   In addition to foundation programs for Classes 6–12, we also provide Home Tuition services from Nursery to Class 12 for personalized learning support.
                 </p>
-                <p className="font-medium text-[#0a1e3d]">
+                <p className="font-medium text-[#0a1e3d] dark:text-slate-50">
                   Our goal is simple — to develop confident, concept-strong students who achieve beyond limits.
                 </p>
               </div>
@@ -87,11 +87,11 @@ function About() {
       {/* ============================================ */}
       {/* VISION & MISSION */}
       {/* ============================================ */}
-      <section className="py-20 bg-gray-50">
+      <section className="py-20 bg-gray-50 dark:bg-slate-800">
         <div className="max-w-6xl mx-auto px-5">
           <div className="grid md:grid-cols-2 gap-8">
             {/* Vision Card */}
-            <div className="group relative bg-white rounded-2xl p-8 md:p-10 border border-gray-100 overflow-hidden hover:-translate-y-2 hover:shadow-elevated-lg transition-all duration-500 cursor-default">
+            <div className="group relative bg-white dark:bg-slate-800 rounded-2xl p-8 md:p-10 border border-gray-100 dark:border-slate-700 overflow-hidden hover:-translate-y-2 hover:shadow-elevated-lg transition-all duration-500 cursor-default">
               {/* Top accent bar that expands on hover */}
               <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-[#05308d] to-[#1a56db] group-hover:h-1.5 transition-all duration-500" />
               {/* Subtle corner glow on hover */}
@@ -100,22 +100,22 @@ function About() {
                 <div className="w-14 h-14 bg-[#05308d]/10 rounded-xl flex items-center justify-center text-[#05308d] mb-6 group-hover:bg-[#05308d] group-hover:text-white group-hover:scale-110 group-hover:rotate-3 transition-all duration-500">
                   <HiOutlineLightBulb className="text-2xl" />
                 </div>
-                <h2 className="font-heading text-2xl font-bold text-[#0a1e3d] mb-4">Our Vision</h2>
-                <p className="font-body text-[15px] text-gray-600 leading-relaxed">
+                <h2 className="font-heading text-2xl font-bold text-[#0a1e3d] dark:text-slate-50 mb-4">Our Vision</h2>
+                <p className="font-body text-[15px] text-gray-600 dark:text-slate-300 leading-relaxed">
                   To create academically strong and competitive students who are well-prepared for IIT-JEE, NEET, and future academic challenges.
                 </p>
               </div>
             </div>
 
             {/* Mission Card */}
-            <div className="group relative bg-white rounded-2xl p-8 md:p-10 border border-gray-100 overflow-hidden hover:-translate-y-2 hover:shadow-elevated-lg transition-all duration-500 cursor-default">
+            <div className="group relative bg-white dark:bg-slate-800 rounded-2xl p-8 md:p-10 border border-gray-100 dark:border-slate-700 overflow-hidden hover:-translate-y-2 hover:shadow-elevated-lg transition-all duration-500 cursor-default">
               <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-[#1a56db] to-[#05308d] group-hover:h-1.5 transition-all duration-500" />
               <div className="absolute -top-20 -right-20 w-40 h-40 bg-[#05308d]/5 rounded-full blur-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
               <div className="relative z-10">
                 <div className="w-14 h-14 bg-[#05308d]/10 rounded-xl flex items-center justify-center text-[#05308d] mb-6 group-hover:bg-[#05308d] group-hover:text-white group-hover:scale-110 group-hover:rotate-3 transition-all duration-500">
                   <HiOutlineAcademicCap className="text-2xl" />
                 </div>
-                <h2 className="font-heading text-2xl font-bold text-[#0a1e3d] mb-4">Our Mission</h2>
+                <h2 className="font-heading text-2xl font-bold text-[#0a1e3d] dark:text-slate-50 mb-4">Our Mission</h2>
                 <ul className="space-y-3">
                   {[
                     'Provide concept-based teaching',
@@ -126,7 +126,7 @@ function About() {
                   ].map((item, i) => (
                     <li key={i} className="flex items-start gap-3 group/item">
                       <span className="w-2 h-2 rounded-full bg-[#05308d]/40 mt-1.5 shrink-0 group-hover/item:bg-[#05308d] group-hover/item:scale-125 transition-all duration-300" />
-                      <span className="font-body text-[15px] text-gray-600 group-hover/item:text-[#0a1e3d] transition-colors duration-300">{item}</span>
+                      <span className="font-body text-[15px] text-gray-600 dark:text-slate-300 group-hover/item:text-[#0a1e3d] dark:group-hover/item:text-slate-50 transition-colors duration-300">{item}</span>
                     </li>
                   ))}
                 </ul>
@@ -187,38 +187,38 @@ function About() {
       {/* ============================================ */}
       {/* FOUNDERS SECTION */}
       {/* ============================================ */}
-      <section className="py-20 bg-white">
+      <section className="py-20 bg-white dark:bg-slate-900">
         <div className="max-w-6xl mx-auto px-5">
           <div className="text-center mb-14">
-            <span className="inline-block font-heading text-xs font-semibold text-[#05308d] uppercase tracking-[0.2em] mb-3">
+            <span className="inline-block font-heading text-xs font-semibold text-[#05308d] dark:text-[#fbbf24] uppercase tracking-[0.2em] mb-3">
               Leadership
             </span>
-            <h2 className="font-heading text-3xl md:text-[40px] font-bold text-[#0a1e3d]">
+            <h2 className="font-heading text-3xl md:text-[40px] font-bold text-[#0a1e3d] dark:text-slate-50">
               Meet the Founders
             </h2>
-            <p className="font-body text-gray-500 mt-3 max-w-lg mx-auto">
+            <p className="font-body text-gray-500 dark:text-slate-400 mt-3 max-w-lg mx-auto">
               The visionaries behind Be Educated
             </p>
           </div>
 
           <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
             {/* Founder 1: Rishabh */}
-            <div className="group relative bg-white rounded-2xl overflow-hidden border border-gray-100 hover:-translate-y-2 hover:shadow-elevated-lg transition-all duration-500 flex flex-col">
+            <div className="group relative bg-white dark:bg-slate-800 rounded-2xl overflow-hidden border border-gray-100 dark:border-slate-700 hover:-translate-y-2 hover:shadow-elevated-lg transition-all duration-500 flex flex-col">
               <div className="h-36 bg-gradient-to-r from-[#0a1e3d] via-[#05308d] to-[#05308d] bg-[length:200%_100%] group-hover:animate-shimmer w-full relative">
                 <div className="absolute top-4 right-4 w-20 h-20 border border-white/10 rounded-full" />
                 <div className="absolute top-8 right-8 w-12 h-12 border border-white/5 rounded-full" />
-                <div className="absolute -bottom-14 left-8 p-1.5 bg-white rounded-full shadow-lg group-hover:shadow-xl transition-shadow duration-500">
-                  <img src={Rishabh} alt="Rishabh Pandey" className="w-24 h-24 rounded-full object-cover ring-4 ring-white group-hover:scale-105 transition-transform duration-500" />
+                <div className="absolute -bottom-14 left-8 p-1.5 bg-white dark:bg-slate-800 rounded-full shadow-lg group-hover:shadow-xl transition-shadow duration-500">
+                  <img src={Rishabh} alt="Rishabh Pandey" className="w-24 h-24 rounded-full object-cover ring-4 ring-white dark:ring-slate-800 group-hover:scale-105 transition-transform duration-500" />
                 </div>
               </div>
               <div className="pt-18 pb-8 px-8 flex-1 flex flex-col">
-                <h3 className="font-heading text-2xl font-bold text-[#0a1e3d] group-hover:text-[#05308d] transition-colors duration-300">Rishabh Pandey</h3>
+                <h3 className="font-heading text-2xl font-bold text-[#0a1e3d] dark:text-slate-50 group-hover:text-[#05308d] transition-colors duration-300">Rishabh Pandey</h3>
                 <span className="inline-block font-body text-[#05308d] font-medium text-xs mb-4 bg-[#05308d]/8 px-3 py-1 rounded-full w-fit">Founder</span>
-                <p className="font-body text-gray-600 text-[15px] leading-relaxed mb-6 flex-1">
+                <p className="font-body text-gray-600 dark:text-slate-300 text-[15px] leading-relaxed mb-6 flex-1">
                   With strong roots in Lalganj Ajhara, Pratapgarh, Rishabh Pandey founded Be Educated with a clear vision — to bring high-quality IIT-JEE & NEET foundation education directly to students, both at centre and at home. Understanding that every student learns differently, he built a personalized home tuition model supported by expert subject teachers, structured study plans, and regular performance tracking. From Nursery to Class 12, students receive concept-focused guidance that builds a strong academic base for boards as well as competitive exams. His mission is simple yet powerful — deliver disciplined, result-oriented, and affordable education to every household.
                 </p>
-                <div className="flex gap-2 pt-4 border-t border-gray-100">
-                  <a href="https://www.linkedin.com/in/rishabh-pandey-6209542ba/" target="_blank" rel="noopener noreferrer" className="w-9 h-9 rounded-lg flex items-center justify-center text-gray-400 hover:text-white hover:bg-[#05308d] transition-all duration-300">
+                <div className="flex gap-2 pt-4 border-t border-gray-100 dark:border-slate-700">
+                  <a href="https://www.linkedin.com/in/rishabh-pandey-6209542ba/" target="_blank" rel="noopener noreferrer" className="w-9 h-9 rounded-lg flex items-center justify-center text-gray-400 dark:text-slate-500 hover:text-white hover:bg-[#05308d] transition-all duration-300">
                     <FaLinkedin size={18} />
                   </a>
                 </div>
@@ -226,29 +226,29 @@ function About() {
             </div>
 
             {/* Founder 2: Devansh */}
-            <div className="group relative bg-white rounded-2xl overflow-hidden border border-gray-100 hover:-translate-y-2 hover:shadow-elevated-lg transition-all duration-500 flex flex-col">
+            <div className="group relative bg-white dark:bg-slate-800 rounded-2xl overflow-hidden border border-gray-100 dark:border-slate-700 hover:-translate-y-2 hover:shadow-elevated-lg transition-all duration-500 flex flex-col">
               {/* Banner with animated gradient */}
               <div className="h-36 bg-gradient-to-r from-[#0a1e3d] via-[#05308d] to-[#0a1e3d] bg-[length:200%_100%] group-hover:animate-shimmer w-full relative">
                 {/* Decorative circles */}
                 <div className="absolute top-4 right-4 w-20 h-20 border border-white/10 rounded-full" />
                 <div className="absolute top-8 right-8 w-12 h-12 border border-white/5 rounded-full" />
-                <div className="absolute -bottom-14 left-8 p-1.5 bg-white rounded-full shadow-lg group-hover:shadow-xl transition-shadow duration-500">
-                  <div className="w-24 h-24 rounded-full bg-[#0a1e3d] text-white flex items-center justify-center text-3xl font-heading font-bold ring-4 ring-white group-hover:scale-105 transition-transform duration-500">
+                <div className="absolute -bottom-14 left-8 p-1.5 bg-white dark:bg-slate-800 rounded-full shadow-lg group-hover:shadow-xl transition-shadow duration-500">
+                  <div className="w-24 h-24 rounded-full bg-[#0a1e3d] text-white flex items-center justify-center text-3xl font-heading font-bold ring-4 ring-white dark:ring-slate-800 group-hover:scale-105 transition-transform duration-500">
                     DP
                   </div>
                 </div>
               </div>
               <div className="pt-18 pb-8 px-8 flex-1 flex flex-col">
-                <h3 className="font-heading text-2xl font-bold text-[#0a1e3d] group-hover:text-[#05308d] transition-colors duration-300">Devansh Pandey</h3>
+                <h3 className="font-heading text-2xl font-bold text-[#0a1e3d] dark:text-slate-50 group-hover:text-[#05308d] transition-colors duration-300">Devansh Pandey</h3>
                 <span className="inline-block font-body text-[#05308d] font-medium text-xs mb-4 bg-[#05308d]/8 px-3 py-1 rounded-full w-fit">Co-Founder & Tech Lead</span>
-                <p className="font-body text-gray-600 text-[15px] leading-relaxed mb-6 flex-1">
+                <p className="font-body text-gray-600 dark:text-slate-300 text-[15px] leading-relaxed mb-6 flex-1">
                   A passionate developer and educator who envisioned a platform where education is not a privilege, but a right. Devansh combined his love for coding and community impact to launch Be Educated.
                 </p>
-                <div className="flex gap-2 pt-4 border-t border-gray-100">
-                  <a href="https://www.linkedin.com/in/devansh-pandey-a71667218/" target="_blank" rel="noopener noreferrer" className="w-9 h-9 rounded-lg flex items-center justify-center text-gray-400 hover:text-white hover:bg-[#05308d] transition-all duration-300">
+                <div className="flex gap-2 pt-4 border-t border-gray-100 dark:border-slate-700">
+                  <a href="https://www.linkedin.com/in/devansh-pandey-a71667218/" target="_blank" rel="noopener noreferrer" className="w-9 h-9 rounded-lg flex items-center justify-center text-gray-400 dark:text-slate-500 hover:text-white hover:bg-[#05308d] transition-all duration-300">
                     <FaLinkedin size={18} />
                   </a>
-                  <a href="https://github.com/devansh101005" target="_blank" rel="noopener noreferrer" className="w-9 h-9 rounded-lg flex items-center justify-center text-gray-400 hover:text-white hover:bg-[#0a1e3d] transition-all duration-300">
+                  <a href="https://github.com/devansh101005" target="_blank" rel="noopener noreferrer" className="w-9 h-9 rounded-lg flex items-center justify-center text-gray-400 dark:text-slate-500 hover:text-white hover:bg-[#0a1e3d] transition-all duration-300">
                     <FaGithub size={18} />
                   </a>
                 </div>
@@ -261,12 +261,12 @@ function About() {
       {/* ============================================ */}
       {/* CTA Section */}
       {/* ============================================ */}
-      <section className="py-16 bg-gray-50">
+      <section className="py-16 bg-gray-50 dark:bg-slate-800">
         <div className="max-w-3xl mx-auto px-5 text-center">
-          <h2 className="font-heading text-2xl md:text-3xl font-bold text-[#0a1e3d] mb-3">
+          <h2 className="font-heading text-2xl md:text-3xl font-bold text-[#0a1e3d] dark:text-slate-50 mb-3">
             Ready to Begin?
           </h2>
-          <p className="font-body text-gray-500 mb-8">
+          <p className="font-body text-gray-500 dark:text-slate-400 mb-8">
             Join Be Educated and give your child the academic foundation they deserve.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
@@ -278,7 +278,7 @@ function About() {
             </a>
             <a
               href="tel:+918382970800"
-              className="inline-block border-2 border-[#0a1e3d] text-[#0a1e3d] px-8 py-3.5 rounded-lg no-underline font-heading font-semibold text-sm hover:bg-[#0a1e3d] hover:text-white transition-colors duration-300"
+              className="inline-block border-2 border-[#0a1e3d] dark:border-slate-300 text-[#0a1e3d] dark:text-slate-300 px-8 py-3.5 rounded-lg no-underline font-heading font-semibold text-sm hover:bg-[#0a1e3d] hover:text-white transition-colors duration-300"
             >
               Call Us
             </a>
