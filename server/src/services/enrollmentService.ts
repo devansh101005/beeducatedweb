@@ -1,32 +1,14 @@
 // Enrollment Service
-// Handles class enrollments with Razorpay payment integration
+// Handles class enrollments with Cashfree payment integration
 
-import crypto from 'crypto';
-import Razorpay from 'razorpay';
 import { getSupabase } from '../config/supabase.js';
-import { env } from '../config/env.js';
 import { courseTypeService } from './courseTypeService.js';
 import { feeService } from './feeService.js';
-
-// Lazy initialize Razorpay to avoid crash if env vars not set
-let razorpayInstance: Razorpay | null = null;
-
-function getRazorpay(): Razorpay {
-  if (!razorpayInstance) {
-    if (!env.RAZORPAY_KEY_ID || !env.RAZORPAY_KEY_SECRET) {
-      throw new Error('Razorpay credentials not configured. Set RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET in .env');
-    }
-    razorpayInstance = new Razorpay({
-      key_id: env.RAZORPAY_KEY_ID,
-      key_secret: env.RAZORPAY_KEY_SECRET,
-    });
-  }
-  return razorpayInstance;
-}
+import { cashfreeService } from './cashfreeService.js';
 
 export type EnrollmentStatus = 'pending' | 'active' | 'expired' | 'cancelled' | 'refunded';
 export type PaymentStatus = 'pending' | 'processing' | 'paid' | 'failed' | 'refunded' | 'partially_refunded';
-export type PaymentType = 'razorpay' | 'cash' | 'bank_transfer' | 'cheque' | 'upi_direct';
+export type PaymentType = 'razorpay' | 'cashfree' | 'cash' | 'bank_transfer' | 'cheque' | 'upi_direct';
 
 export interface ClassEnrollment {
   id: string;
@@ -35,6 +17,8 @@ export interface ClassEnrollment {
   fee_plan_id: string;
   enrollment_number: string;
   status: EnrollmentStatus;
+  registration_paid: boolean;
+  registration_paid_at: string | null;
   initiated_at: string;
   enrolled_at: string | null;
   expires_at: string | null;
@@ -54,6 +38,10 @@ export interface EnrollmentPayment {
   razorpay_order_id: string | null;
   razorpay_payment_id: string | null;
   razorpay_signature: string | null;
+  payment_gateway: string;
+  cashfree_order_id: string | null;
+  cashfree_payment_id: string | null;
+  payment_purpose: string;
   amount: number;
   amount_paise: number;
   currency: string;
@@ -90,15 +78,21 @@ export interface InitiateEnrollmentInput {
   studentName: string;
   studentEmail: string;
   studentPhone?: string;
+  couponCode?: string;
+  couponDiscount?: number;
+  couponId?: string;
 }
 
 export interface InitiateEnrollmentResult {
   enrollmentId: string;
   orderId: string;
+  paymentSessionId: string;
   amount: number;
-  amountPaise: number;
   currency: string;
-  keyId: string;
+  environment: 'sandbox' | 'production';
+  /** 'registration' = paying ₹499 reg fee; 'tuition' = paying tuition after reg */
+  step: 'registration' | 'tuition';
+  couponDiscount?: number;
   prefill: {
     name: string;
     email: string;
@@ -108,9 +102,7 @@ export interface InitiateEnrollmentResult {
 }
 
 export interface VerifyPaymentInput {
-  razorpay_order_id: string;
-  razorpay_payment_id: string;
-  razorpay_signature: string;
+  order_id: string;
 }
 
 export interface EnrollmentWithDetails extends ClassEnrollment {
@@ -145,10 +137,13 @@ export interface ManualEnrollmentResult {
 
 class EnrollmentService {
   /**
-   * Initiate enrollment - creates enrollment record and Razorpay order
+   * Initiate enrollment - two-step flow:
+   *   Step 1 (registration): Pay ₹499 registration fee
+   *   Step 2 (tuition): Pay tuition amount (after registration is confirmed)
+   * If fee plan has registration_fee = 0, skips directly to tuition.
    */
   async initiateEnrollment(input: InitiateEnrollmentInput): Promise<InitiateEnrollmentResult> {
-    const { studentId, classId, feePlanId, studentName, studentEmail, studentPhone } = input;
+    const { studentId, classId, feePlanId, studentName, studentEmail, studentPhone, couponCode, couponDiscount, couponId } = input;
 
     // 1. Check if student is already enrolled
     const existingEnrollment = await this.getEnrollmentByStudentAndClass(studentId, classId);
@@ -156,27 +151,55 @@ class EnrollmentService {
       if (existingEnrollment.status === 'active') {
         throw new Error('You are already enrolled in this class');
       }
+
       if (existingEnrollment.status === 'pending') {
-        // Return existing pending enrollment's order
-        const existingPayment = await this.getPaymentByEnrollmentId(existingEnrollment.id);
-        if (existingPayment && existingPayment.status === 'pending' && existingPayment.razorpay_order_id) {
+        // If registration is paid, they need tuition — redirect to initiateTuition
+        if (existingEnrollment.registration_paid) {
+          return this.initiateTuitionPayment({
+            enrollmentId: existingEnrollment.id,
+            studentName,
+            studentEmail,
+            studentPhone,
+            couponCode,
+            couponDiscount,
+            couponId,
+          });
+        }
+
+        // Registration not yet paid — check for existing pending payment
+        const existingPayment = await this.getPendingPaymentByEnrollment(
+          existingEnrollment.id,
+          'registration'
+        );
+        if (existingPayment && existingPayment.cashfree_order_id) {
+          // Re-create Cashfree order since payment sessions expire
+          const cfOrder = await cashfreeService.createOrder({
+            orderId: `reg_${Date.now()}`,
+            amount: existingPayment.amount,
+            customerName: studentName,
+            customerEmail: studentEmail,
+            customerPhone: studentPhone || '9999999999',
+            notes: { enrollmentId: existingEnrollment.id, purpose: 'registration' },
+          });
+
+          await getSupabase()
+            .from('enrollment_payments')
+            .update({
+              cashfree_order_id: cfOrder.order_id,
+              updated_at: new Date().toISOString(),
+            })
+            .eq('id', existingPayment.id);
+
           return {
             enrollmentId: existingEnrollment.id,
-            orderId: existingPayment.razorpay_order_id,
+            orderId: cfOrder.order_id,
+            paymentSessionId: cfOrder.payment_session_id,
             amount: existingPayment.amount,
-            amountPaise: existingPayment.amount_paise,
-            currency: existingPayment.currency,
-            keyId: env.RAZORPAY_KEY_ID,
-            prefill: {
-              name: studentName,
-              email: studentEmail,
-              contact: studentPhone,
-            },
-            notes: {
-              enrollmentId: existingEnrollment.id,
-              classId,
-              studentId,
-            },
+            currency: 'INR',
+            environment: cashfreeService.getEnvironment(),
+            step: 'registration',
+            prefill: { name: studentName, email: studentEmail, contact: studentPhone },
+            notes: { enrollmentId: existingEnrollment.id, classId, studentId },
           };
         }
       }
@@ -191,7 +214,6 @@ class EnrollmentService {
       throw new Error('This class is not available for enrollment');
     }
 
-    // Check capacity
     if (classInfo.max_students && classInfo.current_students >= classInfo.max_students) {
       throw new Error('This class is full');
     }
@@ -202,32 +224,14 @@ class EnrollmentService {
       throw new Error('Invalid fee plan');
     }
 
-    // 4. Determine payment amount (handle installment plans)
-    const planMetadata = feePlan.metadata as Record<string, any> || {};
-    const isInstallmentPlan = planMetadata.plan_code === 'C' && planMetadata.installments === 2;
-    const paymentAmount = isInstallmentPlan
-      ? planMetadata.installment_1 as number
-      : feePlan.total_amount;
+    // 4. Determine if registration fee needs to be paid first
+    const registrationFee = Number(feePlan.registration_fee) || 0;
+    const hasRegistrationFee = registrationFee > 0;
 
-    // 4b. Create Razorpay order
-    const amountPaise = Math.round(paymentAmount * 100);
-    const order = await getRazorpay().orders.create({
-      amount: amountPaise,
-      currency: 'INR',
-      receipt: `enr_${Date.now()}`,
-      notes: {
-        classId,
-        studentId,
-        feePlanId,
-        ...(isInstallmentPlan ? { installment: '1', plan_code: 'C' } : {}),
-      },
-    });
-
-    // 5. Create enrollment record (or update existing pending one)
+    // 5. Create or update enrollment record
     let enrollment: ClassEnrollment;
 
     if (existingEnrollment && existingEnrollment.status === 'pending') {
-      // Update existing enrollment
       const { data, error } = await getSupabase()
         .from('class_enrollments')
         .update({
@@ -245,7 +249,6 @@ class EnrollmentService {
       }
       enrollment = data;
     } else {
-      // Create new enrollment
       const { data, error } = await getSupabase()
         .from('class_enrollments')
         .insert({
@@ -253,13 +256,13 @@ class EnrollmentService {
           class_id: classId,
           fee_plan_id: feePlanId,
           status: 'pending',
+          registration_paid: false,
           initiated_at: new Date().toISOString(),
         })
         .select()
         .single();
 
       if (error) {
-        // Handle unique constraint violation (race condition: duplicate pending/active enrollment)
         if (error.code === '23505') {
           const existing = await this.getEnrollmentByStudentAndClass(studentId, classId);
           if (existing) {
@@ -276,22 +279,112 @@ class EnrollmentService {
       }
     }
 
-    // 6. Create payment record
+    // Store plan metadata for installment tracking
+    const planMetadata = feePlan.metadata as Record<string, any> || {};
+    if (planMetadata.installments) {
+      let enrollMeta: Record<string, any>;
+
+      if (planMetadata.plan_code === 'M') {
+        // Monthly plan: 12 monthly payments
+        enrollMeta = {
+          plan_code: 'M',
+          installments: 12,
+          monthly_fee: planMetadata.monthly_fee,
+          annual_fee: planMetadata.annual_fee,
+          surcharge_percent: planMetadata.surcharge_percent,
+          months_paid: 0,
+        };
+      } else if (planMetadata.plan_code === 'E' && planMetadata.installments === 4) {
+        // 4-installment quarterly plan
+        enrollMeta = {
+          plan_code: 'E',
+          installments: 4,
+          installment_1: planMetadata.installment_1,
+          quarterly_fee: planMetadata.quarterly_fee,
+          installments_paid: 0,
+        };
+      } else {
+        // Standard installment plan (2-installment, etc.)
+        enrollMeta = {
+          plan_code: planMetadata.plan_code,
+          installments: planMetadata.installments,
+          installment_1: planMetadata.installment_1,
+          installment_2: planMetadata.installment_2,
+          installment_1_paid: false,
+          installment_2_paid: false,
+        };
+      }
+
+      // Attach coupon info if provided
+      if (couponCode && couponDiscount) {
+        enrollMeta.coupon_code = couponCode;
+        enrollMeta.coupon_discount = couponDiscount;
+        enrollMeta.coupon_id = couponId;
+      }
+
+      await getSupabase()
+        .from('class_enrollments')
+        .update({ metadata: enrollMeta })
+        .eq('id', enrollment.id);
+    } else if (couponCode && couponDiscount) {
+      // No installment plan but has coupon — store coupon info
+      await getSupabase()
+        .from('class_enrollments')
+        .update({
+          metadata: {
+            coupon_code: couponCode,
+            coupon_discount: couponDiscount,
+            coupon_id: couponId,
+          },
+        })
+        .eq('id', enrollment.id);
+    }
+
+    // 6. If no registration fee, skip straight to tuition payment
+    if (!hasRegistrationFee) {
+      return this.initiateTuitionPayment({
+        enrollmentId: enrollment.id,
+        studentName,
+        studentEmail,
+        studentPhone,
+        couponCode,
+        couponDiscount,
+        couponId,
+      });
+    }
+
+    // 7. Create Cashfree order for registration fee
+    const cfOrder = await cashfreeService.createOrder({
+      orderId: `reg_${Date.now()}`,
+      amount: registrationFee,
+      customerName: studentName,
+      customerEmail: studentEmail,
+      customerPhone: studentPhone || '9999999999',
+      notes: {
+        enrollmentId: enrollment.id,
+        classId,
+        studentId,
+        purpose: 'registration',
+      },
+    });
+
+    // 8. Create payment record for registration
     const { error: paymentError } = await getSupabase()
       .from('enrollment_payments')
       .insert({
         enrollment_id: enrollment.id,
-        razorpay_order_id: order.id,
-        amount: paymentAmount,
-        amount_paise: amountPaise,
+        payment_gateway: 'cashfree',
+        cashfree_order_id: cfOrder.order_id,
+        payment_purpose: 'registration',
+        amount: registrationFee,
+        amount_paise: Math.round(registrationFee * 100),
         currency: 'INR',
         status: 'pending',
-        payment_notes: isInstallmentPlan ? 'Installment 1 of 2' : null,
+        payment_notes: 'Registration fee',
       });
 
     if (paymentError) {
       console.error('Error creating payment record:', paymentError);
-      // Rollback enrollment to cancelled since payment record failed
       await getSupabase()
         .from('class_enrollments')
         .update({ status: 'cancelled', cancelled_at: new Date().toISOString() })
@@ -299,66 +392,191 @@ class EnrollmentService {
       throw new Error('Failed to create payment record');
     }
 
-    // Store installment info in enrollment metadata
-    if (isInstallmentPlan) {
-      await getSupabase()
-        .from('class_enrollments')
-        .update({
-          metadata: {
-            plan_code: 'C',
-            installments: 2,
-            installment_1: planMetadata.installment_1,
-            installment_2: planMetadata.installment_2,
-            installment_1_paid: false,
-            installment_2_paid: false,
-          },
-        })
-        .eq('id', enrollment.id);
-    }
-
     return {
       enrollmentId: enrollment.id,
-      orderId: order.id,
-      amount: paymentAmount,
-      amountPaise,
+      orderId: cfOrder.order_id,
+      paymentSessionId: cfOrder.payment_session_id,
+      amount: registrationFee,
       currency: 'INR',
-      keyId: env.RAZORPAY_KEY_ID,
-      prefill: {
-        name: studentName,
-        email: studentEmail,
-        contact: studentPhone,
-      },
-      notes: {
-        enrollmentId: enrollment.id,
-        classId,
-        studentId,
-      },
+      environment: cashfreeService.getEnvironment(),
+      step: 'registration',
+      prefill: { name: studentName, email: studentEmail, contact: studentPhone },
+      notes: { enrollmentId: enrollment.id, classId, studentId },
     };
   }
 
   /**
-   * Verify payment and complete enrollment
+   * Initiate tuition payment — called after registration fee is paid.
+   * Determines tuition amount from fee plan (total_amount - registration_fee).
+   * For installment plans, charges installment_1 amount.
    */
-  async verifyPayment(input: VerifyPaymentInput): Promise<ClassEnrollment> {
-    const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = input;
+  async initiateTuitionPayment(input: {
+    enrollmentId: string;
+    studentName: string;
+    studentEmail: string;
+    studentPhone?: string;
+    couponCode?: string;
+    couponDiscount?: number;
+    couponId?: string;
+  }): Promise<InitiateEnrollmentResult> {
+    const { enrollmentId, studentName, studentEmail, studentPhone, couponDiscount } = input;
 
-    // 1. Verify signature
-    const isValid = this.verifyRazorpaySignature(
-      razorpay_order_id,
-      razorpay_payment_id,
-      razorpay_signature
-    );
+    const { data: enrollment, error } = await getSupabase()
+      .from('class_enrollments')
+      .select('*')
+      .eq('id', enrollmentId)
+      .single();
 
-    if (!isValid) {
-      // Update payment status to failed
+    if (error || !enrollment) {
+      throw new Error('Enrollment not found');
+    }
+
+    if (enrollment.status === 'active') {
+      throw new Error('Already enrolled — tuition has been paid');
+    }
+
+    // Get fee plan
+    const feePlan = await courseTypeService.getFeePlanById(enrollment.fee_plan_id);
+    if (!feePlan) throw new Error('Fee plan not found');
+
+    const registrationFee = Number(feePlan.registration_fee) || 0;
+    const tuitionTotal = Number(feePlan.total_amount) - registrationFee;
+
+    // Determine the amount for this payment
+    const planMetadata = (feePlan.metadata as Record<string, any>) || {};
+    const hasInstallments = planMetadata.installments && planMetadata.installments >= 2;
+
+    let paymentAmount: number;
+    let paymentPurpose: string;
+    let paymentNote: string;
+
+    if (planMetadata.plan_code === 'M') {
+      // Monthly plan: charge first month's fee only
+      paymentAmount = planMetadata.monthly_fee as number;
+      paymentPurpose = 'monthly_1';
+      paymentNote = 'Monthly fee — Month 1 of 12';
+    } else if (hasInstallments) {
+      // For installment plans, installment amounts are already tuition-only
+      // (registration_fee was excluded when they were computed in migration 018)
+      paymentAmount = planMetadata.installment_1 as number;
+      paymentPurpose = 'installment_1';
+      paymentNote = `Tuition installment 1 of ${planMetadata.installments}`;
+    } else {
+      paymentAmount = tuitionTotal;
+      paymentPurpose = 'tuition';
+      paymentNote = 'Tuition fee';
+    }
+
+    // Apply coupon discount
+    if (couponDiscount && couponDiscount > 0) {
+      paymentAmount = Math.max(1, paymentAmount - couponDiscount);
+      paymentNote += ` (₹${couponDiscount} coupon discount applied)`;
+    }
+
+    if (paymentAmount <= 0) {
+      throw new Error('Tuition amount is zero — nothing to pay');
+    }
+
+    // Check for existing pending tuition payment and refresh it
+    const existingPayment = await this.getPendingPaymentByEnrollment(enrollmentId, paymentPurpose);
+    if (existingPayment && existingPayment.cashfree_order_id) {
+      const cfOrder = await cashfreeService.createOrder({
+        orderId: `tui_${Date.now()}`,
+        amount: paymentAmount,
+        customerName: studentName,
+        customerEmail: studentEmail,
+        customerPhone: studentPhone || '9999999999',
+        notes: { enrollmentId, purpose: paymentPurpose },
+      });
+
+      await getSupabase()
+        .from('enrollment_payments')
+        .update({
+          cashfree_order_id: cfOrder.order_id,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', existingPayment.id);
+
+      return {
+        enrollmentId,
+        orderId: cfOrder.order_id,
+        paymentSessionId: cfOrder.payment_session_id,
+        amount: paymentAmount,
+        currency: 'INR',
+        environment: cashfreeService.getEnvironment(),
+        step: 'tuition',
+        prefill: { name: studentName, email: studentEmail, contact: studentPhone },
+        notes: { enrollmentId, classId: enrollment.class_id, studentId: enrollment.student_id },
+      };
+    }
+
+    // Create new Cashfree order for tuition
+    const cfOrder = await cashfreeService.createOrder({
+      orderId: `tui_${Date.now()}`,
+      amount: paymentAmount,
+      customerName: studentName,
+      customerEmail: studentEmail,
+      customerPhone: studentPhone || '9999999999',
+      notes: {
+        enrollmentId,
+        classId: enrollment.class_id,
+        studentId: enrollment.student_id,
+        purpose: paymentPurpose,
+      },
+    });
+
+    const { error: paymentError } = await getSupabase()
+      .from('enrollment_payments')
+      .insert({
+        enrollment_id: enrollmentId,
+        payment_gateway: 'cashfree',
+        cashfree_order_id: cfOrder.order_id,
+        payment_purpose: paymentPurpose,
+        amount: paymentAmount,
+        amount_paise: Math.round(paymentAmount * 100),
+        currency: 'INR',
+        status: 'pending',
+        payment_notes: paymentNote,
+      });
+
+    if (paymentError) {
+      console.error('Error creating tuition payment record:', paymentError);
+      throw new Error('Failed to create tuition payment record');
+    }
+
+    return {
+      enrollmentId,
+      orderId: cfOrder.order_id,
+      paymentSessionId: cfOrder.payment_session_id,
+      amount: paymentAmount,
+      currency: 'INR',
+      environment: cashfreeService.getEnvironment(),
+      step: 'tuition',
+      prefill: { name: studentName, email: studentEmail, contact: studentPhone },
+      notes: { enrollmentId, classId: enrollment.class_id, studentId: enrollment.student_id },
+    };
+  }
+
+  /**
+   * Verify payment — handles both registration and tuition payments.
+   *
+   * Registration payment: sets registration_paid = true, keeps enrollment pending.
+   * Tuition payment: activates the enrollment.
+   */
+  async verifyPayment(input: VerifyPaymentInput): Promise<ClassEnrollment & { verifiedStep: string }> {
+    const { order_id } = input;
+
+    // 1. Verify payment status with Cashfree server-side
+    const cfOrder = await cashfreeService.getOrder(order_id);
+    if (cfOrder.order_status !== 'PAID') {
       await getSupabase()
         .from('enrollment_payments')
         .update({
           status: 'failed',
-          error_description: 'Signature verification failed',
+          error_description: `Order status: ${cfOrder.order_status}`,
           updated_at: new Date().toISOString(),
         })
-        .eq('razorpay_order_id', razorpay_order_id);
+        .eq('cashfree_order_id', order_id);
 
       throw new Error('Payment verification failed');
     }
@@ -367,44 +585,84 @@ class EnrollmentService {
     const { data: payment, error: paymentError } = await getSupabase()
       .from('enrollment_payments')
       .select('*, class_enrollments(*)')
-      .eq('razorpay_order_id', razorpay_order_id)
+      .eq('cashfree_order_id', order_id)
       .single();
 
     if (paymentError || !payment) {
       throw new Error('Payment record not found');
     }
 
-    // Check if already processed (idempotency)
+    // Idempotency check
     if (payment.status === 'paid') {
-      return payment.class_enrollments;
+      return { ...payment.class_enrollments, verifiedStep: payment.payment_purpose || 'full_payment' };
     }
 
-    // 3. Get payment details from Razorpay
-    const razorpayPayment = await getRazorpay().payments.fetch(razorpay_payment_id) as any;
+    // 3. Get payment details from Cashfree
+    const cfPayments = await cashfreeService.getOrderPayments(order_id);
+    const cfPayment = cfPayments.find(p => p.payment_status === 'SUCCESS') || cfPayments[0];
 
-    // 4. Update payment record
-    const { error: updatePaymentError } = await getSupabase()
+    // 4. Update payment record to paid
+    await getSupabase()
       .from('enrollment_payments')
       .update({
-        razorpay_payment_id,
-        razorpay_signature,
+        cashfree_payment_id: cfPayment?.cf_payment_id?.toString() || null,
         status: 'paid',
-        payment_method: razorpayPayment.method || null,
-        bank: razorpayPayment.bank || null,
-        wallet: razorpayPayment.wallet || null,
-        vpa: razorpayPayment.vpa || null,
-        card_last4: razorpayPayment.card?.last4 || null,
-        card_network: razorpayPayment.card?.network || null,
+        payment_method: cfPayment?.payment_method?.type || null,
+        bank: cfPayment?.payment_method?.netbanking?.netbanking_bank_name || null,
+        vpa: cfPayment?.payment_method?.upi?.upi_id || null,
+        card_last4: cfPayment?.payment_method?.card?.card_number?.slice(-4) || null,
+        card_network: cfPayment?.payment_method?.card?.card_network || null,
         paid_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       })
-      .eq('razorpay_order_id', razorpay_order_id);
+      .eq('cashfree_order_id', order_id);
 
-    if (updatePaymentError) {
-      console.error('Error updating payment:', updatePaymentError);
+    const paymentPurpose = payment.payment_purpose || 'full_payment';
+
+    // 5. Get current enrollment state
+    const { data: currentEnrollment } = await getSupabase()
+      .from('class_enrollments')
+      .select('metadata, amount_paid, registration_paid')
+      .eq('id', payment.enrollment_id)
+      .single();
+
+    const previousAmountPaid = currentEnrollment?.amount_paid || 0;
+    const enrollmentMeta = (currentEnrollment?.metadata as Record<string, any>) || {};
+
+    // ── REGISTRATION PAYMENT ──
+    if (paymentPurpose === 'registration') {
+      const { data: enrollment, error: enrollmentError } = await getSupabase()
+        .from('class_enrollments')
+        .update({
+          registration_paid: true,
+          registration_paid_at: new Date().toISOString(),
+          amount_paid: previousAmountPaid + payment.amount,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', payment.enrollment_id)
+        .select()
+        .single();
+
+      if (enrollmentError) {
+        console.error('Error updating enrollment for registration:', enrollmentError);
+        throw new Error('Failed to record registration payment');
+      }
+
+      // Create student_fees record for registration
+      const classInfo = await courseTypeService.getClassById(enrollment.class_id);
+      await this.createStudentFeeForEnrollment({
+        studentId: enrollment.student_id,
+        amount: payment.amount,
+        className: classInfo?.name || 'Unknown Class',
+        feePlanName: 'Registration Fee',
+        enrollmentId: enrollment.id,
+        paymentType: 'cashfree',
+      });
+
+      return { ...enrollment, verifiedStep: 'registration' };
     }
 
-    // 5. Get fee plan for validity calculation
+    // ── TUITION / INSTALLMENT / FULL PAYMENT ──
     const { data: feePlan } = await getSupabase()
       .from('class_fee_plans')
       .select('validity_months')
@@ -415,19 +673,6 @@ class EnrollmentService {
     const expiresAt = new Date();
     expiresAt.setMonth(expiresAt.getMonth() + validityMonths);
 
-    // 6. Get current enrollment to check installment metadata
-    const { data: currentEnrollment } = await getSupabase()
-      .from('class_enrollments')
-      .select('metadata, amount_paid')
-      .eq('id', payment.enrollment_id)
-      .single();
-
-    const enrollmentMeta = (currentEnrollment?.metadata as Record<string, any>) || {};
-    const isInstallment1 = enrollmentMeta.plan_code === 'C' && !enrollmentMeta.installment_1_paid;
-    const isInstallment2 = enrollmentMeta.plan_code === 'C' && enrollmentMeta.installment_1_paid && !enrollmentMeta.installment_2_paid;
-    const previousAmountPaid = currentEnrollment?.amount_paid || 0;
-
-    // Build update object
     const enrollmentUpdate: Record<string, any> = {
       status: 'active',
       enrolled_at: new Date().toISOString(),
@@ -437,13 +682,26 @@ class EnrollmentService {
     };
 
     // Update installment tracking metadata
-    if (isInstallment1) {
+    if (paymentPurpose === 'monthly_1') {
+      enrollmentUpdate.metadata = {
+        ...enrollmentMeta,
+        months_paid: 1,
+        month_1_paid_at: new Date().toISOString(),
+      };
+    } else if (paymentPurpose === 'installment_1' && enrollmentMeta.plan_code === 'E') {
+      // 4-installment plan: track with counter
+      enrollmentUpdate.metadata = {
+        ...enrollmentMeta,
+        installments_paid: 1,
+        installment_1_paid_at: new Date().toISOString(),
+      };
+    } else if (paymentPurpose === 'installment_1') {
       enrollmentUpdate.metadata = {
         ...enrollmentMeta,
         installment_1_paid: true,
         installment_1_paid_at: new Date().toISOString(),
       };
-    } else if (isInstallment2) {
+    } else if (paymentPurpose === 'installment_2') {
       enrollmentUpdate.metadata = {
         ...enrollmentMeta,
         installment_2_paid: true,
@@ -451,7 +709,6 @@ class EnrollmentService {
       };
     }
 
-    // 6b. Update enrollment to active
     const { data: enrollment, error: enrollmentError } = await getSupabase()
       .from('class_enrollments')
       .update(enrollmentUpdate)
@@ -464,7 +721,7 @@ class EnrollmentService {
       throw new Error('Failed to complete enrollment');
     }
 
-    // 7. Create student_fees record so it appears in Fee & Payments page
+    // Create student_fees record for the payment just made
     const classInfo = await courseTypeService.getClassById(enrollment.class_id);
     const feePlanInfo = await courseTypeService.getFeePlanById(enrollment.fee_plan_id);
     await this.createStudentFeeForEnrollment({
@@ -473,27 +730,36 @@ class EnrollmentService {
       className: classInfo?.name || 'Unknown Class',
       feePlanName: feePlanInfo?.name || 'Fee Plan',
       enrollmentId: enrollment.id,
-      paymentType: 'razorpay',
+      paymentType: 'cashfree',
     });
 
-    return enrollment;
-  }
+    // For monthly plans, auto-generate remaining 11 monthly student_fees (unpaid)
+    if (paymentPurpose === 'monthly_1') {
+      const monthlyFee = enrollmentMeta.monthly_fee || payment.amount;
+      const className = classInfo?.name || 'Unknown Class';
+      await this.generateRemainingMonthlyFees({
+        studentId: enrollment.student_id,
+        enrollmentId: enrollment.id,
+        className,
+        monthlyFee,
+        startMonth: 2, // months 2–12
+        totalMonths: 12,
+      });
+    }
 
-  /**
-   * Verify Razorpay signature (CRITICAL SECURITY)
-   */
-  private verifyRazorpaySignature(
-    orderId: string,
-    paymentId: string,
-    signature: string
-  ): boolean {
-    const body = orderId + '|' + paymentId;
-    const expectedSignature = crypto
-      .createHmac('sha256', env.RAZORPAY_KEY_SECRET)
-      .update(body)
-      .digest('hex');
+    // For 4-installment plans, auto-generate remaining 3 quarterly student_fees (unpaid)
+    if (paymentPurpose === 'installment_1' && enrollmentMeta.plan_code === 'E') {
+      const quarterlyFee = enrollmentMeta.quarterly_fee as number;
+      const className = classInfo?.name || 'Unknown Class';
+      await this.generateRemainingQuarterlyFees({
+        studentId: enrollment.student_id,
+        enrollmentId: enrollment.id,
+        className,
+        quarterlyFee,
+      });
+    }
 
-    return expectedSignature === signature;
+    return { ...enrollment, verifiedStep: paymentPurpose };
   }
 
   /**
@@ -512,7 +778,7 @@ class EnrollmentService {
         error_description: errorDescription,
         updated_at: new Date().toISOString(),
       })
-      .eq('razorpay_order_id', orderId);
+      .eq('cashfree_order_id', orderId);
   }
 
   /**
@@ -560,12 +826,14 @@ class EnrollmentService {
       throw new Error('Invalid installment amount');
     }
 
-    // 3. Create Razorpay order for installment 2
-    const amountPaise = Math.round(installment2Amount * 100);
-    const order = await getRazorpay().orders.create({
-      amount: amountPaise,
-      currency: 'INR',
-      receipt: `inst2_${Date.now()}`,
+    // 3. Create Cashfree order for installment 2
+    const cfOrderId = `inst2_${Date.now()}`;
+    const cfOrder = await cashfreeService.createOrder({
+      orderId: cfOrderId,
+      amount: installment2Amount,
+      customerName: studentName,
+      customerEmail: studentEmail,
+      customerPhone: studentPhone || '9999999999',
       notes: {
         enrollmentId,
         classId: enrollment.class_id,
@@ -576,11 +844,13 @@ class EnrollmentService {
     });
 
     // 4. Create payment record
+    const amountPaise = Math.round(installment2Amount * 100);
     const { error: paymentError } = await getSupabase()
       .from('enrollment_payments')
       .insert({
         enrollment_id: enrollmentId,
-        razorpay_order_id: order.id,
+        payment_gateway: 'cashfree',
+        cashfree_order_id: cfOrder.order_id,
         amount: installment2Amount,
         amount_paise: amountPaise,
         currency: 'INR',
@@ -594,11 +864,12 @@ class EnrollmentService {
 
     return {
       enrollmentId,
-      orderId: order.id,
+      orderId: cfOrder.order_id,
+      paymentSessionId: cfOrder.payment_session_id,
       amount: installment2Amount,
-      amountPaise,
       currency: 'INR',
-      keyId: env.RAZORPAY_KEY_ID,
+      environment: cashfreeService.getEnvironment(),
+      step: 'tuition' as const,
       prefill: {
         name: studentName,
         email: studentEmail,
@@ -649,6 +920,31 @@ class EnrollmentService {
     if (error && error.code !== 'PGRST116') {
       console.error('Error fetching payment:', error);
       throw new Error('Failed to fetch payment');
+    }
+
+    return data;
+  }
+
+  /**
+   * Get pending payment for a specific enrollment and purpose
+   */
+  private async getPendingPaymentByEnrollment(
+    enrollmentId: string,
+    purpose: string
+  ): Promise<EnrollmentPayment | null> {
+    const { data, error } = await getSupabase()
+      .from('enrollment_payments')
+      .select('*')
+      .eq('enrollment_id', enrollmentId)
+      .eq('payment_purpose', purpose)
+      .eq('status', 'pending')
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (error) {
+      console.error('Error fetching pending payment:', error);
+      return null;
     }
 
     return data;
@@ -775,6 +1071,85 @@ class EnrollmentService {
     } catch (err) {
       // Log but don't fail the enrollment — fee record is supplementary
       console.error('Failed to create student_fees record for enrollment:', err);
+    }
+  }
+
+  /**
+   * Generate remaining monthly student_fees for a monthly plan.
+   * Called after month 1 is paid at enrollment — creates months 2–12 as pending fees.
+   */
+  private async generateRemainingMonthlyFees(params: {
+    studentId: string;
+    enrollmentId: string;
+    className: string;
+    monthlyFee: number;
+    startMonth: number;
+    totalMonths: number;
+  }): Promise<void> {
+    const { studentId, enrollmentId, className, monthlyFee, startMonth, totalMonths } = params;
+
+    try {
+      const now = new Date();
+
+      for (let month = startMonth; month <= totalMonths; month++) {
+        // Due date: N months from now (month 2 = 1 month out, month 3 = 2 months out, etc.)
+        const dueDate = new Date(now);
+        dueDate.setMonth(dueDate.getMonth() + (month - 1));
+        const dueDateStr = dueDate.toISOString().split('T')[0];
+
+        await feeService.createStudentFee({
+          student_id: studentId,
+          fee_type: 'tuition',
+          description: `${className} — Monthly Fee (Month ${month} of ${totalMonths})`,
+          base_amount: monthlyFee,
+          due_date: dueDateStr,
+          is_installment: true,
+          installment_number: month,
+          total_installments: totalMonths,
+          notes: `Enrollment #${enrollmentId} — Monthly plan auto-generated`,
+        });
+      }
+    } catch (err) {
+      // Log but don't fail — the enrollment is already active
+      console.error('Failed to generate remaining monthly fees:', err);
+    }
+  }
+
+  /**
+   * Generate remaining 3 quarterly student_fees for a 4-installment plan.
+   * Called after installment 1 is paid — creates installments 2, 3, 4 as pending fees.
+   */
+  private async generateRemainingQuarterlyFees(params: {
+    studentId: string;
+    enrollmentId: string;
+    className: string;
+    quarterlyFee: number;
+  }): Promise<void> {
+    const { studentId, enrollmentId, className, quarterlyFee } = params;
+
+    try {
+      const now = new Date();
+
+      for (let inst = 2; inst <= 4; inst++) {
+        // Due date: 3 months apart (inst 2 = 3 months, inst 3 = 6 months, inst 4 = 9 months)
+        const dueDate = new Date(now);
+        dueDate.setMonth(dueDate.getMonth() + (inst - 1) * 3);
+        const dueDateStr = dueDate.toISOString().split('T')[0];
+
+        await feeService.createStudentFee({
+          student_id: studentId,
+          fee_type: 'tuition',
+          description: `${className} — Quarterly Fee (Installment ${inst} of 4)`,
+          base_amount: quarterlyFee,
+          due_date: dueDateStr,
+          is_installment: true,
+          installment_number: inst,
+          total_installments: 4,
+          notes: `Enrollment #${enrollmentId} — 4-installment plan auto-generated`,
+        });
+      }
+    } catch (err) {
+      console.error('Failed to generate remaining quarterly fees:', err);
     }
   }
 
@@ -956,6 +1331,7 @@ class EnrollmentService {
   private async generateReceiptNumber(paymentType: PaymentType): Promise<string> {
     const year = new Date().getFullYear();
     const prefixMap: Record<PaymentType, string> = {
+      cashfree: 'CF',
       razorpay: 'RZP',
       cash: 'CASH',
       bank_transfer: 'BANK',

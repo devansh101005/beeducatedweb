@@ -5,6 +5,7 @@ import { Router, Request, Response } from 'express';
 import { requireAuth, attachUser } from '../../middleware/auth.js';
 import { courseTypeService } from '../../services/courseTypeService.js';
 import { enrollmentService } from '../../services/enrollmentService.js';
+import { feeService } from '../../services/feeService.js';
 import { studentService } from '../../services/studentService.js';
 import {
   sendSuccess,
@@ -160,8 +161,11 @@ router.get('/:slug/classes', async (req: Request, res: Response) => {
         maxStudents: c.max_students,
         currentStudents: c.current_students,
         enrollmentOpen: c.enrollment_open,
+        location: (c.metadata as any)?.location || null,
         isEnrolled: c.is_enrolled || false,
         enrollmentStatus: c.enrollment_status || null,
+        registrationPaid: c.registration_paid ?? false,
+        enrollmentId: c.enrollment_id || null,
         feePlan: c.fee_plan
           ? {
               id: c.fee_plan.id,
@@ -325,8 +329,51 @@ router.get('/subjects/all', async (_req: Request, res: Response) => {
 // ============================================
 
 /**
+ * POST /api/v2/course-types/enrollments/validate-coupon
+ * Validate a coupon code for enrollment
+ */
+router.post(
+  '/enrollments/validate-coupon',
+  requireAuth,
+  attachUser,
+  async (req: Request, res: Response) => {
+    try {
+      const { couponCode, classId, feePlanId } = req.body;
+
+      if (!couponCode || !classId || !feePlanId) {
+        return sendBadRequest(res, 'couponCode, classId, and feePlanId are required');
+      }
+
+      if (!req.user || req.user.role !== 'student') {
+        return sendBadRequest(res, 'Only students can validate coupons');
+      }
+
+      const student = await studentService.getByUserId(req.user.id);
+      if (!student) {
+        return sendBadRequest(res, 'Student profile not found');
+      }
+
+      const feePlan = await courseTypeService.getFeePlanById(feePlanId);
+      if (!feePlan) return sendBadRequest(res, 'Invalid fee plan');
+
+      const amount = Number(feePlan.total_amount) - Number(feePlan.registration_fee || 0);
+      const validation = await feeService.validateDiscount(couponCode, student.id, amount, { classId });
+
+      sendSuccess(res, {
+        valid: validation.valid,
+        discountAmount: validation.discountAmount,
+        message: validation.message,
+      });
+    } catch (error: any) {
+      console.error('Error validating coupon:', error);
+      sendError(res, 'Failed to validate coupon');
+    }
+  }
+);
+
+/**
  * POST /api/v2/course-types/enrollments/initiate
- * Initiate enrollment - creates Razorpay order
+ * Initiate enrollment - creates Cashfree order
  */
 router.post(
   '/enrollments/initiate',
@@ -334,7 +381,7 @@ router.post(
   attachUser,
   async (req: Request, res: Response) => {
     try {
-      const { classId, feePlanId } = req.body;
+      const { classId, feePlanId, couponCode } = req.body;
 
       if (!classId || !feePlanId) {
         return sendBadRequest(res, 'classId and feePlanId are required');
@@ -351,14 +398,33 @@ router.post(
         return sendBadRequest(res, 'Student profile not found. Please complete your profile first.');
       }
 
+      // Validate coupon code if provided
+      let couponDiscount = 0;
+      let couponId: string | undefined;
+      if (couponCode) {
+        const feePlan = await courseTypeService.getFeePlanById(feePlanId);
+        if (!feePlan) return sendBadRequest(res, 'Invalid fee plan');
+        const amount = Number(feePlan.total_amount) - Number(feePlan.registration_fee || 0);
+        const validation = await feeService.validateDiscount(couponCode, student.id, amount, { classId });
+        if (!validation.valid) {
+          return sendBadRequest(res, validation.message || 'Invalid coupon code');
+        }
+        couponDiscount = validation.discountAmount;
+        const discountCodeObj = await feeService.getDiscountCode(couponCode);
+        couponId = discountCodeObj?.id;
+      }
+
       // Initiate enrollment
       const result = await enrollmentService.initiateEnrollment({
         studentId: student.id,
         classId,
         feePlanId,
-        studentName: 'Student', // Will be populated from Razorpay payment details
+        studentName: 'Student',
         studentEmail: req.user.email,
-        studentPhone: undefined, // Will be populated from Razorpay payment details
+        studentPhone: undefined,
+        couponCode: couponCode || undefined,
+        couponDiscount: couponDiscount || undefined,
+        couponId: couponId || undefined,
       });
 
       sendCreated(res, result, 'Enrollment initiated');
@@ -380,7 +446,7 @@ router.post(
 
 /**
  * POST /api/v2/course-types/enrollments/verify
- * Verify payment and complete enrollment
+ * Verify Cashfree payment and complete enrollment
  */
 router.post(
   '/enrollments/verify',
@@ -388,27 +454,29 @@ router.post(
   attachUser,
   async (req: Request, res: Response) => {
     try {
-      const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;
+      const { order_id } = req.body;
 
-      if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
-        return sendBadRequest(res, 'Payment details are required');
+      if (!order_id) {
+        return sendBadRequest(res, 'order_id is required');
       }
 
-      const enrollment = await enrollmentService.verifyPayment({
-        razorpay_order_id,
-        razorpay_payment_id,
-        razorpay_signature,
-      });
+      const enrollment = await enrollmentService.verifyPayment({ order_id });
+
+      const isRegistrationStep = enrollment.verifiedStep === 'registration';
 
       sendSuccess(res, {
         enrollment: {
           id: enrollment.id,
           enrollmentNumber: enrollment.enrollment_number,
           status: enrollment.status,
+          registrationPaid: enrollment.registration_paid,
           enrolledAt: enrollment.enrolled_at,
           expiresAt: enrollment.expires_at,
         },
-        message: 'Successfully enrolled! Welcome to the class.',
+        verifiedStep: enrollment.verifiedStep,
+        message: isRegistrationStep
+          ? 'Registration fee paid! Please proceed to pay tuition fee.'
+          : 'Successfully enrolled! Welcome to the class.',
       });
     } catch (error: any) {
       console.error('Error verifying payment:', error);
@@ -430,14 +498,14 @@ router.post(
   attachUser,
   async (req: Request, res: Response) => {
     try {
-      const { razorpay_order_id, error_code, error_description } = req.body;
+      const { order_id, error_code, error_description } = req.body;
 
-      if (!razorpay_order_id) {
-        return sendBadRequest(res, 'Order ID is required');
+      if (!order_id) {
+        return sendBadRequest(res, 'order_id is required');
       }
 
       await enrollmentService.handlePaymentFailure(
-        razorpay_order_id,
+        order_id,
         error_code || 'UNKNOWN',
         error_description || 'Payment failed'
       );
@@ -446,6 +514,55 @@ router.post(
     } catch (error) {
       console.error('Error handling payment failure:', error);
       sendError(res, 'Failed to record payment failure');
+    }
+  }
+);
+
+/**
+ * POST /api/v2/course-types/enrollments/:id/pay-tuition
+ * Initiate tuition payment after registration fee has been paid
+ */
+router.post(
+  '/enrollments/:id/pay-tuition',
+  requireAuth,
+  attachUser,
+  async (req: Request, res: Response) => {
+    try {
+      const enrollmentId = getParam(req.params.id);
+
+      if (!req.user || req.user.role !== 'student') {
+        return sendBadRequest(res, 'Only students can make payments');
+      }
+
+      const student = await studentService.getByUserId(req.user.id);
+      if (!student) {
+        return sendBadRequest(res, 'Student profile not found');
+      }
+
+      const enrollment = await enrollmentService.getEnrollmentById(enrollmentId);
+      if (!enrollment || enrollment.student_id !== student.id) {
+        return sendNotFound(res, 'Enrollment');
+      }
+
+      if (!enrollment.registration_paid) {
+        return sendBadRequest(res, 'Registration fee must be paid first');
+      }
+
+      if (enrollment.status === 'active') {
+        return sendBadRequest(res, 'Tuition already paid — you are enrolled');
+      }
+
+      const result = await enrollmentService.initiateTuitionPayment({
+        enrollmentId,
+        studentName: 'Student',
+        studentEmail: req.user.email,
+        studentPhone: undefined,
+      });
+
+      sendCreated(res, result, 'Tuition payment initiated');
+    } catch (error: any) {
+      console.error('Error initiating tuition payment:', error);
+      sendError(res, error.message || 'Failed to initiate tuition payment');
     }
   }
 );
@@ -520,6 +637,7 @@ router.get(
         id: e.id,
         enrollmentNumber: e.enrollment_number,
         status: e.status,
+        registrationPaid: (e as any).registration_paid ?? true,
         enrolledAt: e.enrolled_at,
         expiresAt: e.expires_at,
         className: e.class_name,
@@ -531,7 +649,9 @@ router.get(
           ? {
               id: e.payment.id,
               paymentType: e.payment.payment_type || 'razorpay',
+              paymentGateway: e.payment.payment_gateway || 'razorpay',
               razorpayPaymentId: e.payment.razorpay_payment_id,
+              cashfreePaymentId: e.payment.cashfree_payment_id,
               receiptNumber: e.payment.receipt_number,
               amount: e.payment.amount,
               status: e.payment.status,
@@ -671,7 +791,9 @@ router.get(
         payment: enrollment.payment
           ? {
               id: enrollment.payment.id,
+              paymentGateway: enrollment.payment.payment_gateway || 'razorpay',
               razorpayPaymentId: enrollment.payment.razorpay_payment_id,
+              cashfreePaymentId: enrollment.payment.cashfree_payment_id,
               amount: enrollment.payment.amount,
               status: enrollment.payment.status,
               paidAt: enrollment.payment.paid_at,

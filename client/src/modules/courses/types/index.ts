@@ -45,8 +45,11 @@ export interface AcademicClass {
   maxStudents: number | null;
   currentStudents: number;
   enrollmentOpen: boolean;
+  location: string | null;
   isEnrolled: boolean;
   enrollmentStatus: string | null;
+  registrationPaid: boolean;
+  enrollmentId: string | null;
   feePlan: FeePlan | null;
   feePlans?: FeePlan[];
 }
@@ -65,18 +68,15 @@ export interface EnrollmentInitiateResponse {
   enrollmentId: string;
   orderId: string;
   amount: number;
-  amountPaise: number;
   currency: string;
-  keyId: string;
-  prefill: {
-    name: string;
-    email: string;
-    contact?: string;
-  };
-  notes: Record<string, string>;
+  paymentSessionId: string;
+  environment: 'sandbox' | 'production';
+  /** Which step this payment is for */
+  step: 'registration' | 'tuition';
+  couponDiscount?: number;
 }
 
-export type PaymentType = 'razorpay' | 'cash' | 'bank_transfer' | 'cheque' | 'upi_direct';
+export type PaymentType = 'cashfree' | 'razorpay' | 'cash' | 'bank_transfer' | 'cheque' | 'upi_direct';
 
 export interface Enrollment {
   id: string;
@@ -92,7 +92,9 @@ export interface Enrollment {
   payment: {
     id: string;
     paymentType: PaymentType;
+    paymentGateway: 'cashfree' | 'razorpay';
     razorpayPaymentId: string | null;
+    cashfreePaymentId: string | null;
     receiptNumber: string | null;
     amount: number;
     status: string;

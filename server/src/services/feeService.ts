@@ -129,6 +129,8 @@ export interface DiscountCode {
   applicable_batches: string[] | null;
   applicable_fee_types: FeeType[] | null;
   min_purchase_amount: number | null;
+  assigned_student_id: string | null;
+  applicable_classes: string[] | null;
   is_active: boolean;
   metadata: Record<string, unknown>;
   created_by: string | null;
@@ -945,6 +947,8 @@ class FeeService {
     applicable_batches?: string[];
     applicable_fee_types?: FeeType[];
     min_purchase_amount?: number;
+    assigned_student_id?: string;
+    applicable_classes?: string[];
     created_by?: string;
   }): Promise<DiscountCode> {
     const { data, error } = await this.supabase
@@ -992,6 +996,7 @@ class FeeService {
       courseId?: string;
       batchId?: string;
       feeType?: FeeType;
+      classId?: string;
     }
   ): Promise<{
     valid: boolean;
@@ -1059,6 +1064,18 @@ class FeeService {
     if (options?.feeType && discountCode.applicable_fee_types?.length) {
       if (!discountCode.applicable_fee_types.includes(options.feeType)) {
         return { valid: false, discountAmount: 0, message: 'Discount code not applicable for this fee type' };
+      }
+    }
+
+    // Check student-specific assignment
+    if (discountCode.assigned_student_id && discountCode.assigned_student_id !== studentId) {
+      return { valid: false, discountAmount: 0, message: 'This coupon code is not available for your account' };
+    }
+
+    // Check class applicability
+    if (options?.classId && discountCode.applicable_classes?.length) {
+      if (!discountCode.applicable_classes.includes(options.classId)) {
+        return { valid: false, discountAmount: 0, message: 'Discount code not applicable for this class' };
       }
     }
 

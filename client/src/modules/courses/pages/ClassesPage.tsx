@@ -1,6 +1,7 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '@clerk/clerk-react';
+import { load as loadCashfree } from '@cashfreepayments/cashfree-js';
 import {
   HiOutlineArrowLeft,
   HiOutlineClock,
@@ -25,7 +26,7 @@ import {
   HiOutlineLockClosed,
   HiOutlineLockOpen,
 } from 'react-icons/hi';
-import type { ClassesResponse, AcademicClass, EnrollmentInitiateResponse } from '../types';
+import type { ClassesResponse, AcademicClass, FeePlan, EnrollmentInitiateResponse } from '../types';
 import Footer from '../../../components/Footer';
 
 /* ── Content types for preview section ── */
@@ -66,12 +67,6 @@ function formatDuration(seconds: number | null): string {
   return `${Math.floor(mins / 60)}h ${mins % 60}m`;
 }
 
-/* Declare Razorpay type */
-declare global {
-  interface Window {
-    Razorpay: any;
-  }
-}
 
 /* ── Static content overrides per class (frontend only) ── */
 const classContentMap: Record<string, { title: string; description: string; features: string[] }> = {
@@ -129,6 +124,12 @@ export function ClassesPage() {
   const [enrollingClassId, setEnrollingClassId] = useState<string | null>(null);
   const [paymentError, setPaymentError] = useState<string | null>(null);
   const [paymentSuccess, setPaymentSuccess] = useState<string | null>(null);
+  // Track selected plan per class: classId -> plan index
+  const [selectedPlans, setSelectedPlans] = useState<Record<string, number>>({});
+  // Coupon state per class
+  const [couponInputs, setCouponInputs] = useState<Record<string, string>>({});
+  const [couponResults, setCouponResults] = useState<Record<string, { valid: boolean; discountAmount: number; message?: string } | null>>({});
+  const [validatingCoupon, setValidatingCoupon] = useState<string | null>(null);
   // Content preview state
   const [expandedClassId, setExpandedClassId] = useState<string | null>(null);
   const [contentData, setContentData] = useState<Record<string, { content: BrowseContent[]; isEnrolled: boolean; loading: boolean }>>({});
@@ -186,20 +187,46 @@ export function ClassesPage() {
     }
   };
 
-  /* ── Razorpay script loader ── */
-  const loadRazorpayScript = useCallback((): Promise<boolean> => {
-    return new Promise((resolve) => {
-      if (window.Razorpay) {
-        resolve(true);
-        return;
+  /* ── Get selected plan for a class (supports multi-plan selector) ── */
+  const getSelectedPlan = (classItem: AcademicClass): FeePlan | null => {
+    const plans = classItem.feePlans || [];
+    if (plans.length === 0) return classItem.feePlan;
+    const idx = selectedPlans[classItem.id] ?? 0;
+    return plans[idx] || plans[0];
+  };
+
+  /* ── Validate coupon handler ── */
+  const handleValidateCoupon = async (classId: string) => {
+    const code = couponInputs[classId]?.trim();
+    if (!code) return;
+
+    const classItem = data?.classes.find((c) => c.id === classId);
+    const selectedPlan = classItem ? getSelectedPlan(classItem) : null;
+
+    setValidatingCoupon(classId);
+    setCouponResults((prev) => ({ ...prev, [classId]: null }));
+
+    try {
+      const res = await fetch('/api/v2/course-types/enrollments/validate-coupon', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ couponCode: code, classId, feePlanId: selectedPlan?.id }),
+      });
+      const result = await res.json();
+      if (result.success) {
+        setCouponResults((prev) => ({ ...prev, [classId]: result.data }));
+      } else {
+        setCouponResults((prev) => ({ ...prev, [classId]: { valid: false, discountAmount: 0, message: result.message || 'Invalid coupon' } }));
       }
-      const script = document.createElement('script');
-      script.src = 'https://checkout.razorpay.com/v1/checkout.js';
-      script.onload = () => resolve(true);
-      script.onerror = () => resolve(false);
-      document.body.appendChild(script);
-    });
-  }, []);
+    } catch {
+      setCouponResults((prev) => ({ ...prev, [classId]: { valid: false, discountAmount: 0, message: 'Failed to validate coupon' } }));
+    } finally {
+      setValidatingCoupon(null);
+    }
+  };
+
+  /* ── Cashfree SDK ref ── */
+  const cashfreeRef = useRef<any>(null);
 
   /* ── Enrollment + Payment handler ── */
   const handleEnroll = async (classItem: AcademicClass) => {
@@ -210,7 +237,8 @@ export function ClassesPage() {
       return;
     }
 
-    if (!classItem.feePlan) {
+    const selectedPlan = getSelectedPlan(classItem);
+    if (!selectedPlan) {
       setPaymentError('No fee plan available for this class');
       return;
     }
@@ -220,17 +248,14 @@ export function ClassesPage() {
     setPaymentSuccess(null);
 
     try {
-      // 1. Load Razorpay
-      const scriptLoaded = await loadRazorpayScript();
-      if (!scriptLoaded) throw new Error('Failed to load payment gateway');
-
-      // 2. Initiate enrollment
+      // 1. Initiate enrollment (backend creates Cashfree order)
       const res = await fetch('/api/v2/course-types/enrollments/initiate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           classId: classItem.id,
-          feePlanId: classItem.feePlan.id,
+          feePlanId: selectedPlan.id,
+          couponCode: couponResults[classItem.id]?.valid ? couponInputs[classItem.id]?.trim() : undefined,
         }),
       });
 
@@ -239,66 +264,124 @@ export function ClassesPage() {
 
       const orderData: EnrollmentInitiateResponse = result.data;
 
-      // 3. Open Razorpay checkout
-      const options = {
-        key: orderData.keyId,
-        amount: orderData.amountPaise,
-        currency: orderData.currency,
-        name: 'Be Educated',
-        description: `Enrollment for ${classItem.name}`,
-        order_id: orderData.orderId,
-        prefill: orderData.prefill,
-        notes: orderData.notes,
-        theme: { color: '#05308d' },
-        handler: async (response: any) => {
-          try {
-            const verifyRes = await fetch('/api/v2/course-types/enrollments/verify', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                razorpay_order_id: response.razorpay_order_id,
-                razorpay_payment_id: response.razorpay_payment_id,
-                razorpay_signature: response.razorpay_signature,
-              }),
-            });
-            const verifyResult = await verifyRes.json();
-            if (verifyResult.success) {
-              setPaymentSuccess(`Successfully enrolled in ${classItem.name}!`);
-              fetchClasses();
-            } else {
-              throw new Error(verifyResult.message || 'Payment verification failed');
-            }
-          } catch (err: any) {
-            setPaymentError(err.message || 'Payment verification failed');
-          }
-        },
-        modal: {
-          ondismiss: () => setEnrollingClassId(null),
-        },
-      };
+      // 2. Load Cashfree SDK
+      if (!cashfreeRef.current) {
+        cashfreeRef.current = await loadCashfree({ mode: orderData.environment });
+      }
+      if (!cashfreeRef.current) throw new Error('Failed to load payment gateway');
 
-      const razorpay = new window.Razorpay(options);
+      // 3. Open Cashfree checkout
+      const checkoutResult = await cashfreeRef.current.checkout({
+        paymentSessionId: orderData.paymentSessionId,
+        redirectTarget: '_modal',
+      });
 
-      razorpay.on('payment.failed', async (response: any) => {
+      if (checkoutResult.error) {
+        // Payment failed or was dismissed
         try {
           await fetch('/api/v2/course-types/enrollments/failure', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-              razorpay_order_id: orderData.orderId,
-              error_code: response.error.code,
-              error_description: response.error.description,
+              order_id: orderData.orderId,
+              error_code: checkoutResult.error?.code || 'UNKNOWN',
+              error_description: checkoutResult.error?.message || 'Payment failed',
             }),
           });
         } catch {
           // Ignore error reporting failures
         }
-        setPaymentError(response.error.description || 'Payment failed');
-      });
+        setPaymentError(checkoutResult.error?.message || 'Payment failed');
+        return;
+      }
 
-      razorpay.open();
+      if (checkoutResult.paymentDetails) {
+        // 4. Verify payment with backend
+        const verifyRes = await fetch('/api/v2/course-types/enrollments/verify', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ order_id: orderData.orderId }),
+        });
+        const verifyResult = await verifyRes.json();
+        if (verifyResult.success) {
+          if (verifyResult.data.verifiedStep === 'registration') {
+            setPaymentSuccess(`Registration fee paid for ${classItem.name}! Please click "Pay Tuition" to complete enrollment.`);
+          } else {
+            setPaymentSuccess(`Successfully enrolled in ${classItem.name}!`);
+          }
+          fetchClasses();
+        } else {
+          throw new Error(verifyResult.message || 'Payment verification failed');
+        }
+      }
     } catch (err: any) {
       setPaymentError(err.message || 'Failed to process enrollment');
+    } finally {
+      setEnrollingClassId(null);
+    }
+  };
+
+  /* ── Pay Tuition handler (after registration fee is paid) ── */
+  const handlePayTuition = async (classItem: AcademicClass) => {
+    if (!isLoaded || !isSignedIn || !classItem.enrollmentId) return;
+
+    setEnrollingClassId(classItem.id);
+    setPaymentError(null);
+    setPaymentSuccess(null);
+
+    try {
+      const res = await fetch(`/api/v2/course-types/enrollments/${classItem.enrollmentId}/pay-tuition`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+      });
+
+      const result = await res.json();
+      if (!result.success) throw new Error(result.message || 'Failed to initiate tuition payment');
+
+      const orderData: EnrollmentInitiateResponse = result.data;
+
+      if (!cashfreeRef.current) {
+        cashfreeRef.current = await loadCashfree({ mode: orderData.environment });
+      }
+      if (!cashfreeRef.current) throw new Error('Failed to load payment gateway');
+
+      const checkoutResult = await cashfreeRef.current.checkout({
+        paymentSessionId: orderData.paymentSessionId,
+        redirectTarget: '_modal',
+      });
+
+      if (checkoutResult.error) {
+        try {
+          await fetch('/api/v2/course-types/enrollments/failure', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              order_id: orderData.orderId,
+              error_code: checkoutResult.error?.code || 'UNKNOWN',
+              error_description: checkoutResult.error?.message || 'Payment failed',
+            }),
+          });
+        } catch { /* ignore */ }
+        setPaymentError(checkoutResult.error?.message || 'Payment failed');
+        return;
+      }
+
+      if (checkoutResult.paymentDetails) {
+        const verifyRes = await fetch('/api/v2/course-types/enrollments/verify', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ order_id: orderData.orderId }),
+        });
+        const verifyResult = await verifyRes.json();
+        if (verifyResult.success) {
+          setPaymentSuccess(`Successfully enrolled in ${classItem.name}!`);
+          fetchClasses();
+        } else {
+          throw new Error(verifyResult.message || 'Payment verification failed');
+        }
+      }
+    } catch (err: any) {
+      setPaymentError(err.message || 'Failed to process tuition payment');
     } finally {
       setEnrollingClassId(null);
     }
@@ -432,6 +515,11 @@ export function ClassesPage() {
               {data.classes.map((classItem) => {
                 const classNum = getClassNumber(classItem.name);
                 const staticContent = classNum ? classContentMap[classNum] : null;
+                const plans = classItem.feePlans || [];
+                const selectedIdx = selectedPlans[classItem.id] ?? 0;
+                const currentPlan = plans.length > 0 ? (plans[selectedIdx] || plans[0]) : classItem.feePlan;
+                const planMeta = currentPlan?.metadata || {};
+                const isMonthly = planMeta.plan_code === 'M';
 
                 return (
                 <div
@@ -495,8 +583,56 @@ export function ClassesPage() {
                       </div>
                     )}
 
+                    {/* Plan Picker */}
+                    {plans.length > 1 && (
+                      <div className="mb-4">
+                        <p className="font-heading text-xs font-bold text-[#0a1e3d] mb-2 uppercase tracking-wide">
+                          Choose Payment Plan
+                        </p>
+                        <div className="grid grid-cols-2 gap-2">
+                          {plans.map((plan, idx) => {
+                            const pm = plan.metadata || {};
+                            const isSelected = selectedIdx === idx;
+                            return (
+                              <button
+                                key={plan.id}
+                                onClick={() =>
+                                  setSelectedPlans((prev) => ({ ...prev, [classItem.id]: idx }))
+                                }
+                                className={`relative text-left px-3 py-2.5 rounded-xl border-2 transition-all duration-200 cursor-pointer bg-transparent ${
+                                  isSelected
+                                    ? 'border-[#05308d] bg-[#05308d]/5'
+                                    : 'border-gray-200 hover:border-gray-300'
+                                }`}
+                              >
+                                {plan.highlightLabel && (
+                                  <span className="absolute -top-2 right-2 bg-green-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">
+                                    {plan.highlightLabel}
+                                  </span>
+                                )}
+                                <p
+                                  className={`font-heading text-xs font-bold ${
+                                    isSelected ? 'text-[#05308d]' : 'text-gray-600'
+                                  }`}
+                                >
+                                  {pm.plan_code === 'M'
+                                    ? 'Monthly'
+                                    : pm.installments === 2
+                                    ? '2 Installments'
+                                    : 'One-Time'}
+                                </p>
+                                <p className="font-body text-[10px] text-gray-400 mt-0.5">
+                                  {plan.discountLabel}
+                                </p>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
+
                     {/* Fee Breakdown */}
-                    {classItem.feePlan && (
+                    {currentPlan && (
                       <div className="bg-gray-50 group-hover/card:bg-[#05308d]/[0.02] rounded-xl p-4 mb-5 transition-colors duration-300">
                         <h4 className="font-heading text-sm font-bold text-[#0a1e3d] mb-3 flex items-center gap-2">
                           <HiOutlineCreditCard className="w-4 h-4 text-[#05308d]" />
@@ -506,38 +642,126 @@ export function ClassesPage() {
                           <div className="flex justify-between">
                             <span className="font-body text-gray-500">Registration Fee</span>
                             <span className="font-heading font-semibold text-[#0a1e3d]">
-                              {classItem.feePlan.registrationFee > 0
-                                ? `₹${classItem.feePlan.registrationFee.toLocaleString()}`
+                              {currentPlan.registrationFee > 0
+                                ? `₹${currentPlan.registrationFee.toLocaleString()}`
                                 : 'Free'}
                             </span>
                           </div>
                           <div className="flex justify-between">
-                            <span className="font-body text-gray-500">Tuition Fee</span>
+                            <span className="font-body text-gray-500">
+                              {isMonthly ? 'Annual Fee (+10%)' : 'Tuition Fee'}
+                            </span>
                             <span className="font-heading font-semibold text-[#0a1e3d]">
-                              ₹{classItem.feePlan.tuitionFee.toLocaleString()}
+                              ₹{currentPlan.tuitionFee.toLocaleString()}
                             </span>
                           </div>
-                          {classItem.feePlan.materialFee > 0 && (
+                          {currentPlan.materialFee > 0 && (
                             <div className="flex justify-between">
                               <span className="font-body text-gray-500">Material Fee</span>
                               <span className="font-heading font-semibold text-[#0a1e3d]">
-                                ₹{classItem.feePlan.materialFee.toLocaleString()}
+                                ₹{currentPlan.materialFee.toLocaleString()}
                               </span>
                             </div>
                           )}
-                          {classItem.feePlan.discountAmount > 0 && (
+                          {currentPlan.discountAmount > 0 && (
                             <div className="flex justify-between text-green-600">
-                              <span className="font-body">{classItem.feePlan.discountLabel || 'Discount'}</span>
-                              <span className="font-heading font-semibold">-₹{classItem.feePlan.discountAmount.toLocaleString()}</span>
+                              <span className="font-body">{currentPlan.discountLabel || 'Discount'}</span>
+                              <span className="font-heading font-semibold">-₹{currentPlan.discountAmount.toLocaleString()}</span>
+                            </div>
+                          )}
+                          {couponResults[classItem.id]?.valid && (
+                            <div className="flex justify-between text-green-600">
+                              <span className="font-body">Coupon Discount</span>
+                              <span className="font-heading font-semibold">-₹{couponResults[classItem.id]!.discountAmount.toLocaleString()}</span>
                             </div>
                           )}
                           <div className="border-t border-gray-200 pt-2 flex justify-between">
-                            <span className="font-heading font-bold text-[#0a1e3d]">Total Amount</span>
+                            <span className="font-heading font-bold text-[#0a1e3d]">
+                              {isMonthly ? 'Total (Annual)' : 'Total Amount'}
+                            </span>
                             <span className="font-heading font-extrabold text-lg text-[#05308d]">
-                              ₹{classItem.feePlan.totalAmount.toLocaleString()}
+                              ₹{(currentPlan.totalAmount - (couponResults[classItem.id]?.valid ? couponResults[classItem.id]!.discountAmount : 0)).toLocaleString()}
                             </span>
                           </div>
                         </div>
+
+                        {/* Monthly breakdown */}
+                        {isMonthly && planMeta.monthly_fee && (
+                          <div className="mt-3 pt-3 border-t border-dashed border-gray-200">
+                            <p className="font-heading text-[10px] font-bold text-[#05308d] uppercase tracking-wide mb-2">
+                              Monthly Payment
+                            </p>
+                            <div className="flex justify-between text-sm">
+                              <span className="font-body text-gray-500">
+                                ₹{Number(planMeta.monthly_fee).toLocaleString()} x 12 months
+                              </span>
+                              <span className="font-heading font-bold text-[#05308d]">
+                                ₹{Number(planMeta.monthly_fee).toLocaleString()}/mo
+                              </span>
+                            </div>
+                            <p className="font-body text-[10px] text-gray-400 mt-1">
+                              First month paid at enrollment, remaining 11 billed monthly.
+                            </p>
+                          </div>
+                        )}
+
+                        {/* 2-installment breakdown */}
+                        {planMeta.installments === 2 && planMeta.installment_1 && (
+                          <div className="mt-3 pt-3 border-t border-dashed border-gray-200">
+                            <p className="font-heading text-[10px] font-bold text-[#05308d] uppercase tracking-wide mb-2">
+                              Payment Schedule
+                            </p>
+                            <div className="space-y-1.5 text-xs">
+                              <div className="flex justify-between">
+                                <span className="font-body text-gray-500">1st Installment (at admission)</span>
+                                <span className="font-heading font-bold text-[#0a1e3d]">
+                                  ₹{Number(planMeta.installment_1).toLocaleString()}
+                                </span>
+                              </div>
+                              <div className="flex justify-between">
+                                <span className="font-body text-gray-500">2nd Installment (after 6 months)</span>
+                                <span className="font-heading font-bold text-[#0a1e3d]">
+                                  ₹{Number(planMeta.installment_2).toLocaleString()}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Coupon Code Input */}
+                        {!classItem.isEnrolled && classItem.enrollmentOpen && (
+                          <div className="mt-3 pt-3 border-t border-dashed border-gray-200">
+                            <p className="font-heading text-[10px] font-bold text-[#05308d] uppercase tracking-wide mb-2">
+                              Have a Coupon?
+                            </p>
+                            <div className="flex gap-2">
+                              <input
+                                type="text"
+                                placeholder="Enter coupon code"
+                                value={couponInputs[classItem.id] || ''}
+                                onChange={(e) => {
+                                  setCouponInputs((prev) => ({ ...prev, [classItem.id]: e.target.value.toUpperCase() }));
+                                  setCouponResults((prev) => ({ ...prev, [classItem.id]: null }));
+                                }}
+                                className="flex-1 px-3 py-2 border border-gray-200 rounded-lg font-body text-sm text-[#0a1e3d] placeholder-gray-400 focus:outline-none focus:border-[#05308d] focus:ring-1 focus:ring-[#05308d]/20 transition-colors"
+                              />
+                              <button
+                                onClick={() => handleValidateCoupon(classItem.id)}
+                                disabled={!couponInputs[classItem.id]?.trim() || validatingCoupon === classItem.id}
+                                className="px-4 py-2 bg-[#05308d] text-white rounded-lg font-heading text-xs font-bold transition-colors hover:bg-[#1a56db] disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer border-none"
+                              >
+                                {validatingCoupon === classItem.id ? '...' : 'Apply'}
+                              </button>
+                            </div>
+                            {couponResults[classItem.id] && (
+                              <p className={`font-body text-xs mt-1.5 ${couponResults[classItem.id]!.valid ? 'text-green-600' : 'text-red-500'}`}>
+                                {couponResults[classItem.id]!.valid
+                                  ? `Coupon applied! ₹${couponResults[classItem.id]!.discountAmount.toLocaleString()} off`
+                                  : couponResults[classItem.id]!.message || 'Invalid coupon'}
+                              </p>
+                            )}
+                          </div>
+                        )}
                       </div>
                     )}
 
@@ -720,11 +944,32 @@ export function ClassesPage() {
                     )}
 
                     {/* CTA Button */}
-                    {classItem.isEnrolled ? (
+                    {classItem.enrollmentStatus === 'active' ? (
                       <div className="flex items-center justify-center gap-2 bg-green-50 border border-green-200 text-green-700 py-3.5 px-4 rounded-xl font-heading font-bold text-sm">
                         <HiOutlineAcademicCap className="w-5 h-5" />
-                        {classItem.enrollmentStatus === 'active' ? 'Enrolled' : 'Enrollment Pending'}
+                        Enrolled
                       </div>
+                    ) : classItem.isEnrolled && classItem.registrationPaid && classItem.enrollmentStatus === 'pending' ? (
+                      <button
+                        onClick={() => handlePayTuition(classItem)}
+                        disabled={enrollingClassId === classItem.id}
+                        className="w-full flex items-center justify-center gap-2 bg-amber-500 hover:bg-amber-600 text-white py-3.5 px-4 rounded-xl font-heading font-bold text-sm transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer border-none hover:shadow-lg hover:shadow-amber-500/25"
+                      >
+                        {enrollingClassId === classItem.id ? (
+                          <>
+                            <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                            Processing...
+                          </>
+                        ) : (
+                          <>
+                            <HiOutlineCreditCard className="w-5 h-5" />
+                            Pay {isMonthly ? 'Month 1' : 'Tuition'} — ₹{(isMonthly
+                              ? Number(planMeta.monthly_fee || 0)
+                              : (currentPlan?.totalAmount || 0) - (currentPlan?.registrationFee || 0)
+                            ).toLocaleString('en-IN')}
+                          </>
+                        )}
+                      </button>
                     ) : classItem.enrollmentOpen ? (
                       <button
                         onClick={() => handleEnroll(classItem)}

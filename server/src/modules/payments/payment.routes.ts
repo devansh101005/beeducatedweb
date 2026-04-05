@@ -4,7 +4,7 @@
 import { Router, Request, Response } from 'express';
 import { requireAuth, attachUser, requireAdmin, requireTeacherOrAdmin } from '../../middleware/auth.js';
 import { paymentService, PaymentMethod } from '../../services/paymentService.js';
-import { razorpayService } from '../../services/razorpayService.js';
+import { cashfreeService } from '../../services/cashfreeService.js';
 import { studentService } from '../../services/studentService.js';
 import { feeService, PaymentStatus } from '../../services/feeService.js';
 import {
@@ -20,22 +20,38 @@ import {
 const router = Router();
 
 // ============================================
-// RAZORPAY CONFIG
+// PAYMENT GATEWAY CONFIG
 // ============================================
 
 /**
- * GET /api/v2/payments/razorpay/config
- * Get Razorpay public configuration
+ * GET /api/v2/payments/gateway/config
+ * Get payment gateway public configuration
  */
+router.get('/gateway/config', requireAuth, attachUser, async (_req: Request, res: Response) => {
+  try {
+    sendSuccess(res, {
+      gateway: 'cashfree',
+      appId: cashfreeService.getAppId(),
+      environment: cashfreeService.getEnvironment(),
+      isConfigured: cashfreeService.isConfigured(),
+    });
+  } catch (error) {
+    console.error('Error getting gateway config:', error);
+    sendError(res, 'Failed to get gateway config');
+  }
+});
+
+// Keep legacy endpoint for backwards compatibility
 router.get('/razorpay/config', requireAuth, attachUser, async (_req: Request, res: Response) => {
   try {
     sendSuccess(res, {
-      keyId: razorpayService.getKeyId(),
-      isConfigured: razorpayService.isConfigured(),
+      gateway: 'cashfree',
+      appId: cashfreeService.getAppId(),
+      environment: cashfreeService.getEnvironment(),
+      isConfigured: cashfreeService.isConfigured(),
     });
   } catch (error) {
-    console.error('Error getting Razorpay config:', error);
-    sendError(res, 'Failed to get Razorpay config');
+    sendError(res, 'Failed to get gateway config');
   }
 });
 
@@ -125,7 +141,7 @@ router.post('/initiate', requireAuth, attachUser, async (req: Request, res: Resp
       return sendBadRequest(res, 'This fee has already been fully paid');
     }
 
-    const result = await paymentService.initiateRazorpayPayment({
+    const result = await paymentService.initiateOnlinePayment({
       student_id: student.id,
       student_fee_id: studentFeeId,
       amount: serverAmount,
@@ -144,21 +160,17 @@ router.post('/initiate', requireAuth, attachUser, async (req: Request, res: Resp
 
 /**
  * POST /api/v2/payments/complete
- * Complete Razorpay payment after successful transaction
+ * Complete online payment after successful Cashfree transaction
  */
 router.post('/complete', requireAuth, attachUser, async (req: Request, res: Response) => {
   try {
-    const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;
+    const { order_id } = req.body;
 
-    if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
-      return sendBadRequest(res, 'Missing payment verification parameters');
+    if (!order_id) {
+      return sendBadRequest(res, 'order_id is required');
     }
 
-    const payment = await paymentService.completeRazorpayPayment({
-      razorpay_order_id,
-      razorpay_payment_id,
-      razorpay_signature,
-    });
+    const payment = await paymentService.completeOnlinePayment({ order_id });
 
     sendSuccess(res, payment, 'Payment completed successfully');
   } catch (error) {

@@ -1,5 +1,5 @@
 // Courses Module - Course types, classes, and enrollment
-// Premium course enrollment experience with Razorpay payment
+// Premium course enrollment experience with Cashfree payment
 
 // Pages
 export { CoursesPage } from './pages/CoursesPage';

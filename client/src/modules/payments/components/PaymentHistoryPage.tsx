@@ -36,8 +36,11 @@ interface Payment {
   currency: string;
   status: 'pending' | 'processing' | 'completed' | 'failed' | 'refunded' | 'cancelled';
   payment_method: string;
+  payment_gateway: string;
   razorpay_payment_id: string;
   razorpay_order_id: string;
+  cashfree_payment_id: string | null;
+  cashfree_order_id: string | null;
   created_at: string;
   completed_at: string | null;
   fee?: {
@@ -326,7 +329,7 @@ export function PaymentHistoryPage() {
                         </p>
                         <div className="flex items-center gap-3 mt-1">
                           <span className="text-xs text-slate-500 font-mono">
-                            {payment.razorpay_payment_id || `#${payment.id.slice(0, 8)}`}
+                            {payment.cashfree_payment_id || payment.razorpay_payment_id || `#${payment.id.slice(0, 8)}`}
                           </span>
                           <span className="text-xs text-slate-400">
                             {format(parseISO(payment.created_at), 'MMM dd, yyyy HH:mm')}

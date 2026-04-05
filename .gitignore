@@ -48,3 +48,8 @@ serviceAccountKey.json
 !**/package.json
 !tsconfig.json
 !**/tsconfig.json
+
+PLATFORM_USER_GUIDE.md
+PLATFORM_USER_GUIDE.pdf
+fee.md
+INTERVIEW_PREP.md

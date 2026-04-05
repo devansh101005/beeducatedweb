@@ -23,10 +23,16 @@ export const env = {
   // Frontend URL (for CORS)
   FRONTEND_URL: process.env.FRONTEND_URL || 'http://localhost:5173',
 
-  // Razorpay
+  // Razorpay (legacy — kept for historical payment lookups)
   RAZORPAY_KEY_ID: process.env.RAZORPAY_KEY_ID || '',
   RAZORPAY_KEY_SECRET: process.env.RAZORPAY_KEY_SECRET || '',
   RAZORPAY_WEBHOOK_SECRET: process.env.RAZORPAY_WEBHOOK_SECRET || '',
+
+  // Cashfree (active payment gateway)
+  CASHFREE_APP_ID: process.env.CASHFREE_APP_ID || '',
+  CASHFREE_SECRET_KEY: process.env.CASHFREE_SECRET_KEY || '',
+  CASHFREE_WEBHOOK_SECRET: process.env.CASHFREE_WEBHOOK_SECRET || '',
+  CASHFREE_API_VERSION: process.env.CASHFREE_API_VERSION || '2023-08-01',
 
   // Admin Whitelist (comma-separated emails)
   ADMIN_EMAILS: process.env.ADMIN_EMAILS || '',

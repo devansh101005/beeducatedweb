@@ -1,4 +1,4 @@
-// Payments Module - Payment processing with Razorpay
+// Payments Module - Payment processing with Cashfree
 // Premium EdTech payment experience
 
 export { PaymentPage } from './components/PaymentPage';

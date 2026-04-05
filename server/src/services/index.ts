@@ -63,5 +63,8 @@ export { feeService } from './feeService.js';
 // Payment service (Phase 4)
 export { paymentService } from './paymentService.js';
 
-// Razorpay service (Phase 4)
+// Razorpay service (legacy — kept for historical refund lookups)
 export { razorpayService } from './razorpayService.js';
+
+// Cashfree service (active payment gateway)
+export { cashfreeService } from './cashfreeService.js';

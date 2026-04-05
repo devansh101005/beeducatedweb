@@ -29,6 +29,7 @@ import { courseTypesRoutes } from './modules/courseTypes/index.js';
 import { teacherRoutes } from './modules/teacher/index.js';
 import clerkWebhook from './webhooks/clerk.js';
 import razorpayWebhook from './webhooks/razorpay.js';
+import cashfreeWebhook from './webhooks/cashfree.js';
 import { examAttemptService } from './services/examAttemptService.js';
 
 // Validate environment variables
@@ -140,6 +141,7 @@ app.use('/api/', generalLimiter);
 // Note: Webhook routes need raw body for signature verification
 app.use('/api/v2/webhooks/clerk', express.raw({ type: 'application/json' }));
 app.use('/api/v2/webhooks/razorpay', express.json());
+app.use('/api/v2/webhooks/cashfree', express.json());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -163,6 +165,7 @@ app.use('/api/v2/health', healthRoutes);
 // Webhooks (must come before auth middleware)
 app.use('/api/v2/webhooks/clerk', clerkWebhook);
 app.use('/api/v2/webhooks/razorpay', razorpayWebhook);
+app.use('/api/v2/webhooks/cashfree', cashfreeWebhook);
 
 // Auth routes (stricter rate limit)
 app.use('/api/v2/auth', authLimiter, authRoutes);

@@ -1,5 +1,22 @@
 /// <reference types="vite/client" />
 
+declare module '@cashfreepayments/cashfree-js' {
+  interface CashfreeCheckoutOptions {
+    paymentSessionId: string;
+    redirectTarget?: '_modal' | '_self' | '_blank' | HTMLElement;
+    returnUrl?: string;
+  }
+  interface CashfreeCheckoutResult {
+    error?: { code?: string; message?: string };
+    paymentDetails?: Record<string, any>;
+    redirect?: boolean;
+  }
+  interface CashfreeInstance {
+    checkout(options: CashfreeCheckoutOptions): Promise<CashfreeCheckoutResult>;
+  }
+  export function load(options: { mode: 'sandbox' | 'production' }): Promise<CashfreeInstance | null>;
+}
+
 interface ImportMetaEnv {
   // API
   readonly VITE_API_URL: string;

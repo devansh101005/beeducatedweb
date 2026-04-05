@@ -1,5 +1,5 @@
 // Admin Enrollments Management Page
-// View all enrollments — online (Razorpay) and manual (cash/bank/cheque/UPI)
+// View all enrollments — online (Cashfree) and manual (cash/bank/cheque/UPI)
 
 import { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '@clerk/clerk-react';
@@ -64,6 +64,7 @@ interface Enrollment {
     amount: number;
     receipt_number: string | null;
     razorpay_payment_id: string | null;
+    cashfree_payment_id: string | null;
     created_at: string;
   } | null;
 }
@@ -94,7 +95,8 @@ const statusOptions = [
 
 const paymentMethodOptions = [
   { value: '', label: 'All Methods' },
-  { value: 'razorpay', label: 'Online (Razorpay)' },
+  { value: 'cashfree', label: 'Online (Cashfree)' },
+  { value: 'razorpay', label: 'Online (Razorpay - Legacy)' },
   { value: 'cash', label: 'Cash' },
   { value: 'bank_transfer', label: 'Bank Transfer' },
   { value: 'cheque', label: 'Cheque' },
@@ -141,6 +143,7 @@ function getStatusBadge(status: string) {
 
 function getPaymentMethodBadge(paymentType: string | null | undefined) {
   switch (paymentType) {
+    case 'cashfree':
     case 'razorpay':
       return (
         <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-blue-50 text-blue-700">

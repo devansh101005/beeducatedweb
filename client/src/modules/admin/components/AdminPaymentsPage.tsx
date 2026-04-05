@@ -50,6 +50,9 @@ interface Payment {
   payment_method: string;
   razorpay_order_id: string | null;
   razorpay_payment_id: string | null;
+  cashfree_order_id: string | null;
+  cashfree_payment_id: string | null;
+  payment_gateway: string | null;
   transaction_id: string | null;
   bank_name: string | null;
   bank_reference: string | null;
@@ -106,7 +109,8 @@ const paymentStatuses = [
 
 const paymentMethods = [
   { value: '', label: 'All Methods' },
-  { value: 'razorpay', label: 'Razorpay' },
+  { value: 'cashfree', label: 'Cashfree' },
+  { value: 'razorpay', label: 'Razorpay (Legacy)' },
   { value: 'cash', label: 'Cash' },
   { value: 'cheque', label: 'Cheque' },
   { value: 'bank_transfer', label: 'Bank Transfer' },
@@ -174,6 +178,7 @@ function getStatusBadge(status: string) {
 
 function getMethodLabel(method: string): string {
   const map: Record<string, string> = {
+    cashfree: 'Cashfree',
     razorpay: 'Razorpay',
     cash: 'Cash',
     cheque: 'Cheque',
@@ -189,6 +194,8 @@ function getMethodLabel(method: string): string {
 
 function getMethodBadge(method: string) {
   switch (method) {
+    case 'cashfree':
+      return <Badge variant="info">Cashfree</Badge>;
     case 'razorpay':
       return <Badge variant="info">Razorpay</Badge>;
     case 'cash':
@@ -804,6 +811,7 @@ function PaymentDetailModal({ payment, onClose }: PaymentDetailModalProps) {
             <div className="space-y-3">
               <DetailRow label="Payment Number" value={payment.payment_number} />
               {payment.transaction_id && <DetailRow label="Transaction ID" value={payment.transaction_id} />}
+              {payment.cashfree_payment_id && <DetailRow label="Cashfree ID" value={payment.cashfree_payment_id} />}
               {payment.razorpay_payment_id && <DetailRow label="Razorpay ID" value={payment.razorpay_payment_id} />}
               {payment.payer_name && <DetailRow label="Payer Name" value={payment.payer_name} />}
               {payment.payer_email && <DetailRow label="Payer Email" value={payment.payer_email} />}

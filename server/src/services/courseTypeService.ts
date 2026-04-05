@@ -77,6 +77,8 @@ export interface ClassWithFees extends AcademicClass {
   fee_plans?: ClassFeePlan[];
   is_enrolled?: boolean;
   enrollment_status?: string;
+  registration_paid?: boolean;
+  enrollment_id?: string | null;
 }
 
 export interface Subject {
@@ -189,16 +191,26 @@ class CourseTypeService {
 
     // Get enrollments if student ID provided
     let enrollments: Record<string, string> = {};
+    let enrollmentRegStatus: Record<string, boolean> = {};
+    let enrollmentIds: Record<string, string> = {};
     if (studentId) {
       const { data: enrollmentData } = await getSupabase()
         .from('class_enrollments')
-        .select('class_id, status')
+        .select('id, class_id, status, registration_paid')
         .eq('student_id', studentId)
         .in('status', ['pending', 'active']);
 
       if (enrollmentData) {
         enrollments = enrollmentData.reduce((acc, e) => {
           acc[e.class_id] = e.status;
+          return acc;
+        }, {} as Record<string, string>);
+        enrollmentRegStatus = enrollmentData.reduce((acc, e) => {
+          acc[e.class_id] = e.registration_paid ?? false;
+          return acc;
+        }, {} as Record<string, boolean>);
+        enrollmentIds = enrollmentData.reduce((acc, e) => {
+          acc[e.class_id] = e.id;
           return acc;
         }, {} as Record<string, string>);
       }
@@ -217,6 +229,8 @@ class CourseTypeService {
         fee_plans: allPlans,
         is_enrolled: !!enrollments[classItem.id],
         enrollment_status: enrollments[classItem.id] || null,
+        registration_paid: enrollmentRegStatus[classItem.id] ?? false,
+        enrollment_id: enrollmentIds[classItem.id] || null,
       };
     });
 

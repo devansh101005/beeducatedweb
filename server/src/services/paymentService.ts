@@ -2,11 +2,12 @@
 // Handles payment creation, tracking, and processing
 
 import { getSupabase } from '../config/supabase.js';
+import { cashfreeService } from './cashfreeService.js';
 import { razorpayService } from './razorpayService.js';
 import { feeService, PaymentStatus } from './feeService.js';
 
 // Types
-export type PaymentMethod = 'razorpay' | 'bank_transfer' | 'cash' | 'cheque' | 'upi' | 'card' | 'wallet' | 'emi' | 'other';
+export type PaymentMethod = 'razorpay' | 'cashfree' | 'bank_transfer' | 'cash' | 'cheque' | 'upi' | 'card' | 'wallet' | 'emi' | 'other';
 
 export interface Payment {
   id: string;
@@ -20,6 +21,9 @@ export interface Payment {
   razorpay_payment_id: string | null;
   razorpay_signature: string | null;
   razorpay_invoice_id: string | null;
+  payment_gateway: string;
+  cashfree_order_id: string | null;
+  cashfree_payment_id: string | null;
   bank_name: string | null;
   bank_reference: string | null;
   transaction_id: string | null;
@@ -64,7 +68,7 @@ export interface CreatePaymentInput {
   created_by?: string;
 }
 
-export interface InitiateRazorpayPaymentInput {
+export interface InitiateOnlinePaymentInput {
   student_id: string;
   student_fee_id?: string;
   amount: number;
@@ -76,10 +80,8 @@ export interface InitiateRazorpayPaymentInput {
   created_by?: string;
 }
 
-export interface CompleteRazorpayPaymentInput {
-  razorpay_order_id: string;
-  razorpay_payment_id: string;
-  razorpay_signature: string;
+export interface CompleteOnlinePaymentInput {
+  order_id: string;
 }
 
 export interface PaymentListOptions {
@@ -138,16 +140,15 @@ class PaymentService {
   }
 
   /**
-   * Initiate Razorpay payment
+   * Initiate online payment via Cashfree
    */
-  async initiateRazorpayPayment(input: InitiateRazorpayPaymentInput): Promise<{
+  async initiateOnlinePayment(input: InitiateOnlinePaymentInput): Promise<{
     payment: Payment;
-    razorpayOrder: {
-      id: string;
-      amount: number;
-      currency: string;
-    };
-    keyId: string;
+    orderId: string;
+    paymentSessionId: string;
+    amount: number;
+    currency: string;
+    environment: 'sandbox' | 'production';
   }> {
     let finalAmount = input.amount;
     let discountCodeId: string | undefined;
@@ -174,7 +175,7 @@ class PaymentService {
       student_id: input.student_id,
       student_fee_id: input.student_fee_id,
       amount: finalAmount,
-      payment_method: 'razorpay',
+      payment_method: 'cashfree',
       payer_name: input.payer_name,
       payer_email: input.payer_email,
       payer_phone: input.payer_phone,
@@ -192,11 +193,13 @@ class PaymentService {
         .eq('id', payment.id);
     }
 
-    // Create Razorpay order
-    const razorpayOrder = await razorpayService.createOrder({
-      amount: Math.round(finalAmount * 100), // Convert to paise
-      currency: 'INR',
-      receipt: payment.payment_number,
+    // Create Cashfree order
+    const cfOrder = await cashfreeService.createOrder({
+      orderId: payment.payment_number,
+      amount: finalAmount,
+      customerName: input.payer_name || 'Student',
+      customerEmail: input.payer_email || '',
+      customerPhone: input.payer_phone || '9999999999',
       notes: {
         payment_id: payment.id,
         student_id: input.student_id,
@@ -204,55 +207,60 @@ class PaymentService {
       },
     });
 
-    // Update payment with Razorpay order ID
+    // Update payment with Cashfree order ID
     await this.supabase
       .from('payments')
-      .update({ razorpay_order_id: razorpayOrder.id })
+      .update({
+        payment_gateway: 'cashfree',
+        cashfree_order_id: cfOrder.order_id,
+      })
       .eq('id', payment.id);
 
     return {
-      payment: { ...payment, razorpay_order_id: razorpayOrder.id },
-      razorpayOrder: {
-        id: razorpayOrder.id,
-        amount: razorpayOrder.amount,
-        currency: razorpayOrder.currency,
-      },
-      keyId: razorpayService.getKeyId(),
+      payment: { ...payment, cashfree_order_id: cfOrder.order_id },
+      orderId: cfOrder.order_id,
+      paymentSessionId: cfOrder.payment_session_id,
+      amount: finalAmount,
+      currency: 'INR',
+      environment: cashfreeService.getEnvironment(),
     };
   }
 
   /**
-   * Complete Razorpay payment after successful payment
+   * Complete online payment — verify with Cashfree server-side
    */
-  async completeRazorpayPayment(input: CompleteRazorpayPaymentInput): Promise<Payment> {
-    // Verify signature
-    const isValid = razorpayService.verifyPaymentSignature({
-      razorpay_order_id: input.razorpay_order_id,
-      razorpay_payment_id: input.razorpay_payment_id,
-      razorpay_signature: input.razorpay_signature,
-    });
-
-    if (!isValid) {
-      throw new Error('Invalid payment signature');
+  async completeOnlinePayment(input: CompleteOnlinePaymentInput): Promise<Payment> {
+    // Verify order status with Cashfree
+    const cfOrder = await cashfreeService.getOrder(input.order_id);
+    if (cfOrder.order_status !== 'PAID') {
+      throw new Error(`Payment not confirmed. Status: ${cfOrder.order_status}`);
     }
 
-    // Get payment by order ID
+    // Get payment by Cashfree order ID
     const { data: payment, error } = await this.supabase
       .from('payments')
       .select('*')
-      .eq('razorpay_order_id', input.razorpay_order_id)
+      .eq('cashfree_order_id', input.order_id)
       .single();
 
     if (error || !payment) {
       throw new Error('Payment not found');
     }
 
+    // Idempotency — already completed
+    if (payment.status === 'completed') {
+      return payment as Payment;
+    }
+
+    // Get payment details from Cashfree
+    const cfPayments = await cashfreeService.getOrderPayments(input.order_id);
+    const cfPayment = cfPayments.find(p => p.payment_status === 'SUCCESS') || cfPayments[0];
+
     // Update payment status
     const { data: updatedPayment, error: updateError } = await this.supabase
       .from('payments')
       .update({
-        razorpay_payment_id: input.razorpay_payment_id,
-        razorpay_signature: input.razorpay_signature,
+        cashfree_payment_id: cfPayment?.cf_payment_id?.toString() || null,
         status: 'completed',
         completed_at: new Date().toISOString(),
       })
@@ -279,7 +287,7 @@ class PaymentService {
 
     // Log transaction
     await this.logTransaction(payment.id, 'payment', payment.amount, 'completed', {
-      razorpay_payment_id: input.razorpay_payment_id,
+      cashfree_payment_id: cfPayment?.cf_payment_id?.toString(),
     });
 
     return updatedPayment as Payment;
@@ -383,13 +391,31 @@ class PaymentService {
   }
 
   /**
-   * Get payment by Razorpay order ID
+   * Get payment by Razorpay order ID (legacy)
    */
   async getPaymentByRazorpayOrderId(orderId: string): Promise<Payment | null> {
     const { data, error } = await this.supabase
       .from('payments')
       .select('*')
       .eq('razorpay_order_id', orderId)
+      .single();
+
+    if (error) {
+      if (error.code === 'PGRST116') return null;
+      throw new Error(`Failed to get payment: ${error.message}`);
+    }
+
+    return data as Payment;
+  }
+
+  /**
+   * Get payment by Cashfree order ID
+   */
+  async getPaymentByCashfreeOrderId(orderId: string): Promise<Payment | null> {
+    const { data, error } = await this.supabase
+      .from('payments')
+      .select('*')
+      .eq('cashfree_order_id', orderId)
       .single();
 
     if (error) {
@@ -518,7 +544,43 @@ class PaymentService {
       throw new Error('Refund amount exceeds payment amount');
     }
 
-    // For Razorpay payments, initiate refund through gateway
+    // For Cashfree payments, initiate refund through gateway
+    if (payment.payment_method === 'cashfree' && payment.cashfree_payment_id) {
+      const refundId = `ref_${Date.now()}`;
+      const refund = await cashfreeService.createRefund({
+        paymentId: payment.cashfree_payment_id,
+        refundAmount,
+        refundId,
+        refundNote: reason || 'Refund requested',
+      });
+
+      const { data, error } = await this.supabase
+        .from('payments')
+        .update({
+          refund_amount: refundAmount,
+          refund_status: 'processing',
+          refund_id: refund.cf_refund_id,
+          refund_reason: reason,
+          status: refundAmount >= payment.amount ? 'refunded' : 'partially_refunded',
+        })
+        .eq('id', paymentId)
+        .select()
+        .single();
+
+      if (error) {
+        console.error(`[REFUND_DB_FAIL] cashfree_refund_id=${refund.cf_refund_id} payment_id=${paymentId} amount=${refundAmount} — DB update failed: ${error.message}`);
+        throw new Error(`Failed to update refund status: ${error.message}`);
+      }
+
+      await this.logTransaction(paymentId, 'refund', refundAmount, 'processing', {
+        refund_id: refund.cf_refund_id,
+        reason,
+      });
+
+      return data as Payment;
+    }
+
+    // For legacy Razorpay payments, use Razorpay for refund
     if (payment.payment_method === 'razorpay' && payment.razorpay_payment_id) {
       const refund = await razorpayService.createRefund({
         paymentId: payment.razorpay_payment_id,
@@ -540,12 +602,10 @@ class PaymentService {
         .single();
 
       if (error) {
-        // Razorpay refund was issued but DB update failed — log prominently for manual reconciliation
         console.error(`[REFUND_DB_FAIL] razorpay_refund_id=${refund.id} payment_id=${paymentId} amount=${refundAmount} — DB update failed: ${error.message}`);
         throw new Error(`Failed to update refund status: ${error.message}`);
       }
 
-      // Log transaction
       await this.logTransaction(paymentId, 'refund', refundAmount, 'processing', {
         refund_id: refund.id,
         reason,

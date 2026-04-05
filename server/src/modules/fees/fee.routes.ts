@@ -792,6 +792,8 @@ router.post('/discount-codes', requireAuth, attachUser, requireAdmin, async (req
       applicableBatches,
       applicableFeeTypes,
       minPurchaseAmount,
+      assignedStudentId,
+      applicableClasses,
     } = req.body;
 
     if (!code || !discountType || discountValue === undefined) {
@@ -812,6 +814,8 @@ router.post('/discount-codes', requireAuth, attachUser, requireAdmin, async (req
       applicable_batches: applicableBatches,
       applicable_fee_types: applicableFeeTypes,
       min_purchase_amount: minPurchaseAmount,
+      assigned_student_id: assignedStudentId,
+      applicable_classes: applicableClasses,
       created_by: req.user?.id,
     });
 
@@ -875,6 +879,8 @@ router.put('/discount-codes/:id', requireAuth, attachUser, requireAdmin, async (
       applicableBatches: 'applicable_batches',
       applicableFeeTypes: 'applicable_fee_types',
       minPurchaseAmount: 'min_purchase_amount',
+      assignedStudentId: 'assigned_student_id',
+      applicableClasses: 'applicable_classes',
       isActive: 'is_active',
     };
 

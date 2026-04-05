@@ -1,9 +1,10 @@
 // Payment Page
-// Razorpay checkout integration
+// Cashfree checkout integration
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useAuth, useUser } from '@clerk/clerk-react';
+import { useAuth } from '@clerk/clerk-react';
+import { load as loadCashfree } from '@cashfreepayments/cashfree-js';
 import { motion } from 'framer-motion';
 import {
   CreditCard,
@@ -39,25 +40,11 @@ interface FeeDetails {
   due_date: string;
 }
 
-interface RazorpayConfig {
-  keyId: string;
-  currency: string;
-  name: string;
-  description: string;
-  image: string;
-}
-
-interface RazorpayOrder {
-  id: string;
-  amount: number;
-  currency: string;
-  receipt: string;
-}
-
-declare global {
-  interface Window {
-    Razorpay: any;
-  }
+interface GatewayConfig {
+  gateway: string;
+  appId: string;
+  environment: 'sandbox' | 'production';
+  isConfigured: boolean;
 }
 
 const API_URL = import.meta.env.VITE_API_URL || '/api';
@@ -70,40 +57,33 @@ export function PaymentPage() {
   const { feeId } = useParams<{ feeId: string }>();
   const navigate = useNavigate();
   const { getToken } = useAuth();
-  const { user } = useUser();
 
   const [fee, setFee] = useState<FeeDetails | null>(null);
-  const [razorpayConfig, setRazorpayConfig] = useState<RazorpayConfig | null>(null);
+  const [gatewayConfig, setGatewayConfig] = useState<GatewayConfig | null>(null);
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [discountCode, setDiscountCode] = useState('');
   const [discountApplied, setDiscountApplied] = useState<number>(0);
   const [paymentMethod, setPaymentMethod] = useState<'online' | 'upi' | 'netbanking'>('online');
-  const [razorpayReady, setRazorpayReady] = useState(false);
-  const [razorpayError, setRazorpayError] = useState(false);
+  const [gatewayReady, setGatewayReady] = useState(false);
+  const [gatewayError, setGatewayError] = useState(false);
+  const cashfreeRef = useRef<any>(null);
 
-  // Load Razorpay script
+  // Load Cashfree SDK
   useEffect(() => {
-    // Check if already loaded
-    if ((window as any).Razorpay) {
-      setRazorpayReady(true);
-      return;
-    }
-
-    const script = document.createElement('script');
-    script.src = 'https://checkout.razorpay.com/v1/checkout.js';
-    script.async = true;
-    script.onload = () => setRazorpayReady(true);
-    script.onerror = () => setRazorpayError(true);
-    document.body.appendChild(script);
-
-    return () => {
-      document.body.removeChild(script);
+    const initCashfree = async () => {
+      try {
+        // Will be initialized with proper mode after config is fetched
+        setGatewayReady(true);
+      } catch {
+        setGatewayError(true);
+      }
     };
+    initCashfree();
   }, []);
 
-  // Fetch fee details and razorpay config
+  // Fetch fee details and gateway config
   useEffect(() => {
     const fetchData = async () => {
       if (!feeId) return;
@@ -124,14 +104,14 @@ export function PaymentPage() {
           setError('Fee not found');
         }
 
-        // Fetch Razorpay config
-        const configRes = await fetch(`${API_URL}/v2/payments/razorpay/config`, {
+        // Fetch gateway config
+        const configRes = await fetch(`${API_URL}/v2/payments/gateway/config`, {
           headers: { Authorization: `Bearer ${token}` },
         });
 
         if (configRes.ok) {
           const configData = await configRes.json();
-          setRazorpayConfig(configData.data);
+          setGatewayConfig(configData.data);
         }
       } catch (err) {
         console.error('Error fetching data:', err);
@@ -176,7 +156,7 @@ export function PaymentPage() {
 
   // Handle payment
   const handlePayment = async () => {
-    if (!fee || !razorpayConfig) return;
+    if (!fee || !gatewayConfig) return;
 
     setProcessing(true);
     setError(null);
@@ -192,8 +172,7 @@ export function PaymentPage() {
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
-          feeId: fee.id,
-          amount: finalAmount,
+          studentFeeId: fee.id,
           discountCode: discountApplied > 0 ? discountCode : undefined,
         }),
       });
@@ -203,60 +182,49 @@ export function PaymentPage() {
       }
 
       const { data: paymentData } = await initiateRes.json();
-      const order: RazorpayOrder = paymentData.order;
 
-      // Open Razorpay checkout
-      const options = {
-        key: razorpayConfig.keyId,
-        amount: order.amount,
-        currency: order.currency,
-        name: razorpayConfig.name,
-        description: `Payment for ${fee.description || fee.fee_type}`,
-        image: razorpayConfig.image,
-        order_id: order.id,
-        prefill: {
-          name: user?.fullName || '',
-          email: user?.primaryEmailAddress?.emailAddress || '',
-          contact: user?.primaryPhoneNumber?.phoneNumber || '',
-        },
-        theme: {
-          color: '#f59e0b',
-        },
-        handler: async function (response: any) {
-          // Complete payment
-          try {
-            const completeRes = await fetch(`${API_URL}/v2/payments/complete`, {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                Authorization: `Bearer ${token}`,
-              },
-              body: JSON.stringify({
-                razorpayPaymentId: response.razorpay_payment_id,
-                razorpayOrderId: response.razorpay_order_id,
-                razorpaySignature: response.razorpay_signature,
-                paymentId: paymentData.paymentId,
-              }),
-            });
+      // Load Cashfree SDK if not already loaded
+      if (!cashfreeRef.current) {
+        cashfreeRef.current = await loadCashfree({
+          mode: gatewayConfig.environment,
+        });
+      }
+      if (!cashfreeRef.current) throw new Error('Failed to load payment gateway');
 
-            if (completeRes.ok) {
-              navigate(`/dashboard/payments/success?paymentId=${paymentData.paymentId}`);
-            } else {
-              throw new Error('Payment verification failed');
-            }
-          } catch (err) {
-            setError('Payment verification failed. Please contact support.');
-          }
-        },
-        modal: {
-          ondismiss: function () {
-            setProcessing(false);
+      // Open Cashfree checkout
+      const checkoutResult = await cashfreeRef.current.checkout({
+        paymentSessionId: paymentData.paymentSessionId,
+        redirectTarget: '_modal',
+      });
+
+      if (checkoutResult.error) {
+        setError(checkoutResult.error?.message || 'Payment failed');
+        setProcessing(false);
+        return;
+      }
+
+      if (checkoutResult.paymentDetails) {
+        // Verify payment with backend
+        const completeRes = await fetch(`${API_URL}/v2/payments/complete`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
           },
-        },
-      };
+          body: JSON.stringify({
+            order_id: paymentData.orderId,
+          }),
+        });
 
-      const razorpay = new window.Razorpay(options);
-      razorpay.open();
+        if (completeRes.ok) {
+          navigate(`/dashboard/payments/success?paymentId=${paymentData.paymentId}`);
+        } else {
+          throw new Error('Payment verification failed');
+        }
+      } else {
+        // Modal was dismissed
+        setProcessing(false);
+      }
     } catch (err) {
       console.error('Payment error:', err);
       setError('Failed to process payment. Please try again.');
@@ -427,7 +395,7 @@ export function PaymentPage() {
           <div className="flex items-center gap-3 p-4 bg-slate-50 rounded-xl">
             <Shield className="w-5 h-5 text-slate-400 shrink-0" />
             <p className="text-sm text-slate-600">
-              Your payment is secured with 256-bit SSL encryption. Powered by Razorpay.
+              Your payment is secured with 256-bit SSL encryption. Powered by Cashfree.
             </p>
           </div>
         </motion.div>
@@ -474,7 +442,7 @@ export function PaymentPage() {
               </div>
             )}
 
-            {razorpayError && (
+            {gatewayError && (
               <div className="mt-4 p-3 bg-amber-50 border border-amber-200 rounded-lg">
                 <p className="text-sm text-amber-700">Payment gateway failed to load. Please check your internet connection and refresh the page.</p>
               </div>
@@ -486,11 +454,11 @@ export function PaymentPage() {
               size="lg"
               onClick={handlePayment}
               isLoading={processing}
-              disabled={!razorpayReady || razorpayError}
+              disabled={!gatewayReady || gatewayError}
               leftIcon={processing ? undefined : <Lock className="w-4 h-4" />}
               className="mt-6"
             >
-              {processing ? 'Processing...' : !razorpayReady ? 'Loading payment gateway...' : `Pay ${formatCurrency(finalAmount)}`}
+              {processing ? 'Processing...' : !gatewayReady ? 'Loading payment gateway...' : `Pay ${formatCurrency(finalAmount)}`}
             </Button>
 
             <div className="mt-4 flex items-center justify-center gap-2">
@@ -501,7 +469,7 @@ export function PaymentPage() {
             {/* Trust badges */}
             <div className="mt-6 pt-4 border-t border-slate-100">
               <div className="flex items-center justify-center gap-4 opacity-50">
-                <img src="/razorpay-logo.svg" alt="Razorpay" className="h-5" onError={(e) => e.currentTarget.style.display = 'none'} />
+                <img src="/cashfree-logo.svg" alt="Cashfree" className="h-5" onError={(e) => e.currentTarget.style.display = 'none'} />
               </div>
             </div>
           </Card>
