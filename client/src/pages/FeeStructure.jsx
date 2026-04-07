@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import {
   HiOutlineAcademicCap,
   HiOutlineCash,
@@ -18,20 +18,24 @@ import {
   HiOutlineHome,
   HiOutlineRefresh,
   HiOutlineBadgeCheck,
+  HiOutlineLocationMarker,
+  HiOutlineArrowRight,
 } from 'react-icons/hi';
 import Footer from '../components/Footer';
 
 /* ──────────────────────────────────────────────
-   OFFLINE BATCH — FEE DATA
+   OFFLINE BATCH (Hybrid) — FEE DATA
+   Source: migrations 018 + 021
+   Plans: M (Monthly +10%), B (50/50 — 10% OFF, default), C (One-Time — 15% OFF)
    ────────────────────────────────────────────── */
 const classFees = [
-  { class: '6',  annual: 9799  },
-  { class: '7',  annual: 10799 },
-  { class: '8',  annual: 11999 },
-  { class: '9',  annual: 17000 },
-  { class: '10', annual: 21000 },
-  { class: '11', annual: 26000 },
-  { class: '12', annual: 33000 },
+  { class: '6',  annual: 9799,  monthly: 899  },
+  { class: '7',  annual: 10799, monthly: 990  },
+  { class: '8',  annual: 11999, monthly: 1100 },
+  { class: '9',  annual: 17000, monthly: 1559 },
+  { class: '10', annual: 21000, monthly: 1925 },
+  { class: '11', annual: 26000, monthly: 2384 },
+  { class: '12', annual: 33000, monthly: 3025 },
 ];
 
 const batchIncludes = [
@@ -45,7 +49,8 @@ const batchIncludes = [
 
 const offlineTerms = [
   'Only one payment option can be selected at the time of enrollment.',
-  '10% OFF is available on 2-installment plan; 15% OFF is available on one-time payment.',
+  'Monthly Plan carries a +10% annual surcharge over the base annual fee.',
+  '10% OFF is available on the 2-installment (50/50) plan; 15% OFF is available on one-time payment.',
   'Discounts apply on course fee only — registration fee and GST are excluded.',
   'Discounts cannot be combined.',
   'Delay beyond the due date will attract a late fine of ₹50 per day.',
@@ -61,24 +66,70 @@ const offlineTerms = [
 ];
 
 /* ──────────────────────────────────────────────
-   HOME TUITION — FEE DATA
+   HOME TUITION — FEE DATA (3 LOCATIONS)
+   Source: migrations 022 + 024
+   Plans: M (Monthly, no surcharge), E (4-Inst — 5% OFF),
+          C (2-Inst — 10% OFF, default), D (One-Time — 15% OFF)
+   Monthly = annual / 12
    ────────────────────────────────────────────── */
-const tuitionFees = [
-  { class: 'Nursery', monthly: 2000, annual: 24000 },
-  { class: 'LKG',     monthly: 2050, annual: 24600 },
-  { class: 'UKG',     monthly: 2100, annual: 25200 },
-  { class: '1st',     monthly: 2150, annual: 25800 },
-  { class: '2nd',     monthly: 2200, annual: 26400 },
-  { class: '3rd',     monthly: 2250, annual: 27000 },
-  { class: '4th',     monthly: 2300, annual: 27600 },
-  { class: '5th',     monthly: 2500, annual: 30000 },
-  { class: '6th',     monthly: 2600, annual: 31200 },
-  { class: '7th',     monthly: 2700, annual: 32400 },
-  { class: '8th',     monthly: 2800, annual: 33600 },
-  { class: '9th',     monthly: 3200, annual: 38400 },
-  { class: '10th',    monthly: 3500, annual: 42000 },
-  { class: '11th',    monthly: 6000, annual: 72000 },
-  { class: '12th',    monthly: 6500, annual: 78000 },
+const tuitionFeesByLocation = {
+  lalganj: [
+    { class: 'Nursery', monthly: 2000, annual: 24000 },
+    { class: 'LKG',     monthly: 2050, annual: 24600 },
+    { class: 'UKG',     monthly: 2100, annual: 25200 },
+    { class: '1st',     monthly: 2150, annual: 25800 },
+    { class: '2nd',     monthly: 2200, annual: 26400 },
+    { class: '3rd',     monthly: 2250, annual: 27000 },
+    { class: '4th',     monthly: 2300, annual: 27600 },
+    { class: '5th',     monthly: 2500, annual: 30000 },
+    { class: '6th',     monthly: 2600, annual: 31200 },
+    { class: '7th',     monthly: 2700, annual: 32400 },
+    { class: '8th',     monthly: 2800, annual: 33600 },
+    { class: '9th',     monthly: 3200, annual: 38400 },
+    { class: '10th',    monthly: 3500, annual: 42000 },
+    { class: '11th',    monthly: 6000, annual: 72000 },
+    { class: '12th',    monthly: 6500, annual: 78000 },
+  ],
+  pratapgarh: [
+    { class: 'Nursery', monthly: 2500, annual: 30000 },
+    { class: 'LKG',     monthly: 2550, annual: 30600 },
+    { class: 'UKG',     monthly: 2600, annual: 31200 },
+    { class: '1st',     monthly: 2700, annual: 32400 },
+    { class: '2nd',     monthly: 2800, annual: 33600 },
+    { class: '3rd',     monthly: 2900, annual: 34800 },
+    { class: '4th',     monthly: 3000, annual: 36000 },
+    { class: '5th',     monthly: 3100, annual: 37200 },
+    { class: '6th',     monthly: 3200, annual: 38400 },
+    { class: '7th',     monthly: 3300, annual: 39600 },
+    { class: '8th',     monthly: 3400, annual: 40800 },
+    { class: '9th',     monthly: 3800, annual: 45600 },
+    { class: '10th',    monthly: 4100, annual: 49200 },
+    { class: '11th',    monthly: 6600, annual: 79200 },
+    { class: '12th',    monthly: 7100, annual: 85200 },
+  ],
+  prayagraj: [
+    { class: 'Nursery', monthly: 3000, annual: 36000 },
+    { class: 'LKG',     monthly: 3050, annual: 36600 },
+    { class: 'UKG',     monthly: 3100, annual: 37200 },
+    { class: '1st',     monthly: 3200, annual: 38400 },
+    { class: '2nd',     monthly: 3300, annual: 39600 },
+    { class: '3rd',     monthly: 3400, annual: 40800 },
+    { class: '4th',     monthly: 3500, annual: 42000 },
+    { class: '5th',     monthly: 3600, annual: 43200 },
+    { class: '6th',     monthly: 3700, annual: 44400 },
+    { class: '7th',     monthly: 3800, annual: 45600 },
+    { class: '8th',     monthly: 3900, annual: 46800 },
+    { class: '9th',     monthly: 4300, annual: 51600 },
+    { class: '10th',    monthly: 4700, annual: 56400 },
+    { class: '11th',    monthly: 7200, annual: 86400 },
+    { class: '12th',    monthly: 7700, annual: 92400 },
+  ],
+};
+
+const LOCATIONS = [
+  { id: 'lalganj',    label: 'Lalganj' },
+  { id: 'pratapgarh', label: 'Pratapgarh' },
+  { id: 'prayagraj',  label: 'Prayagraj' },
 ];
 
 const fmt = (n) => Math.round(n).toLocaleString('en-IN');
@@ -121,7 +172,7 @@ function PolicyAccordion({ title, icon: Icon, children, defaultOpen = false }) {
 }
 
 /* ──────────────────────────────────────────────
-   HOME TUITION: OPTION CARD + ROW
+   OPTION CARD + ROW
    ────────────────────────────────────────────── */
 function OptionCard({ letter, label, badge, accentColor, children }) {
   const styles = {
@@ -167,49 +218,71 @@ function CalcRow({ label, sub, value, highlight }) {
    MAIN PAGE
    ────────────────────────────────────────────── */
 const FeeStructure = () => {
+  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const [selectedClass, setSelectedClass] = useState(null);
   const [selectedOfflineClass, setSelectedOfflineClass] = useState(null);
 
   const activeTab = searchParams.get('tab') === 'home-tuition' ? 'home-tuition' : 'offline';
+  const locParam = (searchParams.get('location') || '').toLowerCase();
+  const selectedLocation = ['lalganj', 'pratapgarh', 'prayagraj'].includes(locParam) ? locParam : 'lalganj';
+  const tuitionFees = tuitionFeesByLocation[selectedLocation];
 
   const switchTab = (tab) => {
-    setSearchParams(tab === 'home-tuition' ? { tab: 'home-tuition' } : {});
+    if (tab === 'home-tuition') {
+      setSearchParams({ tab: 'home-tuition', location: selectedLocation });
+    } else {
+      setSearchParams({});
+    }
+    setSelectedClass(null);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  /* Home Tuition calculator */
+  const switchLocation = (loc) => {
+    setSearchParams({ tab: 'home-tuition', location: loc });
+    setSelectedClass(null);
+  };
+
+  /* Navigate to courses page for enrollment */
+  const goToHomeTuitionEnroll = () => {
+    navigate(`/courses/home-tuition?location=${selectedLocation}`);
+  };
+  const goToOfflineEnroll = () => {
+    navigate('/courses/coaching_offline');
+  };
+
+  /* Home Tuition calculator — 4 plans (M, E, C, D) */
   const selectedTuition = tuitionFees.find((f) => f.class === selectedClass);
   const calc = selectedTuition
     ? (() => {
         const { monthly, annual } = selectedTuition;
-        const b1 = Math.round(annual * 0.25);
-        const b2 = Math.round(annual * 0.3333);
-        const b3 = Math.round(annual * 0.3167);
-        const b4 = annual - b1 - b2 - b3;
+        // Plan E (4-Installment, 5% OFF)
+        const annualE = Math.round(annual * 0.95);
+        const eq = Math.round(annualE / 4);
+        // Plan C (2-Installment, 10% OFF)
         const annualC = Math.round(annual * 0.9);
         const c1 = Math.round(annualC / 2);
         const c2 = annualC - c1;
+        // Plan D (One-Time, 15% OFF)
         const annualD = Math.round(annual * 0.85);
-        return { monthly, annual, atAdmissionA: 499 + monthly * 2, b1, b2, b3, b4, annualC, c1, c2, annualD };
+        return { monthly, annual, annualE, eq, annualC, c1, c2, annualD };
       })()
     : null;
 
-  /* Offline Batch calculator */
+  /* Offline Batch calculator — 3 plans (M, B, C) */
   const selectedOffline = classFees.find((f) => f.class === selectedOfflineClass);
   const offlineCalc = selectedOffline
     ? (() => {
-        const { annual } = selectedOffline;
-        // Option A: Full fee, 2 installments (70/30)
-        const a1 = Math.round(annual * 0.7);
-        const a2 = annual - a1;
-        // Option B: 10% OFF, 2 installments (50/50)
+        const { annual, monthly } = selectedOffline;
+        // Plan M (Monthly, +10% surcharge)
+        const annualWithSurcharge = Math.round(annual * 1.10);
+        // Plan B: 10% OFF, 2 installments (50/50)
         const annualB = Math.round(annual * 0.9);
         const b1 = Math.round(annualB / 2);
         const b2 = annualB - b1;
-        // Option C: 15% OFF, one-time
+        // Plan C: 15% OFF, one-time
         const annualC = Math.round(annual * 0.85);
-        return { annual, a1, a2, annualB, b1, b2, annualC };
+        return { annual, monthlySurcharge: monthly, annualWithSurcharge, annualB, b1, b2, annualC };
       })()
     : null;
 
@@ -233,12 +306,12 @@ const FeeStructure = () => {
             Fee Structure
           </span>
           <h1 className="font-heading text-[32px] sm:text-[42px] md:text-[50px] font-extrabold text-white mb-4 leading-tight">
-            {activeTab === 'home-tuition' ? 'Home Tuition — Fee & Payment Plans' : 'Offline Batch — Class 6 to 12'}
+            {activeTab === 'home-tuition' ? 'Home Tuition — Fee & Payment Plans' : 'Hybrid Batch — Class 6 to 12'}
           </h1>
           <p className="font-body text-base sm:text-lg text-white/70 max-w-2xl mx-auto leading-relaxed">
             {activeTab === 'home-tuition'
-              ? 'Flexible payment options — monthly, quarterly, or one-time — with exclusive discounts.'
-              : 'Transparent and affordable pricing. Invest in your child\'s future with quality education.'}
+              ? 'Flexible payment options — monthly, quarterly, half-yearly, or one-time — with exclusive discounts.'
+              : 'Transparent and affordable pricing. Choose monthly, half-yearly, or one-time payment.'}
           </p>
         </div>
       </section>
@@ -258,7 +331,7 @@ const FeeStructure = () => {
               }`}
             >
               <HiOutlineAcademicCap className="w-4 h-4" />
-              Offline Batch
+              Hybrid Batch
             </button>
             <button
               onClick={() => switchTab('home-tuition')}
@@ -276,7 +349,7 @@ const FeeStructure = () => {
       </section>
 
       {/* ════════════════════════════════════════════ */}
-      {/* OFFLINE BATCH TAB                           */}
+      {/* HYBRID (OFFLINE) BATCH TAB                   */}
       {/* ════════════════════════════════════════════ */}
       {activeTab === 'offline' && (
         <>
@@ -291,11 +364,14 @@ const FeeStructure = () => {
                   </div>
                   <div className="flex-1 text-center sm:text-left">
                     <h3 className="font-heading text-xl sm:text-2xl font-bold text-[#0a1e3d] dark:text-slate-50 mb-1">₹499 Registration Fee</h3>
-                    <p className="font-body text-sm text-gray-500 dark:text-slate-400">One-Time, Mandatory & Non-Refundable — payable at the time of admission, separate from course fee.</p>
+                    <p className="font-body text-sm text-gray-500 dark:text-slate-400">One-Time, Mandatory & Non-Refundable — paid first as a separate step before tuition.</p>
                   </div>
-                  <Link to="/contact" className="flex-shrink-0 bg-[#05308d] text-white px-6 py-3 rounded-xl font-heading font-bold text-sm no-underline transition-all duration-300 hover:bg-[#1a56db] hover:-translate-y-0.5 hover:shadow-lg hover:shadow-[#05308d]/25">
-                    Register Now
-                  </Link>
+                  <button
+                    onClick={goToOfflineEnroll}
+                    className="flex-shrink-0 inline-flex items-center gap-2 bg-[#05308d] text-white px-6 py-3 rounded-xl font-heading font-bold text-sm cursor-pointer border-none transition-all duration-300 hover:bg-[#1a56db] hover:-translate-y-0.5 hover:shadow-lg hover:shadow-[#05308d]/25"
+                  >
+                    Enroll Now <HiOutlineArrowRight className="w-4 h-4" />
+                  </button>
                 </div>
               </div>
             </div>
@@ -344,19 +420,24 @@ const FeeStructure = () => {
                   </div>
                   <div className="grid sm:grid-cols-2 xl:grid-cols-3 gap-5">
 
-                    {/* OPTION A: Annual Fee, 2 installments (70/30), No Discount */}
-                    <OptionCard letter="A" label="2-Installment Plan (70/30)" badge="No Discount" accentColor="blue">
+                    {/* OPTION M: Monthly Plan (+10% surcharge) */}
+                    <OptionCard letter="M" label="Monthly Plan" badge="+10% surcharge" accentColor="gray">
+                      <div className="mb-3">
+                        <span className="font-heading text-2xl font-extrabold text-[#05308d]">₹{fmt(offlineCalc.monthlySurcharge)}</span>
+                        <span className="font-body text-xs text-gray-400 dark:text-slate-500 ml-1">/ month</span>
+                      </div>
                       <div className="space-y-2 mb-4">
-                        <CalcRow label="1st — At Admission" sub="70% of course fee" value={`₹${fmt(offlineCalc.a1)}`} highlight />
-                        <CalcRow label="2nd — Within 75 days" sub="30% of course fee" value={`₹${fmt(offlineCalc.a2)}`} />
+                        <CalcRow label="At Admission" sub="Month 1 fee" value={`₹${fmt(offlineCalc.monthlySurcharge)}`} highlight />
+                        <CalcRow label="Months 2 – 12" sub="Auto-billed monthly" value={`₹${fmt(offlineCalc.monthlySurcharge)} × 11`} />
+                        <CalcRow label="Annual (with surcharge)" value={`₹${fmt(offlineCalc.annualWithSurcharge)}`} />
                       </div>
                       <p className="font-body text-[10px] text-gray-400 dark:text-slate-500 bg-gray-50 dark:bg-slate-800 rounded-lg p-2.5">
-                        Total: ₹{fmt(offlineCalc.annual)} (full course fee, no discount). ₹499 registration fee additional.
+                        ₹499 registration fee paid separately at admission. No discount on monthly plan.
                       </p>
                     </OptionCard>
 
                     {/* OPTION B: 10% OFF, 2 installments (50/50) */}
-                    <OptionCard letter="B" label="2-Installment Plan" badge="10% OFF" accentColor="green">
+                    <OptionCard letter="B" label="2-Installment Plan (50/50)" badge="10% OFF" accentColor="green">
                       <div className="mb-3">
                         <span className="font-body text-xs text-gray-400 dark:text-slate-500 line-through">₹{fmt(offlineCalc.annual)}</span>
                         <span className="font-heading text-2xl font-extrabold text-[#05308d] ml-2">₹{fmt(offlineCalc.annualB)}</span>
@@ -367,7 +448,7 @@ const FeeStructure = () => {
                         <CalcRow label="2nd — Within 75 days" sub="Second half" value={`₹${fmt(offlineCalc.b2)}`} />
                       </div>
                       <p className="font-body text-[10px] text-gray-400 dark:text-slate-500 bg-green-50 dark:bg-green-900/20 rounded-lg p-2.5">
-                        Discount on course fee only. Reg fee & GST excluded.
+                        Default plan. Discount on course fee only. Reg fee & GST excluded.
                       </p>
                     </OptionCard>
 
@@ -386,6 +467,17 @@ const FeeStructure = () => {
                     </OptionCard>
 
                   </div>
+
+                  {/* Enroll CTA below cards */}
+                  <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4">
+                    <button
+                      onClick={goToOfflineEnroll}
+                      className="inline-flex items-center gap-2 bg-[#05308d] text-white px-7 py-3.5 rounded-xl font-heading font-bold text-sm sm:text-base cursor-pointer border-none transition-all duration-300 hover:bg-[#1a56db] hover:-translate-y-0.5 hover:shadow-lg hover:shadow-[#05308d]/25"
+                    >
+                      Enroll in Class {selectedOfflineClass} <HiOutlineArrowRight className="w-4 h-4" />
+                    </button>
+                    <p className="font-body text-xs text-gray-400 dark:text-slate-500">Continue to courses page to choose plan & pay</p>
+                  </div>
                 </>
               )}
             </div>
@@ -397,17 +489,19 @@ const FeeStructure = () => {
               <div className="text-center mb-10">
                 <span className="inline-block font-heading text-sm font-semibold text-[#05308d] uppercase tracking-[0.15em] mb-3">Reference Table</span>
                 <h2 className="font-heading text-2xl sm:text-3xl font-bold text-[#0a1e3d] dark:text-slate-50 mb-2">All Classes Fee Overview</h2>
-                <p className="font-body text-gray-500 dark:text-slate-400 text-sm">Click any row to load it into the calculator above</p>
+                <p className="font-body text-gray-500 dark:text-slate-400 text-sm">Click any row to load it into the calculator above, or enroll directly</p>
               </div>
               <div className="bg-white dark:bg-slate-900 rounded-2xl border border-gray-100 dark:border-slate-700 shadow-sm overflow-hidden">
                 <div className="overflow-x-auto">
-                  <table className="w-full min-w-[500px]">
+                  <table className="w-full min-w-[640px]">
                     <thead>
                       <tr className="bg-[#0a1e3d]">
                         <th className="px-5 py-4 text-left font-heading text-xs font-bold text-white uppercase tracking-wider">Class</th>
-                        <th className="px-5 py-4 text-right font-heading text-xs font-bold text-white uppercase tracking-wider">Annual Fee</th>
+                        <th className="px-5 py-4 text-right font-heading text-xs font-bold text-white uppercase tracking-wider">Monthly<br/><span className="font-normal normal-case">(+10%)</span></th>
+                        <th className="px-5 py-4 text-right font-heading text-xs font-bold text-white uppercase tracking-wider">Annual</th>
                         <th className="px-5 py-4 text-right font-heading text-xs font-bold text-[#fbbf24] uppercase tracking-wider">10% OFF<br/><span className="font-normal normal-case">(2 Inst.)</span></th>
                         <th className="px-5 py-4 text-right font-heading text-xs font-bold text-[#fbbf24] uppercase tracking-wider">15% OFF<br/><span className="font-normal normal-case">(One-time)</span></th>
+                        <th className="px-5 py-4 text-center font-heading text-xs font-bold text-white uppercase tracking-wider">Action</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -416,19 +510,30 @@ const FeeStructure = () => {
                         return (
                           <tr
                             key={f.class}
-                            onClick={() => {
-                              setSelectedOfflineClass(f.class);
-                              window.scrollTo({ top: 0, behavior: 'smooth' });
-                            }}
-                            className={`border-b border-gray-100 dark:border-slate-700 cursor-pointer transition-colors duration-150 ${isSel ? 'bg-[#05308d]/5' : i % 2 === 0 ? 'bg-white dark:bg-slate-900 hover:bg-gray-50 dark:hover:bg-slate-800' : 'bg-gray-50/50 dark:bg-slate-800/50 hover:bg-gray-100/50 dark:hover:bg-slate-700/50'}`}
+                            className={`border-b border-gray-100 dark:border-slate-700 transition-colors duration-150 ${isSel ? 'bg-[#05308d]/5' : i % 2 === 0 ? 'bg-white dark:bg-slate-900 hover:bg-gray-50 dark:hover:bg-slate-800' : 'bg-gray-50/50 dark:bg-slate-800/50 hover:bg-gray-100/50 dark:hover:bg-slate-700/50'}`}
                           >
-                            <td className="px-5 py-3.5">
+                            <td
+                              onClick={() => {
+                                setSelectedOfflineClass(f.class);
+                                window.scrollTo({ top: 0, behavior: 'smooth' });
+                              }}
+                              className="px-5 py-3.5 cursor-pointer"
+                            >
                               <span className={`font-heading font-bold text-sm ${isSel ? 'text-[#05308d]' : 'text-[#0a1e3d] dark:text-slate-50'}`}>Class {f.class}</span>
                               {isSel && <span className="ml-2 text-[10px] bg-[#05308d] text-white px-1.5 py-0.5 rounded font-bold">↑ Selected</span>}
                             </td>
+                            <td className="px-5 py-3.5 text-right font-body text-sm text-gray-600 dark:text-slate-300">₹{fmt(f.monthly)}</td>
                             <td className="px-5 py-3.5 text-right font-body text-sm text-gray-600 dark:text-slate-300">₹{fmt(f.annual)}</td>
                             <td className="px-5 py-3.5 text-right font-heading text-sm font-semibold text-green-700">₹{fmt(f.annual * 0.9)}</td>
                             <td className="px-5 py-3.5 text-right font-heading text-sm font-semibold text-[#05308d]">₹{fmt(f.annual * 0.85)}</td>
+                            <td className="px-5 py-3.5 text-center">
+                              <button
+                                onClick={() => navigate('/courses/coaching_offline')}
+                                className="inline-flex items-center gap-1 bg-[#fbbf24] text-[#0a1e3d] px-3 py-1.5 rounded-lg font-heading font-bold text-[11px] cursor-pointer border-none transition-all duration-200 hover:bg-[#f5c842] hover:shadow-md hover:-translate-y-0.5"
+                              >
+                                Enroll <HiOutlineArrowRight className="w-3 h-3" />
+                              </button>
+                            </td>
                           </tr>
                         );
                       })}
@@ -436,7 +541,7 @@ const FeeStructure = () => {
                   </table>
                 </div>
                 <div className="px-5 py-3 bg-gray-50 dark:bg-slate-800 border-t border-gray-100 dark:border-slate-700">
-                  <p className="font-body text-xs text-gray-400 dark:text-slate-500">₹499 registration fee is additional · Discounts apply on course fee only</p>
+                  <p className="font-body text-xs text-gray-400 dark:text-slate-500">₹499 registration fee is additional · Discounts apply on course fee only · Monthly plan adds +10% surcharge</p>
                 </div>
               </div>
             </div>
@@ -449,7 +554,7 @@ const FeeStructure = () => {
             <div className="relative z-10 max-w-6xl mx-auto px-5">
               <div className="text-center mb-14">
                 <span className="inline-block font-heading text-sm font-semibold text-[#fbbf24] uppercase tracking-[0.15em] mb-3">What You Get</span>
-                <h2 className="font-heading text-2xl sm:text-3xl md:text-4xl font-bold text-white mb-3">Offline Batch Includes</h2>
+                <h2 className="font-heading text-2xl sm:text-3xl md:text-4xl font-bold text-white mb-3">Hybrid Batch Includes</h2>
                 <p className="font-body text-white/50 max-w-xl mx-auto">Every student gets access to complete academic support and resources</p>
               </div>
               <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
@@ -483,8 +588,8 @@ const FeeStructure = () => {
               </div>
               <div className="grid sm:grid-cols-3 gap-5">
                 {[
-                  { letter: 'A', title: '2 Installments (70/30)', sub: 'No Discount', tag: 'Default', tagColor: 'bg-white/10 text-white/70', points: ['70% at admission', '30% within 75 days', 'Full course fee', 'No discount applied'], icon: HiOutlineClipboardCheck },
-                  { letter: 'B', title: '2 Installments (50/50)', sub: '10% OFF', tag: 'Save 10%', tagColor: 'bg-green-500/20 text-green-300', points: ['50% at admission', '50% within 75 days', '10% off on course fee', 'Reg & GST excluded'], icon: HiOutlineBadgeCheck },
+                  { letter: 'M', title: 'Monthly Plan', sub: '+10% surcharge', tag: 'Most Flexible', tagColor: 'bg-white/10 text-white/70', points: ['Pay each month for 12 months', '+10% on top of base annual fee', 'Month 1 due at enrollment', 'Months 2-12 auto-billed monthly'], icon: HiOutlineRefresh },
+                  { letter: 'B', title: '2 Installments (50/50)', sub: '10% OFF', tag: 'Default · Save 10%', tagColor: 'bg-green-500/20 text-green-300', points: ['50% at admission', '50% within 75 days', '10% off on course fee', 'Reg & GST excluded'], icon: HiOutlineBadgeCheck },
                   { letter: 'C', title: 'One-Time Payment', sub: '15% OFF', tag: 'Best Value', tagColor: 'bg-[#fbbf24]/20 text-[#fbbf24]', points: ['Full payment at admission', '15% off on course fee', 'Maximum savings', 'No further dues'], icon: HiOutlineCash },
                 ].map((plan) => {
                   const Icon = plan.icon;
@@ -526,8 +631,8 @@ const FeeStructure = () => {
                     <p className="font-body text-sm text-gray-600 dark:text-slate-300 leading-relaxed">Choose from <span className="font-semibold text-[#0a1e3d] dark:text-slate-50">3 payment options</span>:</p>
                     <div className="grid sm:grid-cols-3 gap-4">
                       {[
-                        { label: 'Option A', title: '2 Installments (70/30)', sub: 'No discount · 70% at admission, 30% within 75 days', color: 'gray' },
-                        { label: 'Option B', title: '2 Installments (50/50)', sub: '10% OFF · Equal halves, 2nd within 75 days', color: 'green' },
+                        { label: 'Option M', title: 'Monthly Plan', sub: '+10% surcharge · Pay across 12 months', color: 'gray' },
+                        { label: 'Option B', title: '2 Installments (50/50)', sub: '10% OFF · Default · 2nd within 75 days', color: 'green' },
                         { label: 'Option C', title: 'One-Time Payment', sub: '15% OFF · Full payment at admission', color: 'gold' },
                       ].map((opt) => (
                         <div key={opt.label} className={`bg-[#05308d]/[0.03] border rounded-xl p-5 transition-all duration-300 hover:shadow-md ${
@@ -541,7 +646,7 @@ const FeeStructure = () => {
                     </div>
                     <div className="flex items-start gap-3 bg-[#fbbf24]/5 border border-[#fbbf24]/20 rounded-xl p-4">
                       <HiOutlineExclamationCircle className="w-5 h-5 text-[#fbbf24] flex-shrink-0 mt-0.5" />
-                      <p className="font-body text-sm text-gray-700 dark:text-slate-300">₹499 registration fee is mandatory, non-refundable, and separate from course fee. Only one payment option can be selected.</p>
+                      <p className="font-body text-sm text-gray-700 dark:text-slate-300">₹499 registration fee is mandatory, non-refundable, and paid as a separate first step before tuition. Only one payment option can be selected.</p>
                     </div>
                   </div>
                 </PolicyAccordion>
@@ -643,7 +748,6 @@ const FeeStructure = () => {
 
           {/* CTA */}
           <section className="relative py-16 sm:py-20 overflow-hidden">
-            {/* Background image with overlay */}
             <div className="absolute inset-0">
               <img
                 src="https://images.unsplash.com/photo-1427504494785-3a9ca7044f45?w=1600&q=80"
@@ -651,7 +755,6 @@ const FeeStructure = () => {
                 className="w-full h-full object-cover"
               />
               <div className="absolute inset-0 bg-[#05308d]/85 backdrop-blur-[2px]" />
-              {/* Decorative pattern overlay */}
               <div className="absolute inset-0 opacity-[0.04]" style={{ backgroundImage: 'radial-gradient(circle at 1px 1px, white 1px, transparent 0)', backgroundSize: '32px 32px' }} />
             </div>
 
@@ -662,10 +765,13 @@ const FeeStructure = () => {
                 Secure your seat with just ₹499 registration fee. Limited seats available for each batch.
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <Link to="/contact" className="group inline-flex items-center justify-center gap-2 bg-[#fbbf24] text-[#0a1e3d] px-8 py-4 rounded-xl font-heading font-bold text-sm sm:text-base no-underline transition-all duration-300 hover:bg-[#f5c842] hover:shadow-lg hover:shadow-[#fbbf24]/30 hover:-translate-y-0.5">
-                  <span>Enquire Now</span>
-                  <svg className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
-                </Link>
+                <button
+                  onClick={goToOfflineEnroll}
+                  className="group inline-flex items-center justify-center gap-2 bg-[#fbbf24] text-[#0a1e3d] px-8 py-4 rounded-xl font-heading font-bold text-sm sm:text-base cursor-pointer border-none transition-all duration-300 hover:bg-[#f5c842] hover:shadow-lg hover:shadow-[#fbbf24]/30 hover:-translate-y-0.5"
+                >
+                  <span>Enroll Now</span>
+                  <HiOutlineArrowRight className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" />
+                </button>
                 <a href="tel:+918382970800" className="inline-flex items-center justify-center gap-2 bg-white/10 border-2 border-white/25 text-white px-8 py-4 rounded-xl font-heading font-bold text-sm sm:text-base no-underline transition-all duration-300 hover:bg-white/20 hover:border-white/40 hover:shadow-md hover:-translate-y-0.5 backdrop-blur-sm">
                   <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" /></svg>
                   Call Us
@@ -692,12 +798,43 @@ const FeeStructure = () => {
                   </div>
                   <div className="flex-1 text-center sm:text-left">
                     <h3 className="font-heading text-xl sm:text-2xl font-bold text-[#0a1e3d] dark:text-slate-50 mb-1">₹499 Registration Fee</h3>
-                    <p className="font-body text-sm text-gray-500 dark:text-slate-400">One-Time · Mandatory · Non-Refundable — payable at admission, separate from tuition fee.</p>
+                    <p className="font-body text-sm text-gray-500 dark:text-slate-400">One-Time · Mandatory · Non-Refundable — paid first as a separate step before tuition.</p>
                   </div>
-                  <Link to="/contact" className="flex-shrink-0 bg-[#05308d] text-white px-6 py-3 rounded-xl font-heading font-bold text-sm no-underline transition-all duration-300 hover:bg-[#1a56db] hover:-translate-y-0.5 hover:shadow-lg hover:shadow-[#05308d]/25">
-                    Enquire Now
-                  </Link>
+                  <button
+                    onClick={goToHomeTuitionEnroll}
+                    className="flex-shrink-0 inline-flex items-center gap-2 bg-[#05308d] text-white px-6 py-3 rounded-xl font-heading font-bold text-sm cursor-pointer border-none transition-all duration-300 hover:bg-[#1a56db] hover:-translate-y-0.5 hover:shadow-lg hover:shadow-[#05308d]/25"
+                  >
+                    Enroll Now <HiOutlineArrowRight className="w-4 h-4" />
+                  </button>
                 </div>
+              </div>
+            </div>
+          </section>
+
+          {/* Location Switcher */}
+          <section className="mt-10 px-5">
+            <div className="max-w-2xl mx-auto">
+              <p className="text-center font-heading text-xs font-bold text-gray-400 dark:text-slate-500 uppercase tracking-[0.15em] mb-3">
+                Select Your Location
+              </p>
+              <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-xl border border-gray-100 dark:border-slate-700 p-1.5 flex gap-1.5">
+                {LOCATIONS.map((loc) => {
+                  const isActive = selectedLocation === loc.id;
+                  return (
+                    <button
+                      key={loc.id}
+                      onClick={() => switchLocation(loc.id)}
+                      className={`flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-xl font-heading font-bold text-sm transition-all duration-250 cursor-pointer border-none ${
+                        isActive
+                          ? 'bg-[#05308d] text-white shadow-md shadow-[#05308d]/20'
+                          : 'bg-transparent text-gray-500 dark:text-slate-400 hover:text-[#05308d] hover:bg-[#05308d]/5'
+                      }`}
+                    >
+                      <HiOutlineLocationMarker className="w-4 h-4" />
+                      {loc.label}
+                    </button>
+                  );
+                })}
               </div>
             </div>
           </section>
@@ -707,7 +844,9 @@ const FeeStructure = () => {
             <div className="max-w-6xl mx-auto px-5">
               <div className="text-center mb-10">
                 <span className="inline-block font-heading text-sm font-semibold text-[#05308d] uppercase tracking-[0.15em] mb-3">Fee Calculator</span>
-                <h2 className="font-heading text-2xl sm:text-3xl md:text-4xl font-bold text-[#0a1e3d] dark:text-slate-50 mb-3">Select Class & See All Options</h2>
+                <h2 className="font-heading text-2xl sm:text-3xl md:text-4xl font-bold text-[#0a1e3d] dark:text-slate-50 mb-3">
+                  Select Class — {LOCATIONS.find((l) => l.id === selectedLocation)?.label}
+                </h2>
                 <p className="font-body text-gray-500 dark:text-slate-400 max-w-lg mx-auto">Click your class below — all 4 payment plans update instantly</p>
               </div>
 
@@ -740,30 +879,42 @@ const FeeStructure = () => {
                   <div className="text-center mb-6">
                     <span className="inline-flex items-center gap-2 bg-[#05308d]/5 text-[#05308d] px-4 py-2 rounded-xl font-heading text-sm font-bold">
                       <HiOutlineAcademicCap className="w-4 h-4" />
-                      Class {selectedClass} — Monthly ₹{fmt(calc.monthly)} · Annual ₹{fmt(calc.annual)}
+                      Class {selectedClass} ({LOCATIONS.find((l) => l.id === selectedLocation)?.label}) — Monthly ₹{fmt(calc.monthly)} · Annual ₹{fmt(calc.annual)}
                     </span>
                   </div>
                   <div className="grid sm:grid-cols-2 xl:grid-cols-4 gap-5">
 
-                    <OptionCard letter="A" label="Monthly Plan" badge="No Discount" accentColor="gray">
-                      <div className="space-y-2 mb-4">
-                        <CalcRow label="Monthly Fee" value={`₹${fmt(calc.monthly)}`} />
-                        <CalcRow label="Security Deposit" sub="1 month advance" value={`₹${fmt(calc.monthly)}`} />
-                        <CalcRow label="At Admission Total" sub="Reg + Month + Deposit" value={`₹${fmt(calc.atAdmissionA)}`} highlight />
+                    {/* OPTION M: Monthly Plan (no surcharge) */}
+                    <OptionCard letter="M" label="Monthly Plan" badge="No Surcharge" accentColor="gray">
+                      <div className="mb-3">
+                        <span className="font-heading text-2xl font-extrabold text-[#05308d]">₹{fmt(calc.monthly)}</span>
+                        <span className="font-body text-xs text-gray-400 dark:text-slate-500 ml-1">/ month</span>
                       </div>
-                      <p className="font-body text-[10px] text-gray-400 dark:text-slate-500 leading-relaxed bg-gray-50 dark:bg-slate-800 rounded-lg p-2.5">Security deposit is interest-free; adjusted against last month's fee on completion.</p>
+                      <div className="space-y-2 mb-4">
+                        <CalcRow label="At Admission" sub="Month 1 fee" value={`₹${fmt(calc.monthly)}`} highlight />
+                        <CalcRow label="Months 2 – 12" sub="Auto-billed monthly" value={`₹${fmt(calc.monthly)} × 11`} />
+                        <CalcRow label="Annual Total" value={`₹${fmt(calc.annual)}`} />
+                      </div>
+                      <p className="font-body text-[10px] text-gray-400 dark:text-slate-500 leading-relaxed bg-gray-50 dark:bg-slate-800 rounded-lg p-2.5">No surcharge. Most flexible plan — pay as you go.</p>
                     </OptionCard>
 
-                    <OptionCard letter="B" label="4-Installment Plan" badge="No Discount" accentColor="blue">
-                      <div className="space-y-2 mb-4">
-                        <CalcRow label="1st — At Admission" sub="25% of annual" value={`₹${fmt(calc.b1)}`} highlight />
-                        <CalcRow label="2nd — Day 75" sub="~33% of annual" value={`₹${fmt(calc.b2)}`} />
-                        <CalcRow label="3rd — Day 150" sub="~32% of annual" value={`₹${fmt(calc.b3)}`} />
-                        <CalcRow label="4th — Day 225" sub="10% of annual" value={`₹${fmt(calc.b4)}`} />
+                    {/* OPTION E: 4-Installment Plan (5% OFF) */}
+                    <OptionCard letter="E" label="4-Installment Plan" badge="5% OFF" accentColor="blue">
+                      <div className="mb-3">
+                        <span className="font-body text-xs text-gray-400 dark:text-slate-500 line-through">₹{fmt(calc.annual)}</span>
+                        <span className="font-heading text-2xl font-extrabold text-[#05308d] ml-2">₹{fmt(calc.annualE)}</span>
+                        <p className="font-body text-[10px] text-blue-600 mt-0.5">Save ₹{fmt(calc.annual - calc.annualE)}</p>
                       </div>
-                      <p className="font-body text-[10px] text-gray-400 dark:text-slate-500 bg-gray-50 dark:bg-slate-800 rounded-lg p-2.5">Total: ₹{fmt(calc.annual)} (full annual fee, no discount)</p>
+                      <div className="space-y-2 mb-4">
+                        <CalcRow label="1st — At Admission" sub="Quarter 1" value={`₹${fmt(calc.eq)}`} highlight />
+                        <CalcRow label="2nd — Day 90"  sub="Quarter 2" value={`₹${fmt(calc.eq)}`} />
+                        <CalcRow label="3rd — Day 180" sub="Quarter 3" value={`₹${fmt(calc.eq)}`} />
+                        <CalcRow label="4th — Day 270" sub="Quarter 4" value={`₹${fmt(calc.eq)}`} />
+                      </div>
+                      <p className="font-body text-[10px] text-gray-400 dark:text-slate-500 bg-gray-50 dark:bg-slate-800 rounded-lg p-2.5">Discount on tuition only. Reg fee & GST excluded.</p>
                     </OptionCard>
 
+                    {/* OPTION C: 2-Installment Plan (10% OFF) — DEFAULT */}
                     <OptionCard letter="C" label="2-Installment Plan" badge="10% OFF" accentColor="green">
                       <div className="mb-3">
                         <span className="font-body text-xs text-gray-400 dark:text-slate-500 line-through">₹{fmt(calc.annual)}</span>
@@ -774,9 +925,10 @@ const FeeStructure = () => {
                         <CalcRow label="1st — At Admission" sub="First 6 months" value={`₹${fmt(calc.c1)}`} highlight />
                         <CalcRow label="2nd — Day 180" sub="Last 6 months" value={`₹${fmt(calc.c2)}`} />
                       </div>
-                      <p className="font-body text-[10px] text-gray-400 dark:text-slate-500 bg-green-50 dark:bg-green-900/20 rounded-lg p-2.5">Discount on tuition only. Reg fee & GST excluded.</p>
+                      <p className="font-body text-[10px] text-gray-400 dark:text-slate-500 bg-green-50 dark:bg-green-900/20 rounded-lg p-2.5">Default plan. Discount on tuition only. Reg fee & GST excluded.</p>
                     </OptionCard>
 
+                    {/* OPTION D: One-Time Payment (15% OFF) */}
                     <OptionCard letter="D" label="One-Time Full Payment" badge="15% OFF" accentColor="gold">
                       <p className="font-body text-xs text-gray-400 dark:text-slate-500 line-through mb-0.5">₹{fmt(calc.annual)}</p>
                       <p className="font-heading text-3xl font-extrabold text-[#05308d] mb-0.5">₹{fmt(calc.annualD)}</p>
@@ -789,6 +941,17 @@ const FeeStructure = () => {
                     </OptionCard>
 
                   </div>
+
+                  {/* Enroll CTA below cards */}
+                  <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4">
+                    <button
+                      onClick={goToHomeTuitionEnroll}
+                      className="inline-flex items-center gap-2 bg-[#05308d] text-white px-7 py-3.5 rounded-xl font-heading font-bold text-sm sm:text-base cursor-pointer border-none transition-all duration-300 hover:bg-[#1a56db] hover:-translate-y-0.5 hover:shadow-lg hover:shadow-[#05308d]/25"
+                    >
+                      Enroll in {selectedClass} ({LOCATIONS.find((l) => l.id === selectedLocation)?.label}) <HiOutlineArrowRight className="w-4 h-4" />
+                    </button>
+                    <p className="font-body text-xs text-gray-400 dark:text-slate-500">Continue to courses page to choose plan & pay</p>
+                  </div>
                 </>
               )}
             </div>
@@ -799,12 +962,14 @@ const FeeStructure = () => {
             <div className="max-w-5xl mx-auto px-5">
               <div className="text-center mb-10">
                 <span className="inline-block font-heading text-sm font-semibold text-[#05308d] uppercase tracking-[0.15em] mb-3">Reference Table</span>
-                <h2 className="font-heading text-2xl sm:text-3xl font-bold text-[#0a1e3d] dark:text-slate-50 mb-2">All Classes Fee Overview</h2>
-                <p className="font-body text-gray-500 dark:text-slate-400 text-sm">Click any row to load it into the calculator above</p>
+                <h2 className="font-heading text-2xl sm:text-3xl font-bold text-[#0a1e3d] dark:text-slate-50 mb-2">
+                  All Classes — {LOCATIONS.find((l) => l.id === selectedLocation)?.label}
+                </h2>
+                <p className="font-body text-gray-500 dark:text-slate-400 text-sm">Click any row to load it into the calculator above, or enroll directly</p>
               </div>
               <div className="bg-white dark:bg-slate-900 rounded-2xl border border-gray-100 dark:border-slate-700 shadow-sm overflow-hidden">
                 <div className="overflow-x-auto">
-                  <table className="w-full min-w-[580px]">
+                  <table className="w-full min-w-[680px]">
                     <thead>
                       <tr className="bg-[#0a1e3d]">
                         <th className="px-5 py-4 text-left font-heading text-xs font-bold text-white uppercase tracking-wider">Class</th>
@@ -812,6 +977,7 @@ const FeeStructure = () => {
                         <th className="px-5 py-4 text-right font-heading text-xs font-bold text-white uppercase tracking-wider">Annual</th>
                         <th className="px-5 py-4 text-right font-heading text-xs font-bold text-[#fbbf24] uppercase tracking-wider">10% OFF<br/><span className="font-normal normal-case">(2 Inst.)</span></th>
                         <th className="px-5 py-4 text-right font-heading text-xs font-bold text-[#fbbf24] uppercase tracking-wider">15% OFF<br/><span className="font-normal normal-case">(One-time)</span></th>
+                        <th className="px-5 py-4 text-center font-heading text-xs font-bold text-white uppercase tracking-wider">Action</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -820,13 +986,15 @@ const FeeStructure = () => {
                         return (
                           <tr
                             key={f.class}
-                            onClick={() => {
-                              setSelectedClass(f.class);
-                              window.scrollTo({ top: 0, behavior: 'smooth' });
-                            }}
-                            className={`border-b border-gray-100 dark:border-slate-700 cursor-pointer transition-colors duration-150 ${isSel ? 'bg-[#05308d]/5' : i % 2 === 0 ? 'bg-white dark:bg-slate-900 hover:bg-gray-50 dark:hover:bg-slate-800' : 'bg-gray-50/50 dark:bg-slate-800/50 hover:bg-gray-100/50 dark:hover:bg-slate-700/50'}`}
+                            className={`border-b border-gray-100 dark:border-slate-700 transition-colors duration-150 ${isSel ? 'bg-[#05308d]/5' : i % 2 === 0 ? 'bg-white dark:bg-slate-900 hover:bg-gray-50 dark:hover:bg-slate-800' : 'bg-gray-50/50 dark:bg-slate-800/50 hover:bg-gray-100/50 dark:hover:bg-slate-700/50'}`}
                           >
-                            <td className="px-5 py-3.5">
+                            <td
+                              onClick={() => {
+                                setSelectedClass(f.class);
+                                window.scrollTo({ top: 0, behavior: 'smooth' });
+                              }}
+                              className="px-5 py-3.5 cursor-pointer"
+                            >
                               <span className={`font-heading font-bold text-sm ${isSel ? 'text-[#05308d]' : 'text-[#0a1e3d] dark:text-slate-50'}`}>{f.class}</span>
                               {isSel && <span className="ml-2 text-[10px] bg-[#05308d] text-white px-1.5 py-0.5 rounded font-bold">↑ Selected</span>}
                             </td>
@@ -834,6 +1002,14 @@ const FeeStructure = () => {
                             <td className="px-5 py-3.5 text-right font-body text-sm text-gray-600 dark:text-slate-300">₹{fmt(f.annual)}</td>
                             <td className="px-5 py-3.5 text-right font-heading text-sm font-semibold text-green-700">₹{fmt(f.annual * 0.9)}</td>
                             <td className="px-5 py-3.5 text-right font-heading text-sm font-semibold text-[#05308d]">₹{fmt(f.annual * 0.85)}</td>
+                            <td className="px-5 py-3.5 text-center">
+                              <button
+                                onClick={goToHomeTuitionEnroll}
+                                className="inline-flex items-center gap-1 bg-[#fbbf24] text-[#0a1e3d] px-3 py-1.5 rounded-lg font-heading font-bold text-[11px] cursor-pointer border-none transition-all duration-200 hover:bg-[#f5c842] hover:shadow-md hover:-translate-y-0.5"
+                              >
+                                Enroll <HiOutlineArrowRight className="w-3 h-3" />
+                              </button>
+                            </td>
                           </tr>
                         );
                       })}
@@ -841,7 +1017,7 @@ const FeeStructure = () => {
                   </table>
                 </div>
                 <div className="px-5 py-3 bg-gray-50 dark:bg-slate-800 border-t border-gray-100 dark:border-slate-700">
-                  <p className="font-body text-xs text-gray-400 dark:text-slate-500">₹499 registration fee is additional · Discounts apply on tuition fee only</p>
+                  <p className="font-body text-xs text-gray-400 dark:text-slate-500">₹499 registration fee is additional · Discounts apply on tuition fee only · Monthly = Annual ÷ 12 (no surcharge)</p>
                 </div>
               </div>
             </div>
@@ -858,9 +1034,9 @@ const FeeStructure = () => {
               </div>
               <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
                 {[
-                  { letter: 'A', title: 'Monthly', sub: 'No Discount', tag: 'Most Flexible', tagColor: 'bg-white/10 text-white/70', points: ['Pay each month', '1 month security deposit', 'Adjusted in last month', 'Due by 5th of month'], icon: HiOutlineRefresh },
-                  { letter: 'B', title: '4 Installments', sub: 'No Discount', tag: 'Spread the Cost', tagColor: 'bg-blue-500/20 text-blue-300', points: ['25% at admission', '33% at day 75', '32% at day 150', '10% at day 225'], icon: HiOutlineClipboardCheck },
-                  { letter: 'C', title: '2 Installments', sub: '10% OFF', tag: 'Save 10%', tagColor: 'bg-green-500/20 text-green-300', points: ['50% at admission', '50% at day 180', '10% off on annual', 'Reg & GST excluded'], icon: HiOutlineBadgeCheck },
+                  { letter: 'M', title: 'Monthly', sub: 'No Surcharge', tag: 'Most Flexible', tagColor: 'bg-white/10 text-white/70', points: ['Pay each month for 12 months', 'No surcharge — pure annual / 12', 'Month 1 due at enrollment', 'Months 2-12 auto-billed monthly'], icon: HiOutlineRefresh },
+                  { letter: 'E', title: '4 Installments', sub: '5% OFF', tag: 'Save 5%', tagColor: 'bg-blue-500/20 text-blue-300', points: ['25% at admission', '25% at day 90', '25% at day 180', '25% at day 270'], icon: HiOutlineClipboardCheck },
+                  { letter: 'C', title: '2 Installments', sub: '10% OFF', tag: 'Default · Save 10%', tagColor: 'bg-green-500/20 text-green-300', points: ['50% at admission', '50% at day 180', '10% off on annual', 'Reg & GST excluded'], icon: HiOutlineBadgeCheck },
                   { letter: 'D', title: 'One-Time', sub: '15% OFF', tag: 'Best Value', tagColor: 'bg-[#fbbf24]/20 text-[#fbbf24]', points: ['Full payment at admission', '15% off on annual', 'Maximum savings', 'No further dues'], icon: HiOutlineCash },
                 ].map((plan) => {
                   const Icon = plan.icon;
@@ -913,22 +1089,6 @@ const FeeStructure = () => {
                   </div>
                 </PolicyAccordion>
 
-                <PolicyAccordion title="Security Deposit Rules (Option A — Monthly)" icon={HiOutlineShieldCheck}>
-                  <div className="space-y-3">
-                    {[
-                      'Security deposit equals 1 month tuition fee, paid at admission.',
-                      'The deposit is completely interest-free.',
-                      'Adjusted against the last month\'s fee on successful course completion.',
-                      'Forfeited partially or fully in case of early discontinuation.',
-                      'May be adjusted against pending dues or misconduct penalties.',
-                    ].map((item, i) => (
-                      <div key={i} className="flex items-start gap-3 font-body text-sm text-gray-600 dark:text-slate-300 leading-relaxed">
-                        <span className="w-2 h-2 rounded-full bg-blue-400 mt-1.5 flex-shrink-0"></span>{item}
-                      </div>
-                    ))}
-                  </div>
-                </PolicyAccordion>
-
                 <PolicyAccordion title="Refund & Cancellation" icon={HiOutlineExclamationCircle}>
                   <div className="space-y-3">
                     {[
@@ -948,14 +1108,14 @@ const FeeStructure = () => {
                 <PolicyAccordion title="Discount Rules" icon={HiOutlineBadgeCheck}>
                   <div className="grid sm:grid-cols-2 gap-3 mb-4">
                     {[
-                      { plan: 'Option A — Monthly',        discount: 'No discount',  color: 'gray'  },
-                      { plan: 'Option B — 4 Installments', discount: 'No discount',  color: 'gray'  },
+                      { plan: 'Option M — Monthly',        discount: 'No surcharge', color: 'gray'  },
+                      { plan: 'Option E — 4 Installments', discount: '5% OFF',       color: 'blue'  },
                       { plan: 'Option C — 2 Installments', discount: '10% OFF',      color: 'green' },
                       { plan: 'Option D — One-Time',       discount: '15% OFF',      color: 'gold'  },
                     ].map((item, i) => (
-                      <div key={i} className={`flex items-center justify-between p-4 rounded-xl border ${item.color === 'green' ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800' : item.color === 'gold' ? 'bg-[#fbbf24]/5 border-[#fbbf24]/20' : 'bg-gray-50 dark:bg-slate-800 border-gray-200 dark:border-slate-700'}`}>
+                      <div key={i} className={`flex items-center justify-between p-4 rounded-xl border ${item.color === 'green' ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800' : item.color === 'gold' ? 'bg-[#fbbf24]/5 border-[#fbbf24]/20' : item.color === 'blue' ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800' : 'bg-gray-50 dark:bg-slate-800 border-gray-200 dark:border-slate-700'}`}>
                         <span className="font-body text-sm text-gray-700 dark:text-slate-300">{item.plan}</span>
-                        <span className={`font-heading text-sm font-bold ${item.color === 'green' ? 'text-green-700' : item.color === 'gold' ? 'text-yellow-700' : 'text-gray-400'}`}>{item.discount}</span>
+                        <span className={`font-heading text-sm font-bold ${item.color === 'green' ? 'text-green-700' : item.color === 'gold' ? 'text-yellow-700' : item.color === 'blue' ? 'text-blue-700' : 'text-gray-400'}`}>{item.discount}</span>
                       </div>
                     ))}
                   </div>
@@ -971,6 +1131,7 @@ const FeeStructure = () => {
                       'Only one payment option can be selected at the time of enrollment.',
                       'Installment due dates are auto-calculated from the admission date.',
                       'Fee structure is valid for the current session; may be revised for new admissions.',
+                      'Fees vary by location — Lalganj, Pratapgarh, and Prayagraj have separate rates.',
                       'GST will be applied as per government regulations.',
                       'All disputes are subject to local jurisdiction only.',
                       'The management\'s decision shall be final and binding in all matters.',
@@ -993,10 +1154,13 @@ const FeeStructure = () => {
               <h2 className="font-heading text-2xl sm:text-3xl md:text-4xl font-bold text-[#0a1e3d] dark:text-slate-50 mb-4">Book Your Home Tuition Today</h2>
               <p className="font-body text-gray-500 dark:text-slate-400 text-base sm:text-lg mb-10 max-w-xl mx-auto leading-relaxed">Personalised one-on-one learning by experienced faculty — at your doorstep. Limited slots available.</p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <Link to="/contact" className="group inline-flex items-center justify-center gap-2 bg-[#05308d] text-white px-8 py-4 rounded-xl font-heading font-bold text-sm sm:text-base no-underline transition-all duration-300 hover:bg-[#1a56db] hover:shadow-lg hover:shadow-[#05308d]/25 hover:-translate-y-0.5">
-                  <span>Enquire Now</span>
-                  <svg className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
-                </Link>
+                <button
+                  onClick={goToHomeTuitionEnroll}
+                  className="group inline-flex items-center justify-center gap-2 bg-[#05308d] text-white px-8 py-4 rounded-xl font-heading font-bold text-sm sm:text-base cursor-pointer border-none transition-all duration-300 hover:bg-[#1a56db] hover:shadow-lg hover:shadow-[#05308d]/25 hover:-translate-y-0.5"
+                >
+                  <span>Enroll Now ({LOCATIONS.find((l) => l.id === selectedLocation)?.label})</span>
+                  <HiOutlineArrowRight className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" />
+                </button>
                 <a href="tel:+918382970800" className="inline-flex items-center justify-center gap-2 bg-white dark:bg-slate-800 border-2 border-[#05308d]/15 dark:border-slate-600 text-[#05308d] px-8 py-4 rounded-xl font-heading font-bold text-sm sm:text-base no-underline transition-all duration-300 hover:border-[#05308d]/30 hover:shadow-md hover:-translate-y-0.5">
                   <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" /></svg>
                   Call Us

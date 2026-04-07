@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 
 // Public pages
 import Home from "./pages/Home";
@@ -162,6 +162,8 @@ function App() {
         <Route path="/about" element={<><Navbar /><About /></>} />
         <Route path="/courses" element={<><Navbar /><NewCoursesPage /></>} />
         <Route path="/courses/home-tuition" element={<><Navbar /><HomeTuitionClassesPage /></>} />
+        <Route path="/courses/home_tuition" element={<Navigate to="/courses/home-tuition" replace />} />
+        <Route path="/courses/hometuition" element={<Navigate to="/courses/home-tuition" replace />} />
         <Route path="/courses/:slug" element={<><Navbar /><ClassesPage /></>} />
         <Route path="/contact" element={<><Navbar /><Contact /></>} />
         <Route path="/fee-structure" element={<><Navbar /><FeeStructure /></>} />

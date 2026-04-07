@@ -291,7 +291,6 @@ class EnrollmentService {
           installments: 12,
           monthly_fee: planMetadata.monthly_fee,
           annual_fee: planMetadata.annual_fee,
-          surcharge_percent: planMetadata.surcharge_percent,
           months_paid: 0,
         };
       } else if (planMetadata.plan_code === 'E' && planMetadata.installments === 4) {

@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { useAuth } from '@clerk/clerk-react';
 import { load as loadCashfree } from '@cashfreepayments/cashfree-js';
 import {
@@ -11,6 +11,7 @@ import {
   HiOutlineChevronDown,
   HiOutlineAcademicCap,
   HiOutlineHome,
+  HiOutlineLocationMarker,
   HiOutlineClock,
   HiOutlineShieldCheck,
   HiOutlineBadgeCheck,
@@ -60,6 +61,7 @@ function formatDuration(seconds: number | null): string {
 
 export function HomeTuitionClassesPage() {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { isSignedIn, isLoaded } = useAuth();
 
   const [data, setData] = useState<ClassesResponse | null>(null);
@@ -68,8 +70,23 @@ export function HomeTuitionClassesPage() {
   const [enrollingClassId, setEnrollingClassId] = useState<string | null>(null);
   const [paymentError, setPaymentError] = useState<string | null>(null);
   const [paymentSuccess, setPaymentSuccess] = useState<string | null>(null);
-  // Location filter
-  const [selectedLocation, setSelectedLocation] = useState<string>('lalganj');
+  // Location filter — initialize from ?location= URL param, default to 'lalganj'
+  const VALID_LOCATIONS = ['lalganj', 'pratapgarh', 'prayagraj'];
+  const [selectedLocation, setSelectedLocation] = useState<string>(() => {
+    const loc = (searchParams.get('location') || '').toLowerCase();
+    return VALID_LOCATIONS.includes(loc) ? loc : 'lalganj';
+  });
+
+  // Sync selectedLocation back to URL whenever it changes
+  useEffect(() => {
+    const current = (searchParams.get('location') || '').toLowerCase();
+    if (current !== selectedLocation) {
+      const next = new URLSearchParams(searchParams);
+      next.set('location', selectedLocation);
+      setSearchParams(next, { replace: true });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedLocation]);
   // Track selected plan per class: classId -> plan index
   const [selectedPlans, setSelectedPlans] = useState<Record<string, number>>({});
   // Coupon state per class
@@ -447,26 +464,34 @@ export function HomeTuitionClassesPage() {
       </div>
 
       {/* ============================================ */}
-      {/* LOCATION FILTER */}
+      {/* LOCATION TAB SWITCHER */}
       {/* ============================================ */}
-      <div className="max-w-6xl mx-auto px-5 pt-6">
-        <div className="flex items-center gap-3 flex-wrap">
-          <span className="font-heading text-sm font-bold text-[#0a1e3d]">Location:</span>
-          {(['lalganj', 'pratapgarh', 'prayagraj'] as const).map((loc) => (
-            <button
-              key={loc}
-              onClick={() => setSelectedLocation(loc)}
-              className={`px-4 py-2 rounded-xl font-heading text-sm font-semibold transition-all duration-200 cursor-pointer border-2 bg-transparent ${
-                selectedLocation === loc
-                  ? 'border-[#05308d] bg-[#05308d]/5 text-[#05308d]'
-                  : 'border-gray-200 text-gray-500 hover:border-gray-300'
-              }`}
-            >
-              {loc.charAt(0).toUpperCase() + loc.slice(1)}
-            </button>
-          ))}
+      <section className="px-5 pt-8">
+        <div className="max-w-2xl mx-auto">
+          <p className="text-center font-heading text-xs font-bold text-gray-400 uppercase tracking-[0.15em] mb-3">
+            Select Your Location
+          </p>
+          <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-1.5 flex gap-1.5">
+            {(['lalganj', 'pratapgarh', 'prayagraj'] as const).map((loc) => {
+              const isActive = selectedLocation === loc;
+              return (
+                <button
+                  key={loc}
+                  onClick={() => setSelectedLocation(loc)}
+                  className={`flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-xl font-heading font-bold text-sm transition-all duration-250 cursor-pointer border-none ${
+                    isActive
+                      ? 'bg-[#05308d] text-white shadow-md shadow-[#05308d]/20'
+                      : 'bg-transparent text-gray-500 hover:text-[#05308d] hover:bg-[#05308d]/5'
+                  }`}
+                >
+                  <HiOutlineLocationMarker className="w-4 h-4" />
+                  {loc.charAt(0).toUpperCase() + loc.slice(1)}
+                </button>
+              );
+            })}
+          </div>
         </div>
-      </div>
+      </section>
 
       {/* ============================================ */}
       {/* CLASSES GRID */}
@@ -507,11 +532,11 @@ export function HomeTuitionClassesPage() {
                       <div className="flex items-center justify-between">
                         <div>
                           <h3 className="font-heading text-lg font-bold text-white">
-                            {classItem.name}
+                            {classItem.name.replace(/\s*\((?:Lalganj|Pratapgarh|Prayagraj)\)/i, '')}
                           </h3>
                           <span className="inline-flex items-center gap-1 text-xs text-[#fbbf24]/80">
                             <HiOutlineHome className="w-3.5 h-3.5" />
-                            Home Tuition
+                            Home Tuition — {selectedLocation.charAt(0).toUpperCase() + selectedLocation.slice(1)}
                           </span>
                         </div>
                         {classItem.duration && (
@@ -583,7 +608,7 @@ export function HomeTuitionClassesPage() {
                           <div className="space-y-1.5 text-sm">
                             <div className="flex justify-between">
                               <span className="font-body text-gray-500">
-                                {isMonthly ? 'Annual Fee (+10%)' : 'Annual Fee'}
+                                {isMonthly ? 'Annual Fee (Monthly)' : 'Annual Fee'}
                               </span>
                               <span className="font-heading font-semibold text-[#0a1e3d]">
                                 ₹{currentPlan.tuitionFee.toLocaleString()}
@@ -604,7 +629,12 @@ export function HomeTuitionClassesPage() {
                               </div>
                             )}
                             <div className="flex justify-between">
-                              <span className="font-body text-gray-500">Registration</span>
+                              <span className="font-body text-gray-500">
+                                Registration
+                                {currentPlan.registrationFee > 0 && (
+                                  <span className="text-[10px] text-gray-400 ml-1">(one-time, paid first)</span>
+                                )}
+                              </span>
                               <span className="font-heading font-semibold text-[#0a1e3d]">
                                 ₹{currentPlan.registrationFee.toLocaleString()}
                               </span>
@@ -614,7 +644,7 @@ export function HomeTuitionClassesPage() {
                                 {isMonthly ? 'Total (Annual)' : 'Total'}
                               </span>
                               <span className="font-heading font-extrabold text-lg text-[#05308d]">
-                                ₹{(currentPlan.totalAmount - (couponResults[classItem.id]?.valid ? couponResults[classItem.id]!.discountAmount : 0)).toLocaleString()}
+                                ₹{(currentPlan.totalAmount - currentPlan.registrationFee - (couponResults[classItem.id]?.valid ? couponResults[classItem.id]!.discountAmount : 0)).toLocaleString()}
                               </span>
                             </div>
                           </div>

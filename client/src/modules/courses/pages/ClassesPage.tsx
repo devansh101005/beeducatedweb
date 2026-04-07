@@ -617,6 +617,8 @@ export function ClassesPage() {
                                 >
                                   {pm.plan_code === 'M'
                                     ? 'Monthly'
+                                    : pm.plan_code === 'E' || pm.installments === 4
+                                    ? '4 Installments'
                                     : pm.installments === 2
                                     ? '2 Installments'
                                     : 'One-Time'}
@@ -640,7 +642,12 @@ export function ClassesPage() {
                         </h4>
                         <div className="space-y-2 text-sm">
                           <div className="flex justify-between">
-                            <span className="font-body text-gray-500">Registration Fee</span>
+                            <span className="font-body text-gray-500">
+                              Registration Fee
+                              {currentPlan.registrationFee > 0 && (
+                                <span className="text-[10px] text-gray-400 ml-1">(one-time, paid first)</span>
+                              )}
+                            </span>
                             <span className="font-heading font-semibold text-[#0a1e3d]">
                               {currentPlan.registrationFee > 0
                                 ? `₹${currentPlan.registrationFee.toLocaleString()}`
@@ -649,7 +656,7 @@ export function ClassesPage() {
                           </div>
                           <div className="flex justify-between">
                             <span className="font-body text-gray-500">
-                              {isMonthly ? 'Annual Fee (+10%)' : 'Tuition Fee'}
+                              {isMonthly ? 'Annual Fee' : 'Tuition Fee'}
                             </span>
                             <span className="font-heading font-semibold text-[#0a1e3d]">
                               ₹{currentPlan.tuitionFee.toLocaleString()}
@@ -680,7 +687,7 @@ export function ClassesPage() {
                               {isMonthly ? 'Total (Annual)' : 'Total Amount'}
                             </span>
                             <span className="font-heading font-extrabold text-lg text-[#05308d]">
-                              ₹{(currentPlan.totalAmount - (couponResults[classItem.id]?.valid ? couponResults[classItem.id]!.discountAmount : 0)).toLocaleString()}
+                              ₹{(currentPlan.totalAmount - currentPlan.registrationFee - (couponResults[classItem.id]?.valid ? couponResults[classItem.id]!.discountAmount : 0)).toLocaleString()}
                             </span>
                           </div>
                         </div>
