@@ -331,7 +331,7 @@ const FeeStructure = () => {
               }`}
             >
               <HiOutlineAcademicCap className="w-4 h-4" />
-              Hybrid Batch
+              Offline Batch
             </button>
             <button
               onClick={() => switchTab('home-tuition')}
