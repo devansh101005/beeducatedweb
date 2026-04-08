@@ -126,6 +126,16 @@ export function HomeTuitionClassesPage() {
     return plans[idx] || plans[0];
   };
 
+  // Robustly derive a class's location: prefer the API `location` field
+  // (sourced from metadata.location), then fall back to parsing the
+  // "(Lalganj|Pratapgarh|Prayagraj)" suffix that migration 022 puts on every
+  // home-tuition class name. Returns lowercase string or null.
+  const getClassLocation = (c: AcademicClass): string | null => {
+    if (c.location) return c.location.toLowerCase();
+    const m = c.name?.match(/\((Lalganj|Pratapgarh|Prayagraj)\)/i);
+    return m ? m[1].toLowerCase() : null;
+  };
+
   /* ── Fetch content preview for a class ── */
   const toggleContentPreview = async (classId: string) => {
     if (expandedClassId === classId) {
@@ -498,19 +508,26 @@ export function HomeTuitionClassesPage() {
       {/* ============================================ */}
       <section className="py-10 sm:py-16 bg-white">
         <div className="max-w-6xl mx-auto px-5">
-          {data.classes.filter((c) => (c.location || 'lalganj') === selectedLocation).length === 0 ? (
-            <div className="text-center py-20">
-              <HiOutlineHome className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-              <h3 className="font-heading text-xl font-bold text-[#0a1e3d] mb-2">
-                No classes available yet
-              </h3>
-              <p className="font-body text-gray-500 mb-6">
-                Home tuition classes for this location will be available soon.
-              </p>
-            </div>
-          ) : (
+          {(() => {
+            const visibleClasses = data.classes.filter(
+              (c) => getClassLocation(c) === selectedLocation
+            );
+            if (visibleClasses.length === 0) {
+              return (
+                <div className="text-center py-20">
+                  <HiOutlineHome className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                  <h3 className="font-heading text-xl font-bold text-[#0a1e3d] mb-2">
+                    No classes available yet
+                  </h3>
+                  <p className="font-body text-gray-500 mb-6">
+                    Home tuition classes for this location will be available soon.
+                  </p>
+                </div>
+              );
+            }
+            return (
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
-              {data.classes.filter((c) => (c.location || 'lalganj') === selectedLocation).map((classItem) => {
+              {visibleClasses.map((classItem) => {
                 const plans = classItem.feePlans || [];
                 const selectedIdx = selectedPlans[classItem.id] ?? 0;
                 const currentPlan = plans[selectedIdx] || classItem.feePlan;
@@ -536,7 +553,10 @@ export function HomeTuitionClassesPage() {
                           </h3>
                           <span className="inline-flex items-center gap-1 text-xs text-[#fbbf24]/80">
                             <HiOutlineHome className="w-3.5 h-3.5" />
-                            Home Tuition — {selectedLocation.charAt(0).toUpperCase() + selectedLocation.slice(1)}
+                            {(() => {
+                              const loc = getClassLocation(classItem) || selectedLocation;
+                              return `Home Tuition — ${loc.charAt(0).toUpperCase() + loc.slice(1)}`;
+                            })()}
                           </span>
                         </div>
                         {classItem.duration && (
@@ -944,7 +964,8 @@ export function HomeTuitionClassesPage() {
                 );
               })}
             </div>
-          )}
+            );
+          })()}
         </div>
       </section>
 
