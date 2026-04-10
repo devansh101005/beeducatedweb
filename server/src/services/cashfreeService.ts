@@ -118,7 +118,7 @@ class CashfreeService {
       },
       order_meta: {
         return_url: `${env.FRONTEND_URL}/dashboard/payment-success?order_id={order_id}`,
-        notify_url: `${env.NODE_ENV === 'production' ? 'https://beeducated-server.onrender.com' : `http://localhost:${env.PORT}`}/api/v2/webhooks/cashfree`,
+        notify_url: `${env.NODE_ENV === 'production' ? 'https://beeducatedweb-backend.onrender.com' : `http://localhost:${env.PORT}`}/api/v2/webhooks/cashfree`,
       },
       order_note: input.notes ? JSON.stringify(input.notes) : undefined,
     };
