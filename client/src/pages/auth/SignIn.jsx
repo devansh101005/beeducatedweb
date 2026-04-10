@@ -50,7 +50,7 @@ const SignIn = () => {
                 identityPreviewEditButton: "text-[#05308d] hover:text-[#1a56db]",
               },
             }}
-            routing="virtual"
+            routing="hash"
             path="/sign-in"
             signUpUrl="/sign-up"
             afterSignInUrl="/dashboard"
