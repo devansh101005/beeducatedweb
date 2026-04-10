@@ -392,11 +392,8 @@ router.post(
         return sendBadRequest(res, 'Only students can enroll in classes');
       }
 
-      // Get student record
-      const student = await studentService.getByUserId(req.user.id);
-      if (!student) {
-        return sendBadRequest(res, 'Student profile not found. Please complete your profile first.');
-      }
+      // Get or auto-create student record (auto-generates BEE-YYYY-NNNN ID, editable by admin later)
+      const student = await studentService.findOrCreateByUserId(req.user.id);
 
       // Validate coupon code if provided
       let couponDiscount = 0;

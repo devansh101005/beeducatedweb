@@ -176,6 +176,42 @@ class StudentService {
   }
 
   /**
+   * Find existing student by user ID, or auto-create one on the fly.
+   * Used during enrollment so users don't need admin approval first.
+   * The auto-generated student ID (e.g. BEE-2026-0001) can be changed later by admin.
+   */
+  async findOrCreateByUserId(userId: string): Promise<Student> {
+    const existing = await this.getByUserId(userId);
+    if (existing) return existing;
+
+    const studentId = await this.generateSuggestedStudentId();
+
+    const { data, error } = await this.supabase
+      .from('students')
+      .insert({
+        user_id: userId,
+        student_id: studentId,
+        student_type: 'coaching_offline' as StudentType,
+        subscription_status: 'pending' as SubscriptionStatus,
+      })
+      .select()
+      .single();
+
+    if (error) {
+      // Race condition: another request created it between our check and insert
+      if (error.code === '23505') {
+        const retry = await this.getByUserId(userId);
+        if (retry) return retry;
+      }
+      console.error('Error auto-creating student:', error);
+      throw new Error('Failed to create student profile');
+    }
+
+    console.log(`Auto-created student ${data.student_id} for user ${userId}`);
+    return data as Student;
+  }
+
+  /**
    * Create a new student with manual or auto-generated student ID
    */
   async create(input: CreateStudentInput): Promise<Student> {
