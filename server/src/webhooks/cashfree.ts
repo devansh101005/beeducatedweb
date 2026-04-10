@@ -14,9 +14,9 @@ router.post('/', async (req: Request, res: Response) => {
   try {
     const rawBody = JSON.stringify(req.body);
 
-    // Get signature and timestamp from headers
-    const signature = req.headers['x-cashfree-signature'] as string;
-    const timestamp = req.headers['x-cashfree-timestamp'] as string;
+    // Get signature and timestamp from headers (Cashfree sends x-webhook-*)
+    const signature = (req.headers['x-webhook-signature'] || req.headers['x-cashfree-signature']) as string;
+    const timestamp = (req.headers['x-webhook-timestamp'] || req.headers['x-cashfree-timestamp']) as string;
 
     if (!signature || !timestamp) {
       console.warn('Cashfree webhook: Missing signature or timestamp');
