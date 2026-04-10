@@ -12,7 +12,7 @@ const router = Router();
  */
 router.post('/', async (req: Request, res: Response) => {
   try {
-    const rawBody = JSON.stringify(req.body);
+    const rawBody = (req as any).rawBody || JSON.stringify(req.body);
 
     // Get signature and timestamp from headers (Cashfree sends x-webhook-*)
     const signature = (req.headers['x-webhook-signature'] || req.headers['x-cashfree-signature']) as string;

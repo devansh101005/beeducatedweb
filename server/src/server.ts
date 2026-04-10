@@ -141,7 +141,12 @@ app.use('/api/', generalLimiter);
 // Note: Webhook routes need raw body for signature verification
 app.use('/api/v2/webhooks/clerk', express.raw({ type: 'application/json' }));
 app.use('/api/v2/webhooks/razorpay', express.json());
-app.use('/api/v2/webhooks/cashfree', express.json());
+app.use('/api/v2/webhooks/cashfree', express.json({
+  verify: (req: any, _res, buf) => {
+    // Store the raw body buffer for webhook signature verification
+    req.rawBody = buf.toString('utf8');
+  },
+}));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
