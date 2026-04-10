@@ -39,14 +39,8 @@ const AppWithProviders = () => {
   );
 };
 
-const root = ReactDOM.createRoot(document.getElementById("root"));
-
-if (import.meta.env.DEV) {
-  root.render(
-    <React.StrictMode>
-      <AppWithProviders />
-    </React.StrictMode>
-  );
-} else {
-  root.render(<AppWithProviders />);
-}
+ReactDOM.createRoot(document.getElementById("root")).render(
+  <React.StrictMode>
+    <AppWithProviders />
+  </React.StrictMode>
+);
