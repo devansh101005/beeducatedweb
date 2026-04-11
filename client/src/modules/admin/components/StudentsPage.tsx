@@ -153,6 +153,9 @@ function AddStudentModal({ onClose, onSuccess }: AddStudentModalProps) {
   const [loadingCourseTypes, setLoadingCourseTypes] = useState(false);
   const [loadingClasses, setLoadingClasses] = useState(false);
 
+  // Welcome email toggle (defaults to on)
+  const [sendWelcomeEmail, setSendWelcomeEmail] = useState(true);
+
   // UI state
   const [step, setStep] = useState(1); // 1 = user info, 2 = student info
   const [loading, setLoading] = useState(false);
@@ -320,6 +323,8 @@ function AddStudentModal({ onClose, onSuccess }: AddStudentModalProps) {
           parentPhone,
           // Enrollment field (for manual enrollment)
           classId: selectedClassId || undefined,
+          // Welcome email toggle
+          sendWelcomeEmail,
         }),
       });
 
@@ -496,7 +501,12 @@ function AddStudentModal({ onClose, onSuccess }: AddStudentModalProps) {
                         }}
                         options={[
                           { value: '', label: loadingCourseTypes ? 'Loading...' : 'Select course type' },
-                          ...courseTypes.map(ct => ({ value: ct.slug, label: ct.name })),
+                          ...courseTypes.map(ct => ({
+                            value: ct.slug,
+                            label: /classroom.*coaching|coaching.?offline/i.test(ct.slug) || /classroom\s*coaching/i.test(ct.name)
+                              ? 'Offline Batch'
+                              : ct.name,
+                          })),
                         ]}
                         disabled={loadingCourseTypes}
                       />
@@ -681,6 +691,24 @@ function AddStudentModal({ onClose, onSuccess }: AddStudentModalProps) {
                       leftIcon={<Phone className="w-4 h-4" />}
                     />
                   </div>
+                </div>
+
+                {/* Welcome email toggle */}
+                <div className="mt-4 p-3 bg-slate-50 border border-slate-200 rounded-lg">
+                  <label className="flex items-start gap-3 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={sendWelcomeEmail}
+                      onChange={(e) => setSendWelcomeEmail(e.target.checked)}
+                      className="mt-0.5 w-4 h-4 text-blue-600 rounded border-slate-300 focus:ring-blue-500"
+                    />
+                    <div className="flex-1">
+                      <p className="text-sm font-medium text-slate-800">Email login credentials to student</p>
+                      <p className="text-xs text-slate-500 mt-0.5">
+                        Sends a welcome email with their email, temporary password, and sign-in link. Uncheck for test accounts.
+                      </p>
+                    </div>
+                  </label>
                 </div>
               </div>
             )}

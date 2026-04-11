@@ -16,6 +16,8 @@ import { teacherService } from '../../services/teacherService.js';
 import { parentService } from '../../services/parentService.js';
 import { enrollmentService, PaymentType } from '../../services/enrollmentService.js';
 import { courseTypeService } from '../../services/courseTypeService.js';
+import { emailService } from '../../services/emailService.js';
+import { env } from '../../config/env.js';
 import {
   sendSuccess,
   sendCreated,
@@ -589,6 +591,8 @@ router.post('/students/create-with-user', async (req: Request, res: Response) =>
       parentEmail,
       // Enrollment fields (optional - for manual enrollment)
       classId,
+      // Welcome email opt-out (defaults to true)
+      sendWelcomeEmail = true,
     } = req.body;
 
     // Validate required fields
@@ -782,7 +786,24 @@ router.post('/students/create-with-user', async (req: Request, res: Response) =>
       }
     }
 
-    sendCreated(res, { user, student, enrollment }, 'Student created successfully');
+    // Step 5: Send welcome email with credentials (non-fatal — don't block creation if email fails)
+    let welcomeEmailSent = false;
+    if (sendWelcomeEmail) {
+      try {
+        await emailService.sendStudentWelcome({
+          email,
+          firstName,
+          studentId,
+          tempPassword: password,
+          loginUrl: `${env.FRONTEND_URL}/sign-in`,
+        });
+        welcomeEmailSent = true;
+      } catch (emailError: any) {
+        console.error('Welcome email failed (non-fatal):', emailError?.message);
+      }
+    }
+
+    sendCreated(res, { user, student, enrollment, welcomeEmailSent }, 'Student created successfully');
   } catch (error: any) {
     console.error('Error creating student with user:', error);
     sendError(res, error.message || 'Failed to create student');

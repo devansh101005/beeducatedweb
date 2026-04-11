@@ -172,6 +172,130 @@ class EmailService {
   }
 
   /**
+   * Send welcome email to admin-created student with login credentials
+   */
+  async sendStudentWelcome(data: {
+    email: string;
+    firstName: string;
+    studentId: string;
+    tempPassword: string;
+    loginUrl: string;
+  }): Promise<void> {
+    const { email, firstName, studentId, tempPassword, loginUrl } = data;
+
+    const html = `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <meta charset="utf-8" />
+          <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        </head>
+        <body style="margin:0;padding:0;background-color:#f1f5f9;font-family:'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#f1f5f9;padding:40px 20px;">
+            <tr>
+              <td align="center">
+                <table role="presentation" width="560" cellpadding="0" cellspacing="0" style="max-width:560px;width:100%;">
+
+                  <!-- Header -->
+                  <tr>
+                    <td style="background:linear-gradient(135deg,#0a1e3d 0%,#05308d 100%);border-radius:16px 16px 0 0;padding:36px 32px;text-align:center;">
+                      <h1 style="margin:0;font-size:24px;font-weight:800;color:#ffffff;letter-spacing:-0.3px;">Welcome to Be Educated</h1>
+                      <p style="margin:8px 0 0;font-size:13px;color:rgba(255,255,255,0.6);letter-spacing:0.3px;">IIT-JEE &amp; NEET Foundation</p>
+                    </td>
+                  </tr>
+
+                  <!-- Body -->
+                  <tr>
+                    <td style="background-color:#ffffff;padding:32px;">
+                      <p style="margin:0 0 8px;font-size:16px;color:#0a1e3d;">Hi <strong>${firstName}</strong>,</p>
+                      <p style="margin:0 0 24px;font-size:14px;line-height:1.6;color:#334155;">
+                        Your student account has been created by the Be Educated administrator. Use the credentials below to sign in to your dashboard.
+                      </p>
+
+                      <!-- Credentials card -->
+                      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:8px;">
+                        <tr>
+                          <td style="padding:14px 16px;background-color:#f8fafc;border-radius:10px;border:1px solid #e2e8f0;">
+                            <p style="margin:0 0 2px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.6px;color:#94a3b8;">Student ID</p>
+                            <p style="margin:0;font-size:15px;font-weight:600;color:#0a1e3d;font-family:'Courier New',monospace;">${studentId}</p>
+                          </td>
+                        </tr>
+                      </table>
+                      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:8px;margin-top:8px;">
+                        <tr>
+                          <td style="padding:14px 16px;background-color:#f8fafc;border-radius:10px;border:1px solid #e2e8f0;">
+                            <p style="margin:0 0 2px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.6px;color:#94a3b8;">Email</p>
+                            <p style="margin:0;font-size:15px;font-weight:600;color:#05308d;">${email}</p>
+                          </td>
+                        </tr>
+                      </table>
+                      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top:8px;">
+                        <tr>
+                          <td style="padding:14px 16px;background-color:#fffbeb;border-radius:10px;border:1px solid #fbbf24;">
+                            <p style="margin:0 0 2px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.6px;color:#b45309;">Temporary Password</p>
+                            <p style="margin:0;font-size:16px;font-weight:700;color:#0a1e3d;font-family:'Courier New',monospace;">${tempPassword}</p>
+                          </td>
+                        </tr>
+                      </table>
+
+                      <!-- Sign in CTA -->
+                      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top:28px;">
+                        <tr>
+                          <td align="center">
+                            <a href="${loginUrl}" style="display:inline-block;background-color:#05308d;color:#ffffff;font-size:14px;font-weight:700;text-decoration:none;padding:14px 40px;border-radius:10px;letter-spacing:0.3px;">
+                              Sign In to Dashboard &rarr;
+                            </a>
+                          </td>
+                        </tr>
+                      </table>
+
+                      <!-- Security note -->
+                      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top:28px;">
+                        <tr>
+                          <td style="padding:14px 16px;background-color:#f1f5f9;border-radius:10px;">
+                            <p style="margin:0;font-size:12px;line-height:1.6;color:#64748b;">
+                              <strong style="color:#0a1e3d;">Security tip:</strong> For your safety, please change your password after signing in for the first time. Never share your credentials with anyone.
+                            </p>
+                          </td>
+                        </tr>
+                      </table>
+                    </td>
+                  </tr>
+
+                  <!-- Footer -->
+                  <tr>
+                    <td style="background-color:#f8fafc;border-top:1px solid #e2e8f0;border-radius:0 0 16px 16px;padding:20px 32px;text-align:center;">
+                      <p style="margin:0 0 4px;font-size:13px;font-weight:700;color:#0a1e3d;">Be Educated</p>
+                      <p style="margin:0;font-size:11px;color:#94a3b8;">If you did not expect this email, please contact your administrator.</p>
+                    </td>
+                  </tr>
+
+                </table>
+              </td>
+            </tr>
+          </table>
+        </body>
+      </html>
+    `;
+
+    try {
+      const resend = this.getResendClient();
+
+      await resend.emails.send({
+        from: env.RESEND_FROM_EMAIL,
+        to: email,
+        subject: 'Welcome to Be Educated - Your Login Details',
+        html,
+      });
+
+      console.log(`Student welcome email sent to ${email}`);
+    } catch (error) {
+      console.error('Error sending student welcome email:', error);
+      throw new Error('Failed to send welcome email');
+    }
+  }
+
+  /**
    * Test email configuration
    */
   async testEmailConfig(): Promise<boolean> {
