@@ -233,18 +233,10 @@ class CashfreeService {
     const orderId = orderData.order_id;
     const cfPaymentId = paymentData.cf_payment_id?.toString();
 
-    // Update enrollment_payments
-    await this.supabase
-      .from('enrollment_payments')
-      .update({
-        status: 'paid',
-        cashfree_payment_id: cfPaymentId,
-        paid_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      })
-      .eq('cashfree_order_id', orderId);
+    // Note: enrollment_payments updates are handled by enrollmentService.verifyPayment
+    // (called from the webhook route for PAYMENT_SUCCESS_WEBHOOK). This method is only
+    // invoked as a fallback for general fee payments that live in the `payments` table.
 
-    // Update payments (general fees)
     await this.supabase
       .from('payments')
       .update({

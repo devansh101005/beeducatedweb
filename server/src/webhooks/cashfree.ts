@@ -3,6 +3,7 @@
 
 import { Router, Request, Response } from 'express';
 import { cashfreeService } from '../services/cashfreeService.js';
+import { enrollmentService } from '../services/enrollmentService.js';
 
 const router = Router();
 
@@ -41,8 +42,29 @@ router.post('/', async (req: Request, res: Response) => {
 
     console.log(`Cashfree webhook received: ${type}`);
 
-    // Process the event
-    await cashfreeService.processWebhookEvent(type, req.body);
+    // For successful enrollment payments, use the authoritative state-transition path
+    // (enrollmentService.verifyPayment) so registration_paid / enrollment activation
+    // is always applied — even if the browser never reaches the return_url.
+    // Falls back to the generic handler (payments table) if the order is not an enrollment.
+    if (type === 'PAYMENT_SUCCESS_WEBHOOK') {
+      const orderId = req.body?.data?.order?.order_id;
+      if (orderId) {
+        try {
+          await enrollmentService.verifyPayment({ order_id: orderId });
+          console.log(`Cashfree webhook: enrollment payment processed for ${orderId}`);
+        } catch (err: any) {
+          const msg = err?.message || '';
+          if (msg.includes('Payment record not found')) {
+            // Not an enrollment payment — it's a general fee / monthly payment row
+            await cashfreeService.processWebhookEvent(type, req.body);
+          } else {
+            throw err;
+          }
+        }
+      }
+    } else {
+      await cashfreeService.processWebhookEvent(type, req.body);
+    }
 
     // Acknowledge receipt
     res.status(200).json({ received: true, event: type });
