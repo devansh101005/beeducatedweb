@@ -18,6 +18,7 @@ import { enrollmentService, PaymentType } from '../../services/enrollmentService
 import { courseTypeService } from '../../services/courseTypeService.js';
 import { emailService } from '../../services/emailService.js';
 import { env } from '../../config/env.js';
+import { getSupabase } from '../../config/supabase.js';
 import {
   sendSuccess,
   sendCreated,
@@ -807,6 +808,236 @@ router.post('/students/create-with-user', async (req: Request, res: Response) =>
   } catch (error: any) {
     console.error('Error creating student with user:', error);
     sendError(res, error.message || 'Failed to create student');
+  }
+});
+
+// ============================================
+// FEE MANAGEMENT (Phase 1: drilldown UX)
+// ============================================
+
+/**
+ * GET /api/v2/admin/fees/classes
+ * Query: ?courseType=coaching_offline|home_tuition  &branch=lalganj|pratapgarh|prayagraj
+ *
+ * Returns classes for the given course type (optionally filtered by branch),
+ * each with aggregate fee stats (student count, total collected).
+ */
+router.get('/fees/classes', async (req: Request, res: Response) => {
+  try {
+    const courseTypeSlug = getParam(req.query.courseType as string | string[] | undefined);
+    const branch = getParam(req.query.branch as string | string[] | undefined).toLowerCase();
+
+    if (!courseTypeSlug) {
+      return sendBadRequest(res, 'courseType query param is required');
+    }
+
+    const supabase = getSupabase();
+
+    // 1. Resolve course_type_id
+    const { data: courseType, error: ctError } = await supabase
+      .from('course_types')
+      .select('id, slug, name')
+      .eq('slug', courseTypeSlug)
+      .single();
+
+    if (ctError || !courseType) {
+      return sendBadRequest(res, `Unknown course type: ${courseTypeSlug}`);
+    }
+
+    // 2. Fetch classes (optionally filter by branch via metadata->>'location')
+    let classQuery = supabase
+      .from('academic_classes')
+      .select('id, name, slug, metadata, display_order, is_active')
+      .eq('course_type_id', courseType.id)
+      .eq('is_active', true)
+      .order('display_order', { ascending: true });
+
+    if (branch) {
+      classQuery = classQuery.eq('metadata->>location', branch);
+    }
+
+    const { data: classes, error: classError } = await classQuery;
+    if (classError) {
+      console.error('Error fetching classes:', classError);
+      return sendError(res, 'Failed to load classes');
+    }
+
+    if (!classes || classes.length === 0) {
+      return sendSuccess(res, { courseType, classes: [] });
+    }
+
+    const classIds = classes.map(c => c.id);
+
+    // 3. Aggregate enrollment counts + amount paid per class
+    const { data: enrollments } = await supabase
+      .from('class_enrollments')
+      .select('class_id, status, amount_paid')
+      .in('class_id', classIds)
+      .neq('status', 'cancelled')
+      .neq('status', 'refunded');
+
+    const stats = new Map<string, { students: number; collected: number; active: number; pending: number; suspended: number }>();
+    for (const id of classIds) {
+      stats.set(id, { students: 0, collected: 0, active: 0, pending: 0, suspended: 0 });
+    }
+    for (const e of enrollments || []) {
+      const s = stats.get(e.class_id);
+      if (!s) continue;
+      s.students += 1;
+      s.collected += Number(e.amount_paid || 0);
+      if (e.status === 'active') s.active += 1;
+      else if (e.status === 'pending') s.pending += 1;
+      else if (e.status === 'suspended') s.suspended += 1;
+    }
+
+    const result = classes.map(c => {
+      const s = stats.get(c.id) || { students: 0, collected: 0, active: 0, pending: 0, suspended: 0 };
+      const meta = (c.metadata as Record<string, any>) || {};
+      return {
+        id: c.id,
+        name: c.name,
+        slug: c.slug,
+        location: meta.location || null,
+        totalStudents: s.students,
+        activeStudents: s.active,
+        pendingStudents: s.pending,
+        suspendedStudents: s.suspended,
+        totalCollected: s.collected,
+      };
+    });
+
+    sendSuccess(res, { courseType, classes: result });
+  } catch (error: any) {
+    console.error('Error in GET /admin/fees/classes:', error);
+    sendError(res, error.message || 'Failed to load classes');
+  }
+});
+
+/**
+ * GET /api/v2/admin/fees/classes/:classId/students
+ * Query: ?search=
+ *
+ * Returns enrolled students for the given class with inline fee summary
+ * and a "source" badge (cashfree vs manual).
+ */
+router.get('/fees/classes/:classId/students', async (req: Request, res: Response) => {
+  try {
+    const classId = getParam(req.params.classId);
+    const search = getParam(req.query.search as string | string[] | undefined).trim().toLowerCase();
+
+    if (!classId) {
+      return sendBadRequest(res, 'classId is required');
+    }
+
+    const supabase = getSupabase();
+
+    // 1. Fetch class info (for header context on the page)
+    const { data: classInfo } = await supabase
+      .from('academic_classes')
+      .select('id, name, metadata')
+      .eq('id', classId)
+      .single();
+
+    if (!classInfo) {
+      return sendNotFound(res, 'Class not found');
+    }
+
+    // 2. Fetch enrollments + nested student + user
+    const { data: enrollments, error: enrollError } = await supabase
+      .from('class_enrollments')
+      .select(`
+        id,
+        status,
+        registration_paid,
+        registration_paid_at,
+        enrolled_at,
+        expires_at,
+        amount_paid,
+        suspended_at,
+        suspension_reason,
+        students!inner (
+          id,
+          student_id,
+          class_grade,
+          users!inner (
+            id,
+            first_name,
+            last_name,
+            email,
+            phone
+          )
+        )
+      `)
+      .eq('class_id', classId)
+      .neq('status', 'cancelled')
+      .neq('status', 'refunded')
+      .order('enrolled_at', { ascending: false, nullsFirst: false });
+
+    if (enrollError) {
+      console.error('Error fetching enrollments:', enrollError);
+      return sendError(res, 'Failed to load students');
+    }
+
+    if (!enrollments || enrollments.length === 0) {
+      return sendSuccess(res, { class: classInfo, students: [] });
+    }
+
+    // 3. Get the first payment for each enrollment (to determine source)
+    const enrollmentIds = enrollments.map(e => e.id);
+    const { data: payments } = await supabase
+      .from('enrollment_payments')
+      .select('enrollment_id, payment_method, payment_type, cashfree_payment_id, razorpay_payment_id, paid_at')
+      .in('enrollment_id', enrollmentIds)
+      .order('paid_at', { ascending: true, nullsFirst: false });
+
+    const sourceByEnrollment = new Map<string, 'cashfree' | 'manual'>();
+    for (const p of payments || []) {
+      if (sourceByEnrollment.has(p.enrollment_id)) continue; // first payment wins
+      const isCashfree = !!p.cashfree_payment_id || !!p.razorpay_payment_id ||
+        ['card', 'upi', 'netbanking', 'wallet'].includes((p.payment_method || '').toLowerCase());
+      sourceByEnrollment.set(p.enrollment_id, isCashfree ? 'cashfree' : 'manual');
+    }
+
+    // 4. Shape response + apply search filter
+    const rows = enrollments
+      .map((e: any) => {
+        const student = e.students;
+        const user = student?.users;
+        const fullName = [user?.first_name, user?.last_name].filter(Boolean).join(' ').trim() || '—';
+
+        return {
+          enrollmentId: e.id,
+          studentDbId: student?.id,
+          studentId: student?.student_id,
+          name: fullName,
+          email: user?.email || '',
+          phone: user?.phone || null,
+          classGrade: student?.class_grade || null,
+          source: sourceByEnrollment.get(e.id) || 'manual',
+          status: e.suspended_at ? 'suspended' : e.status,
+          registrationPaid: !!e.registration_paid,
+          registrationPaidAt: e.registration_paid_at,
+          enrolledAt: e.enrolled_at,
+          expiresAt: e.expires_at,
+          amountPaid: Number(e.amount_paid || 0),
+          suspendedAt: e.suspended_at,
+          suspensionReason: e.suspension_reason,
+        };
+      })
+      .filter(row => {
+        if (!search) return true;
+        return (
+          row.name.toLowerCase().includes(search) ||
+          row.email.toLowerCase().includes(search) ||
+          (row.studentId || '').toLowerCase().includes(search) ||
+          (row.phone || '').toLowerCase().includes(search)
+        );
+      });
+
+    sendSuccess(res, { class: classInfo, students: rows });
+  } catch (error: any) {
+    console.error('Error in GET /admin/fees/classes/:classId/students:', error);
+    sendError(res, error.message || 'Failed to load students');
   }
 });
 

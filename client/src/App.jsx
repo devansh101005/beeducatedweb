@@ -47,6 +47,8 @@ import { DashboardLayout, DashboardHome } from "@modules/dashboard";
 
 // Fee Management
 import { FeeListPage, MyFeesPage } from "@modules/fees";
+import FeeManagementPage from "@modules/admin/components/fees/FeeManagementPage";
+import ClassStudentsView from "@modules/admin/components/fees/ClassStudentsView";
 
 // Payments
 import { PaymentPage, PaymentSuccessPage, PaymentHistoryPage } from "@modules/payments";
@@ -106,8 +108,11 @@ function App() {
         }>
           <Route index element={<DashboardHome />} />
 
-          {/* Fee Management */}
-          <Route path="fees" element={<FeeListPage />} />
+          {/* Fee Management — admin (drilldown UX) */}
+          <Route path="fees" element={<FeeManagementPage />} />
+          <Route path="fees/classes/:classId" element={<ClassStudentsView />} />
+          {/* Legacy flat fee list (kept for fallback / non-admin views) */}
+          <Route path="fees-legacy" element={<FeeListPage />} />
           <Route path="my-fees" element={<MyFeesPage />} />
 
           {/* Payments */}
