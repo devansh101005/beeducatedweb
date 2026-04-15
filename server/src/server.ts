@@ -31,6 +31,8 @@ import clerkWebhook from './webhooks/clerk.js';
 import razorpayWebhook from './webhooks/razorpay.js';
 import cashfreeWebhook from './webhooks/cashfree.js';
 import { examAttemptService } from './services/examAttemptService.js';
+import { runDailyReminders } from './services/reminderService.js';
+import cron from 'node-cron';
 
 // Validate environment variables
 validateEnv();
@@ -291,6 +293,20 @@ app.listen(PORT, () => {
       console.error('[AUTO_SUBMIT] Error:', err);
     }
   }, 2 * 60 * 1000);
+
+  // Daily fee reminder job at 21:00 IST
+  cron.schedule(
+    '0 21 * * *',
+    async () => {
+      try {
+        await runDailyReminders();
+      } catch (err) {
+        console.error('[REMINDERS] Cron job failed:', err);
+      }
+    },
+    { timezone: 'Asia/Kolkata' }
+  );
+  console.log('  Fee reminders: scheduled daily at 21:00 IST');
 });
 
 // Handle unhandled promise rejections

@@ -27,7 +27,7 @@ import {
   ShieldOff,
   User,
 } from 'lucide-react';
-import { Card, Badge, Skeleton, Button } from '@shared/components/ui';
+import { Card, Badge, Skeleton, Button, Modal, ModalHeader, ModalBody, ModalFooter, Textarea } from '@shared/components/ui';
 import clsx from 'clsx';
 
 const API_URL = import.meta.env.VITE_API_URL || '/api';
@@ -195,6 +195,60 @@ export default function StudentFeeProfilePage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showAllReminders, setShowAllReminders] = useState(false);
+  const [reminderModalOpen, setReminderModalOpen] = useState(false);
+  const [reminderMessage, setReminderMessage] = useState('');
+  const [reminderSending, setReminderSending] = useState(false);
+  const [reminderToast, setReminderToast] = useState<{ tone: 'success' | 'error'; text: string } | null>(null);
+
+  const refetch = async () => {
+    if (!studentId) return;
+    try {
+      const token = await getToken();
+      const res = await fetch(`${API_URL}/v2/admin/fees/students/${studentId}/full-profile`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const json = await res.json();
+      if (res.ok) setData(json.data);
+    } catch {
+      /* ignore */
+    }
+  };
+
+  const handleSendReminder = async () => {
+    if (!studentId) return;
+    setReminderSending(true);
+    setReminderToast(null);
+    try {
+      const token = await getToken();
+      const res = await fetch(`${API_URL}/v2/admin/fees/students/${studentId}/send-reminder`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ customMessage: reminderMessage.trim() || undefined }),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.message || `Failed (${res.status})`);
+      setReminderToast({
+        tone: 'success',
+        text: `Reminder sent to ${json.data?.email || 'student'} for ${json.data?.dueCount || 0} pending due(s).`,
+      });
+      setReminderMessage('');
+      setReminderModalOpen(false);
+      await refetch();
+    } catch (err: any) {
+      setReminderToast({ tone: 'error', text: err.message || 'Failed to send reminder' });
+    } finally {
+      setReminderSending(false);
+    }
+  };
+
+  useEffect(() => {
+    if (!reminderToast) return;
+    const t = setTimeout(() => setReminderToast(null), 4500);
+    return () => clearTimeout(t);
+  }, [reminderToast]);
 
   useEffect(() => {
     if (!studentId) return;
@@ -294,6 +348,27 @@ export default function StudentFeeProfilePage() {
 
   return (
     <div className="space-y-5">
+      {/* Toast */}
+      {reminderToast && (
+        <motion.div
+          initial={{ opacity: 0, y: -8 }}
+          animate={{ opacity: 1, y: 0 }}
+          className={clsx(
+            'p-3 rounded-lg border text-sm flex items-start gap-2',
+            reminderToast.tone === 'success'
+              ? 'bg-emerald-50 border-emerald-200 text-emerald-800'
+              : 'bg-red-50 border-red-200 text-red-800'
+          )}
+        >
+          {reminderToast.tone === 'success' ? (
+            <CheckCircle className="w-4 h-4 mt-0.5 shrink-0" />
+          ) : (
+            <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" />
+          )}
+          <span>{reminderToast.text}</span>
+        </motion.div>
+      )}
+
       {/* Back */}
       <button
         onClick={() => navigate(-1)}
@@ -351,7 +426,13 @@ export default function StudentFeeProfilePage() {
 
           {/* Action placeholders — wired in Phase 3 + 5 */}
           <div className="flex flex-wrap gap-2">
-            <Button variant="secondary" size="sm" disabled title="Coming in Phase 3">
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={() => setReminderModalOpen(true)}
+              disabled={totals.remaining <= 0}
+              title={totals.remaining <= 0 ? 'No pending dues' : 'Send fee reminder email'}
+            >
               <Send className="w-4 h-4 mr-1" /> Send Reminder
             </Button>
             {!isSuspended ? (
@@ -506,6 +587,41 @@ export default function StudentFeeProfilePage() {
           </div>
         )}
       </Card>
+
+      {/* Reminder modal */}
+      <Modal isOpen={reminderModalOpen} onClose={() => !reminderSending && setReminderModalOpen(false)} size="md">
+        <ModalHeader title="Send Fee Reminder" subtitle={`To ${student.name} · ${student.email}`} onClose={() => !reminderSending && setReminderModalOpen(false)} />
+        <ModalBody>
+          <p className="text-sm text-slate-600 mb-4">
+            This will email {student.name.split(' ')[0]} a summary of{' '}
+            <span className="font-semibold text-slate-900">{formatINR(totals.remaining)}</span> in pending dues
+            across {enrollments.filter(e => e.remaining > 0).length} enrollment
+            {enrollments.filter(e => e.remaining > 0).length === 1 ? '' : 's'}.
+          </p>
+          <Textarea
+            label="Custom message (optional)"
+            placeholder="Add a personal note — e.g. 'Please pay before the next class on Monday.'"
+            rows={4}
+            maxLength={1000}
+            value={reminderMessage}
+            onChange={e => setReminderMessage(e.target.value)}
+            helperText={`${reminderMessage.length}/1000 characters`}
+          />
+        </ModalBody>
+        <ModalFooter>
+          <Button
+            variant="ghost"
+            onClick={() => setReminderModalOpen(false)}
+            disabled={reminderSending}
+          >
+            Cancel
+          </Button>
+          <Button variant="primary" onClick={handleSendReminder} isLoading={reminderSending}>
+            <Send className="w-4 h-4 mr-1" />
+            Send Reminder
+          </Button>
+        </ModalFooter>
+      </Modal>
     </div>
   );
 }

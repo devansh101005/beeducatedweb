@@ -296,6 +296,167 @@ class EmailService {
   }
 
   /**
+   * Send a fee reminder email to a student
+   */
+  async sendFeeReminder(data: {
+    email: string;
+    firstName: string;
+    pendingDues: Array<{
+      className: string;
+      description: string;
+      amountDue: number;
+      dueDate: string | null;
+      daysUntilDue: number | null;
+    }>;
+    totalDue: number;
+    customMessage?: string;
+    dashboardUrl: string;
+  }): Promise<void> {
+    const { email, firstName, pendingDues, totalDue, customMessage, dashboardUrl } = data;
+
+    const formatINR = (n: number) =>
+      new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(n);
+
+    const formatDate = (iso: string | null) => {
+      if (!iso) return '—';
+      try {
+        return new Date(iso).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+      } catch {
+        return '—';
+      }
+    };
+
+    const duesRows = pendingDues
+      .map(d => {
+        const urgency =
+          d.daysUntilDue === null
+            ? ''
+            : d.daysUntilDue < 0
+            ? `<span style="color:#dc2626;font-weight:700;">${Math.abs(d.daysUntilDue)} day${Math.abs(d.daysUntilDue) === 1 ? '' : 's'} overdue</span>`
+            : d.daysUntilDue === 0
+            ? `<span style="color:#d97706;font-weight:700;">Due today</span>`
+            : `<span style="color:#64748b;">in ${d.daysUntilDue} day${d.daysUntilDue === 1 ? '' : 's'}</span>`;
+        return `
+          <tr>
+            <td style="padding:12px 14px;border-bottom:1px solid #e2e8f0;">
+              <p style="margin:0;font-size:13px;font-weight:600;color:#0a1e3d;">${d.className}</p>
+              <p style="margin:2px 0 0;font-size:12px;color:#64748b;">${d.description}</p>
+              <p style="margin:4px 0 0;font-size:11px;">${urgency}</p>
+            </td>
+            <td style="padding:12px 14px;border-bottom:1px solid #e2e8f0;text-align:right;vertical-align:top;">
+              <p style="margin:0;font-size:14px;font-weight:700;color:#0a1e3d;">${formatINR(d.amountDue)}</p>
+              <p style="margin:2px 0 0;font-size:11px;color:#94a3b8;">due ${formatDate(d.dueDate)}</p>
+            </td>
+          </tr>
+        `;
+      })
+      .join('');
+
+    const customBlock = customMessage
+      ? `
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:20px 0 0;">
+          <tr>
+            <td style="padding:14px 16px;background-color:#fffbeb;border-left:4px solid #fbbf24;border-radius:6px;">
+              <p style="margin:0 0 4px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:#b45309;">Message from Be Educated</p>
+              <p style="margin:0;font-size:13px;line-height:1.6;color:#334155;white-space:pre-wrap;">${customMessage.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</p>
+            </td>
+          </tr>
+        </table>
+      `
+      : '';
+
+    const html = `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <meta charset="utf-8" />
+          <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        </head>
+        <body style="margin:0;padding:0;background-color:#f1f5f9;font-family:'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#f1f5f9;padding:40px 20px;">
+            <tr>
+              <td align="center">
+                <table role="presentation" width="560" cellpadding="0" cellspacing="0" style="max-width:560px;width:100%;">
+                  <tr>
+                    <td style="background:linear-gradient(135deg,#0a1e3d 0%,#05308d 100%);border-radius:16px 16px 0 0;padding:36px 32px;text-align:center;">
+                      <h1 style="margin:0;font-size:22px;font-weight:800;color:#ffffff;letter-spacing:-0.3px;">Fee Payment Reminder</h1>
+                      <p style="margin:8px 0 0;font-size:13px;color:rgba(255,255,255,0.6);">Be Educated — IIT-JEE &amp; NEET Foundation</p>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td style="background-color:#ffffff;padding:32px;">
+                      <p style="margin:0 0 8px;font-size:16px;color:#0a1e3d;">Hi <strong>${firstName}</strong>,</p>
+                      <p style="margin:0 0 20px;font-size:14px;line-height:1.6;color:#334155;">
+                        This is a friendly reminder that you have pending fee payments on your Be Educated account. Please review the details below and complete your payment at your earliest convenience.
+                      </p>
+
+                      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #e2e8f0;border-radius:10px;overflow:hidden;">
+                        <thead>
+                          <tr style="background-color:#f8fafc;">
+                            <th style="padding:10px 14px;text-align:left;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:#64748b;">Description</th>
+                            <th style="padding:10px 14px;text-align:right;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:#64748b;">Amount</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          ${duesRows}
+                          <tr>
+                            <td style="padding:14px 14px;background-color:#f8fafc;">
+                              <p style="margin:0;font-size:13px;font-weight:700;color:#0a1e3d;">Total Pending</p>
+                            </td>
+                            <td style="padding:14px 14px;background-color:#f8fafc;text-align:right;">
+                              <p style="margin:0;font-size:16px;font-weight:800;color:#05308d;">${formatINR(totalDue)}</p>
+                            </td>
+                          </tr>
+                        </tbody>
+                      </table>
+
+                      ${customBlock}
+
+                      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top:28px;">
+                        <tr>
+                          <td align="center">
+                            <a href="${dashboardUrl}" style="display:inline-block;background-color:#05308d;color:#ffffff;font-size:14px;font-weight:700;text-decoration:none;padding:14px 40px;border-radius:10px;letter-spacing:0.3px;">
+                              Pay Now &rarr;
+                            </a>
+                          </td>
+                        </tr>
+                      </table>
+
+                      <p style="margin:24px 0 0;font-size:12px;line-height:1.6;color:#64748b;text-align:center;">
+                        Questions? Contact us or visit your dashboard to see a full breakdown.
+                      </p>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td style="background-color:#f8fafc;border-top:1px solid #e2e8f0;border-radius:0 0 16px 16px;padding:20px 32px;text-align:center;">
+                      <p style="margin:0 0 4px;font-size:13px;font-weight:700;color:#0a1e3d;">Be Educated</p>
+                      <p style="margin:0;font-size:11px;color:#94a3b8;">This reminder was sent by your institute's administrator.</p>
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+          </table>
+        </body>
+      </html>
+    `;
+
+    try {
+      const resend = this.getResendClient();
+      await resend.emails.send({
+        from: env.RESEND_FROM_EMAIL,
+        to: email,
+        subject: `Fee Reminder — ${formatINR(totalDue)} pending`,
+        html,
+      });
+      console.log(`Fee reminder sent to ${email}`);
+    } catch (error) {
+      console.error('Error sending fee reminder:', error);
+      throw new Error('Failed to send fee reminder');
+    }
+  }
+
+  /**
    * Test email configuration
    */
   async testEmailConfig(): Promise<boolean> {

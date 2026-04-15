@@ -17,6 +17,7 @@ import { parentService } from '../../services/parentService.js';
 import { enrollmentService, PaymentType } from '../../services/enrollmentService.js';
 import { courseTypeService } from '../../services/courseTypeService.js';
 import { emailService } from '../../services/emailService.js';
+import { runDailyReminders } from '../../services/reminderService.js';
 import { env } from '../../config/env.js';
 import { getSupabase } from '../../config/supabase.js';
 import {
@@ -1406,6 +1407,165 @@ router.get('/fees/students/:studentId/full-profile', async (req: Request, res: R
   } catch (error: any) {
     console.error('Error in GET /admin/fees/students/:id/full-profile:', error);
     sendError(res, error.message || 'Failed to load student profile');
+  }
+});
+
+/**
+ * POST /api/v2/admin/fees/students/:studentId/send-reminder
+ *
+ * Manually send a fee reminder email to a student. Admin can optionally
+ * include a custom message. Logs entry in reminder_log with type='manual'.
+ *
+ * Body: { customMessage?: string }
+ */
+router.post('/fees/students/:studentId/send-reminder', async (req: Request, res: Response) => {
+  try {
+    const studentId = getParam(req.params.studentId);
+    if (!studentId) return sendBadRequest(res, 'studentId is required');
+
+    const customMessage = typeof req.body?.customMessage === 'string'
+      ? req.body.customMessage.trim().slice(0, 1000)
+      : undefined;
+
+    const supabase = getSupabase();
+
+    // Fetch student + user
+    const { data: student, error: studentError } = await supabase
+      .from('students')
+      .select(`
+        id,
+        student_id,
+        users!inner ( id, first_name, email )
+      `)
+      .eq('id', studentId)
+      .single();
+
+    if (studentError || !student) {
+      return sendNotFound(res, 'Student not found');
+    }
+    const user = (student as any).users;
+    if (!user?.email) {
+      return sendBadRequest(res, 'Student has no email on file');
+    }
+
+    // Fetch enrollments (active / pending — not cancelled/refunded/suspended)
+    const { data: enrollments } = await supabase
+      .from('class_enrollments')
+      .select(`
+        id,
+        status,
+        amount_paid,
+        suspended_at,
+        academic_classes:class_id ( id, name ),
+        class_fee_plans:fee_plan_id ( total_amount )
+      `)
+      .eq('student_id', studentId);
+
+    // Fetch unpaid student fees linked to enrollments
+    const { data: fees } = await supabase
+      .from('student_fees')
+      .select('id, description, fee_type, amount_due, due_date, status, metadata')
+      .eq('student_id', studentId)
+      .in('status', ['pending', 'partial', 'overdue']);
+
+    // Build pending dues list
+    const enrollmentMap = new Map<string, any>();
+    for (const e of enrollments || []) {
+      enrollmentMap.set(e.id, e);
+    }
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const pendingDues = (fees || [])
+      .map(f => {
+        const enrollmentId = (f.metadata as any)?.enrollment_id;
+        const enrollment = enrollmentId ? enrollmentMap.get(enrollmentId) : null;
+        const klass = enrollment?.academic_classes;
+        const daysUntilDue = f.due_date
+          ? Math.round((new Date(f.due_date).getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
+          : null;
+        return {
+          feeId: f.id,
+          enrollmentId: enrollmentId || null,
+          className: klass?.name || 'General Fee',
+          description: f.description || f.fee_type.replace(/_/g, ' '),
+          amountDue: Number(f.amount_due || 0),
+          dueDate: f.due_date,
+          daysUntilDue,
+        };
+      })
+      .filter(d => d.amountDue > 0);
+
+    if (pendingDues.length === 0) {
+      return sendBadRequest(res, 'This student has no pending dues to remind about');
+    }
+
+    const totalDue = pendingDues.reduce((sum, d) => sum + d.amountDue, 0);
+    const firstName = user.first_name || 'there';
+    const dashboardUrl = `${env.FRONTEND_URL}/dashboard/my-fees`;
+
+    // Send email
+    let emailStatus: 'sent' | 'failed' = 'sent';
+    let emailError: string | null = null;
+    try {
+      await emailService.sendFeeReminder({
+        email: user.email,
+        firstName,
+        pendingDues,
+        totalDue,
+        customMessage,
+        dashboardUrl,
+      });
+    } catch (err: any) {
+      emailStatus = 'failed';
+      emailError = err?.message || 'Unknown error';
+    }
+
+    // Log to reminder_log
+    await supabase.from('reminder_log').insert({
+      student_id: studentId,
+      reminder_type: 'manual',
+      channel: 'email',
+      sent_by: req.user?.id || null,
+      status: emailStatus,
+      error_message: emailError,
+      metadata: {
+        total_due: totalDue,
+        due_count: pendingDues.length,
+        custom_message: customMessage || null,
+      },
+    });
+
+    if (emailStatus === 'failed') {
+      return sendError(res, emailError || 'Failed to send reminder');
+    }
+
+    sendSuccess(res, {
+      sent: true,
+      email: user.email,
+      totalDue,
+      dueCount: pendingDues.length,
+    });
+  } catch (error: any) {
+    console.error('Error in POST /admin/fees/students/:id/send-reminder:', error);
+    sendError(res, error.message || 'Failed to send reminder');
+  }
+});
+
+/**
+ * POST /api/v2/admin/fees/run-reminders
+ *
+ * Admin-triggered manual run of the daily reminder job.
+ * Useful for testing or catching up after downtime.
+ */
+router.post('/fees/run-reminders', async (_req: Request, res: Response) => {
+  try {
+    const summary = await runDailyReminders();
+    sendSuccess(res, summary);
+  } catch (error: any) {
+    console.error('Error in POST /admin/fees/run-reminders:', error);
+    sendError(res, error.message || 'Failed to run reminders');
   }
 });
 
