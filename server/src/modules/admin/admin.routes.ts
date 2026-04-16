@@ -1554,6 +1554,202 @@ router.post('/fees/students/:studentId/send-reminder', async (req: Request, res:
 });
 
 /**
+ * POST /api/v2/admin/fees/enrollments/:enrollmentId/suspend
+ *
+ * Suspend a student's enrollment. Optionally email the student with reason.
+ *
+ * Body: { reason: string, sendEmail?: boolean, customMessage?: string }
+ */
+router.post('/fees/enrollments/:enrollmentId/suspend', async (req: Request, res: Response) => {
+  try {
+    const enrollmentId = getParam(req.params.enrollmentId);
+    if (!enrollmentId) return sendBadRequest(res, 'enrollmentId is required');
+
+    const reason = typeof req.body?.reason === 'string' ? req.body.reason.trim().slice(0, 500) : '';
+    if (!reason) return sendBadRequest(res, 'reason is required');
+
+    const sendEmail = req.body?.sendEmail !== false; // default true
+    const customMessage = typeof req.body?.customMessage === 'string'
+      ? req.body.customMessage.trim().slice(0, 1000)
+      : undefined;
+
+    const supabase = getSupabase();
+
+    // Fetch enrollment with student + class
+    const { data: enrollment, error: fetchError } = await supabase
+      .from('class_enrollments')
+      .select(`
+        id,
+        status,
+        suspended_at,
+        student_id,
+        academic_classes:class_id ( name ),
+        students!inner (
+          id,
+          users!inner ( first_name, email )
+        )
+      `)
+      .eq('id', enrollmentId)
+      .single();
+
+    if (fetchError || !enrollment) {
+      return sendNotFound(res, 'Enrollment not found');
+    }
+
+    if ((enrollment as any).suspended_at) {
+      return sendBadRequest(res, 'Enrollment is already suspended');
+    }
+
+    // Update enrollment
+    const { error: updateError } = await supabase
+      .from('class_enrollments')
+      .update({
+        status: 'suspended',
+        suspended_at: new Date().toISOString(),
+        suspended_by: req.user?.id || null,
+        suspension_reason: reason,
+        suspension_email_sent: false,
+      })
+      .eq('id', enrollmentId);
+
+    if (updateError) {
+      console.error('Error suspending enrollment:', updateError);
+      return sendError(res, 'Failed to suspend enrollment');
+    }
+
+    // Send email if requested
+    let emailSent = false;
+    let emailError: string | null = null;
+    const klass = (enrollment as any).academic_classes;
+    const user = (enrollment as any).students?.users;
+
+    if (sendEmail && user?.email) {
+      try {
+        await emailService.sendAccountSuspended({
+          email: user.email,
+          firstName: user.first_name || 'there',
+          className: klass?.name || 'your class',
+          reason,
+          customMessage,
+          contactEmail: env.ENQUIRY_EMAIL,
+        });
+        emailSent = true;
+        // Mark email sent
+        await supabase
+          .from('class_enrollments')
+          .update({ suspension_email_sent: true })
+          .eq('id', enrollmentId);
+      } catch (err: any) {
+        emailError = err?.message || 'Email failed';
+      }
+    }
+
+    // Log to reminder_log
+    await supabase.from('reminder_log').insert({
+      student_id: (enrollment as any).student_id,
+      enrollment_id: enrollmentId,
+      reminder_type: 'suspension',
+      channel: 'email',
+      sent_by: req.user?.id || null,
+      status: emailSent ? 'sent' : sendEmail ? 'failed' : 'sent',
+      error_message: emailError,
+      metadata: {
+        reason,
+        custom_message: customMessage || null,
+        email_attempted: sendEmail,
+      },
+    });
+
+    sendSuccess(res, {
+      suspended: true,
+      enrollmentId,
+      emailSent,
+      emailError,
+    });
+  } catch (error: any) {
+    console.error('Error in POST /admin/fees/enrollments/:id/suspend:', error);
+    sendError(res, error.message || 'Failed to suspend enrollment');
+  }
+});
+
+/**
+ * POST /api/v2/admin/fees/enrollments/:enrollmentId/reactivate
+ *
+ * Reverse a suspension. Restores enrollment to its prior status (active if
+ * fully paid + within validity, otherwise pending).
+ */
+router.post('/fees/enrollments/:enrollmentId/reactivate', async (req: Request, res: Response) => {
+  try {
+    const enrollmentId = getParam(req.params.enrollmentId);
+    if (!enrollmentId) return sendBadRequest(res, 'enrollmentId is required');
+
+    const supabase = getSupabase();
+
+    const { data: enrollment, error: fetchError } = await supabase
+      .from('class_enrollments')
+      .select(`
+        id,
+        suspended_at,
+        registration_paid,
+        amount_paid,
+        expires_at,
+        student_id,
+        class_fee_plans:fee_plan_id ( total_amount )
+      `)
+      .eq('id', enrollmentId)
+      .single();
+
+    if (fetchError || !enrollment) {
+      return sendNotFound(res, 'Enrollment not found');
+    }
+
+    if (!(enrollment as any).suspended_at) {
+      return sendBadRequest(res, 'Enrollment is not suspended');
+    }
+
+    // Decide what status to restore to
+    const totalAmount = Number((enrollment as any).class_fee_plans?.total_amount || 0);
+    const amountPaid = Number((enrollment as any).amount_paid || 0);
+    const expiresAt = (enrollment as any).expires_at ? new Date((enrollment as any).expires_at) : null;
+    const now = new Date();
+
+    let newStatus: 'active' | 'pending' | 'expired';
+    if (expiresAt && expiresAt < now) {
+      newStatus = 'expired';
+    } else if ((enrollment as any).registration_paid && amountPaid >= totalAmount) {
+      newStatus = 'active';
+    } else {
+      newStatus = 'pending';
+    }
+
+    const { error: updateError } = await supabase
+      .from('class_enrollments')
+      .update({
+        status: newStatus,
+        suspended_at: null,
+        suspended_by: null,
+        suspension_reason: null,
+        suspension_email_sent: false,
+      })
+      .eq('id', enrollmentId);
+
+    if (updateError) {
+      console.error('Error reactivating enrollment:', updateError);
+      return sendError(res, 'Failed to reactivate enrollment');
+    }
+
+    sendSuccess(res, {
+      reactivated: true,
+      enrollmentId,
+      newStatus,
+    });
+  } catch (error: any) {
+    console.error('Error in POST /admin/fees/enrollments/:id/reactivate:', error);
+    sendError(res, error.message || 'Failed to reactivate enrollment');
+  }
+});
+
+/**
  * POST /api/v2/admin/fees/run-reminders
  *
  * Admin-triggered manual run of the daily reminder job.

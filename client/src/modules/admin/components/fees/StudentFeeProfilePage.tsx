@@ -200,6 +200,14 @@ export default function StudentFeeProfilePage() {
   const [reminderSending, setReminderSending] = useState(false);
   const [reminderToast, setReminderToast] = useState<{ tone: 'success' | 'error'; text: string } | null>(null);
 
+  // Suspension state
+  const [suspendModalEnrollment, setSuspendModalEnrollment] = useState<Enrollment | null>(null);
+  const [suspendReason, setSuspendReason] = useState('');
+  const [suspendMessage, setSuspendMessage] = useState('');
+  const [suspendSendEmail, setSuspendSendEmail] = useState(true);
+  const [suspendSubmitting, setSuspendSubmitting] = useState(false);
+  const [reactivatingId, setReactivatingId] = useState<string | null>(null);
+
   const refetch = async () => {
     if (!studentId) return;
     try {
@@ -249,6 +257,85 @@ export default function StudentFeeProfilePage() {
     const t = setTimeout(() => setReminderToast(null), 4500);
     return () => clearTimeout(t);
   }, [reminderToast]);
+
+  const openSuspendModal = (enrollment: Enrollment) => {
+    setSuspendModalEnrollment(enrollment);
+    setSuspendReason('');
+    setSuspendMessage('');
+    setSuspendSendEmail(true);
+  };
+
+  const closeSuspendModal = () => {
+    if (suspendSubmitting) return;
+    setSuspendModalEnrollment(null);
+  };
+
+  const handleSuspend = async () => {
+    if (!suspendModalEnrollment) return;
+    if (!suspendReason.trim()) {
+      setReminderToast({ tone: 'error', text: 'Reason is required to suspend' });
+      return;
+    }
+    setSuspendSubmitting(true);
+    try {
+      const token = await getToken();
+      const res = await fetch(
+        `${API_URL}/v2/admin/fees/enrollments/${suspendModalEnrollment.id}/suspend`,
+        {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            reason: suspendReason.trim(),
+            sendEmail: suspendSendEmail,
+            customMessage: suspendMessage.trim() || undefined,
+          }),
+        }
+      );
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.message || `Failed (${res.status})`);
+      setReminderToast({
+        tone: 'success',
+        text: json.data?.emailSent
+          ? `Enrollment suspended. Notice emailed to student.`
+          : `Enrollment suspended.`,
+      });
+      setSuspendModalEnrollment(null);
+      await refetch();
+    } catch (err: any) {
+      setReminderToast({ tone: 'error', text: err.message || 'Failed to suspend' });
+    } finally {
+      setSuspendSubmitting(false);
+    }
+  };
+
+  const handleReactivate = async (enrollmentId: string) => {
+    if (!confirm('Reactivate this enrollment? The student will regain access.')) return;
+    setReactivatingId(enrollmentId);
+    try {
+      const token = await getToken();
+      const res = await fetch(
+        `${API_URL}/v2/admin/fees/enrollments/${enrollmentId}/reactivate`,
+        {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.message || `Failed (${res.status})`);
+      setReminderToast({
+        tone: 'success',
+        text: `Enrollment reactivated as ${json.data?.newStatus || 'active'}.`,
+      });
+      await refetch();
+    } catch (err: any) {
+      setReminderToast({ tone: 'error', text: err.message || 'Failed to reactivate' });
+    } finally {
+      setReactivatingId(null);
+    }
+  };
 
   useEffect(() => {
     if (!studentId) return;
@@ -424,7 +511,6 @@ export default function StudentFeeProfilePage() {
             )}
           </div>
 
-          {/* Action placeholders — wired in Phase 3 + 5 */}
           <div className="flex flex-wrap gap-2">
             <Button
               variant="secondary"
@@ -435,15 +521,6 @@ export default function StudentFeeProfilePage() {
             >
               <Send className="w-4 h-4 mr-1" /> Send Reminder
             </Button>
-            {!isSuspended ? (
-              <Button variant="danger" size="sm" disabled title="Coming in Phase 5">
-                <ShieldOff className="w-4 h-4 mr-1" /> Suspend
-              </Button>
-            ) : (
-              <Button variant="primary" size="sm" disabled title="Coming in Phase 5">
-                <CheckCircle className="w-4 h-4 mr-1" /> Reactivate
-              </Button>
-            )}
           </div>
         </div>
 
@@ -521,7 +598,14 @@ export default function StudentFeeProfilePage() {
       ) : (
         <div className="space-y-5">
           {enrollments.map((e, idx) => (
-            <EnrollmentSection key={e.id} enrollment={e} index={idx} />
+            <EnrollmentSection
+              key={e.id}
+              enrollment={e}
+              index={idx}
+              onSuspend={() => openSuspendModal(e)}
+              onReactivate={() => handleReactivate(e.id)}
+              isReactivating={reactivatingId === e.id}
+            />
           ))}
         </div>
       )}
@@ -588,6 +672,78 @@ export default function StudentFeeProfilePage() {
         )}
       </Card>
 
+      {/* Suspend modal */}
+      <Modal
+        isOpen={!!suspendModalEnrollment}
+        onClose={closeSuspendModal}
+        size="md"
+      >
+        <ModalHeader
+          title="Suspend Enrollment"
+          subtitle={
+            suspendModalEnrollment
+              ? `${student.name} · ${suspendModalEnrollment.class?.name || 'class'}`
+              : undefined
+          }
+          onClose={closeSuspendModal}
+        />
+        <ModalBody>
+          <div className="p-3 mb-4 rounded-lg bg-red-50 border border-red-200 text-sm text-red-800">
+            <p className="font-semibold">This will block the student's access to this enrollment.</p>
+            <p className="mt-1 text-red-700">You can reactivate them later from this same page.</p>
+          </div>
+          <Textarea
+            label="Reason (required, internal record)"
+            placeholder="e.g. Repeated unpaid dues; violation of conduct policy"
+            rows={2}
+            maxLength={500}
+            value={suspendReason}
+            onChange={e => setSuspendReason(e.target.value)}
+            helperText={`${suspendReason.length}/500 characters`}
+          />
+          <div className="mt-4">
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={suspendSendEmail}
+                onChange={e => setSuspendSendEmail(e.target.checked)}
+                className="w-4 h-4 rounded border-slate-300 text-red-600 focus:ring-red-500"
+              />
+              <span className="text-sm font-medium text-slate-700">
+                Email the student about this suspension
+              </span>
+            </label>
+          </div>
+          {suspendSendEmail && (
+            <div className="mt-3">
+              <Textarea
+                label="Custom message to student (optional)"
+                placeholder="Add a personal note explaining what's needed to resolve this."
+                rows={4}
+                maxLength={1000}
+                value={suspendMessage}
+                onChange={e => setSuspendMessage(e.target.value)}
+                helperText={`${suspendMessage.length}/1000 characters`}
+              />
+            </div>
+          )}
+        </ModalBody>
+        <ModalFooter>
+          <Button variant="ghost" onClick={closeSuspendModal} disabled={suspendSubmitting}>
+            Cancel
+          </Button>
+          <Button
+            variant="danger"
+            onClick={handleSuspend}
+            isLoading={suspendSubmitting}
+            disabled={!suspendReason.trim()}
+          >
+            <ShieldOff className="w-4 h-4 mr-1" />
+            Suspend
+          </Button>
+        </ModalFooter>
+      </Modal>
+
       {/* Reminder modal */}
       <Modal isOpen={reminderModalOpen} onClose={() => !reminderSending && setReminderModalOpen(false)} size="md">
         <ModalHeader title="Send Fee Reminder" subtitle={`To ${student.name} · ${student.email}`} onClose={() => !reminderSending && setReminderModalOpen(false)} />
@@ -627,9 +783,22 @@ export default function StudentFeeProfilePage() {
 }
 
 // ── Per-enrollment section ─────────────────────────────────────────────
-function EnrollmentSection({ enrollment, index }: { enrollment: Enrollment; index: number }) {
+function EnrollmentSection({
+  enrollment,
+  index,
+  onSuspend,
+  onReactivate,
+  isReactivating,
+}: {
+  enrollment: Enrollment;
+  index: number;
+  onSuspend: () => void;
+  onReactivate: () => void;
+  isReactivating: boolean;
+}) {
   const [paymentsOpen, setPaymentsOpen] = useState(index === 0);
   const e = enrollment;
+  const isSuspended = !!e.suspended;
 
   return (
     <motion.div
@@ -662,11 +831,50 @@ function EnrollmentSection({ enrollment, index }: { enrollment: Enrollment; inde
             </div>
           </div>
 
-          <div className="text-right">
-            <p className="text-xs text-slate-500">Plan Total</p>
-            <p className="text-lg font-bold text-slate-900">{formatINR(e.totalAmount)}</p>
+          <div className="flex items-start gap-3">
+            <div className="text-right">
+              <p className="text-xs text-slate-500">Plan Total</p>
+              <p className="text-lg font-bold text-slate-900">{formatINR(e.totalAmount)}</p>
+            </div>
+            {isSuspended ? (
+              <Button
+                variant="primary"
+                size="sm"
+                onClick={onReactivate}
+                isLoading={isReactivating}
+                title="Restore access for this enrollment"
+              >
+                <CheckCircle className="w-4 h-4 mr-1" />
+                Reactivate
+              </Button>
+            ) : (
+              <Button
+                variant="danger"
+                size="sm"
+                onClick={onSuspend}
+                title="Suspend this enrollment"
+              >
+                <ShieldOff className="w-4 h-4 mr-1" />
+                Suspend
+              </Button>
+            )}
           </div>
         </div>
+
+        {/* Suspension banner inline on enrollment */}
+        {isSuspended && e.suspended && (
+          <div className="mb-4 p-3 rounded-lg bg-red-50 border border-red-200 text-sm">
+            <p className="font-semibold text-red-800">
+              Suspended on {formatDate(e.suspended.at)}
+              {e.suspended.emailSent && (
+                <span className="ml-2 text-xs font-normal text-red-600">• student notified</span>
+              )}
+            </p>
+            {e.suspended.reason && (
+              <p className="text-red-700 mt-1">Reason: {e.suspended.reason}</p>
+            )}
+          </div>
+        )}
 
         {/* Fee math strip */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">

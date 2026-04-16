@@ -457,6 +457,106 @@ class EmailService {
   }
 
   /**
+   * Send a suspension notice to a student
+   */
+  async sendAccountSuspended(data: {
+    email: string;
+    firstName: string;
+    className: string;
+    reason: string;
+    customMessage?: string;
+    contactEmail?: string;
+  }): Promise<void> {
+    const { email, firstName, className, reason, customMessage, contactEmail } = data;
+
+    const customBlock = customMessage
+      ? `
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:20px 0 0;">
+          <tr>
+            <td style="padding:14px 16px;background-color:#fffbeb;border-left:4px solid #fbbf24;border-radius:6px;">
+              <p style="margin:0 0 4px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:#b45309;">Message from Be Educated</p>
+              <p style="margin:0;font-size:13px;line-height:1.6;color:#334155;white-space:pre-wrap;">${customMessage.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</p>
+            </td>
+          </tr>
+        </table>
+      `
+      : '';
+
+    const html = `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <meta charset="utf-8" />
+          <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        </head>
+        <body style="margin:0;padding:0;background-color:#f1f5f9;font-family:'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#f1f5f9;padding:40px 20px;">
+            <tr>
+              <td align="center">
+                <table role="presentation" width="560" cellpadding="0" cellspacing="0" style="max-width:560px;width:100%;">
+                  <tr>
+                    <td style="background:linear-gradient(135deg,#7f1d1d 0%,#dc2626 100%);border-radius:16px 16px 0 0;padding:36px 32px;text-align:center;">
+                      <h1 style="margin:0;font-size:22px;font-weight:800;color:#ffffff;letter-spacing:-0.3px;">Account Suspended</h1>
+                      <p style="margin:8px 0 0;font-size:13px;color:rgba(255,255,255,0.7);">Be Educated — IIT-JEE &amp; NEET Foundation</p>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td style="background-color:#ffffff;padding:32px;">
+                      <p style="margin:0 0 8px;font-size:16px;color:#0a1e3d;">Hi <strong>${firstName}</strong>,</p>
+                      <p style="margin:0 0 20px;font-size:14px;line-height:1.6;color:#334155;">
+                        Your enrollment in <strong>${className}</strong> at Be Educated has been suspended by the administrator.
+                      </p>
+
+                      <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+                        <tr>
+                          <td style="padding:14px 16px;background-color:#fef2f2;border-left:4px solid #dc2626;border-radius:6px;">
+                            <p style="margin:0 0 4px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:#991b1b;">Reason</p>
+                            <p style="margin:0;font-size:14px;line-height:1.6;color:#0a1e3d;">${reason.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</p>
+                          </td>
+                        </tr>
+                      </table>
+
+                      ${customBlock}
+
+                      <p style="margin:24px 0 0;font-size:13px;line-height:1.6;color:#334155;">
+                        While suspended, you will not be able to access classes or materials linked to this enrollment. To resolve this and reactivate your account, please get in touch with us at your earliest convenience.
+                      </p>
+
+                      ${contactEmail
+                        ? `<p style="margin:16px 0 0;font-size:13px;color:#334155;">Contact: <a href="mailto:${contactEmail}" style="color:#05308d;font-weight:600;">${contactEmail}</a></p>`
+                        : ''}
+                    </td>
+                  </tr>
+                  <tr>
+                    <td style="background-color:#f8fafc;border-top:1px solid #e2e8f0;border-radius:0 0 16px 16px;padding:20px 32px;text-align:center;">
+                      <p style="margin:0 0 4px;font-size:13px;font-weight:700;color:#0a1e3d;">Be Educated</p>
+                      <p style="margin:0;font-size:11px;color:#94a3b8;">This notice was sent by your institute's administrator.</p>
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+          </table>
+        </body>
+      </html>
+    `;
+
+    try {
+      const resend = this.getResendClient();
+      await resend.emails.send({
+        from: env.RESEND_FROM_EMAIL,
+        to: email,
+        subject: `Account Suspended — ${className}`,
+        html,
+      });
+      console.log(`Suspension notice sent to ${email}`);
+    } catch (error) {
+      console.error('Error sending suspension notice:', error);
+      throw new Error('Failed to send suspension notice');
+    }
+  }
+
+  /**
    * Test email configuration
    */
   async testEmailConfig(): Promise<boolean> {
