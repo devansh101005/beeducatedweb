@@ -38,12 +38,11 @@ coverage/
 .turbo
 nul
 
-# Firebase/Service accounts
+# Firebase/Service accounts(dead now)
 server/serviceAccountKey.json
 serviceAccountKey.json
 **/serviceAccountKey.json
 
-# Keep package.json files
 !package.json
 !**/package.json
 !tsconfig.json
@@ -53,3 +52,11 @@ PLATFORM_USER_GUIDE.md
 PLATFORM_USER_GUIDE.pdf
 fee.md
 INTERVIEW_PREP.md
+ARCHITECTURE.md
+CONTACT_FORM_SETUP.md
+COURSES_ENROLLMENT_DESIGN.md
+PAYMENT_ARCHITECTURE.md
+POSTGRESQL_LEARNING_GUIDE.md
+INTERVIEW_NOTES_MASTER.md
+docs/
+
