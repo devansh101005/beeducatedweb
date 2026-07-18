@@ -137,7 +137,7 @@ const fmt = (n) => Math.round(n).toLocaleString('en-IN');
 /* ──────────────────────────────────────────────
    SHARED: ACCORDION
    ────────────────────────────────────────────── */
-function PolicyAccordion({ title, icon: Icon, children, defaultOpen = false }) {
+function PolicyAccordion({ title, icon: _Icon, children, defaultOpen = false }) {
   const [isOpen, setIsOpen] = useState(defaultOpen);
   return (
     <div className={`group/acc border rounded-2xl transition-all duration-300 overflow-hidden ${

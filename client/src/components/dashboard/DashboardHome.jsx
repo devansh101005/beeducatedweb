@@ -143,7 +143,7 @@ const ParentDashboard = () => {
 };
 
 // Default Dashboard
-const DefaultDashboard = ({ userData }) => {
+const DefaultDashboard = ({ userData: _userData }) => {
   return (
     <div className="bg-white rounded-lg shadow p-6 text-center">
       <div className="text-6xl mb-4">🎓</div>

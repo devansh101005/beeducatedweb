@@ -124,7 +124,7 @@ const Contact = () => {
                 line1: 'Mon–Fri: 8:00 AM – 7:30 PM',
                 line2: 'Sat–Sun: 9:00 AM – 5:00 PM',
               },
-            ].map(({ icon: Icon, title, line1, line2, link }, i) => (
+            ].map(({ icon: _Icon, title, line1, line2, link }, i) => (
               <div
                 key={i}
                 className="group relative bg-white dark:bg-slate-800 rounded-2xl p-6 border border-gray-100 dark:border-slate-700 overflow-hidden hover:-translate-y-2 hover:shadow-elevated-lg transition-all duration-500 cursor-default"

@@ -161,7 +161,7 @@ const Courses = () => {
 
               {/* Class Cards Grid */}
               <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
-                {offlineClasses.map((item, index) => {
+                {offlineClasses.map((item, _index) => {
                   const isAdvanced = item.class === '11' || item.class === '12';
                   return (
                     <div

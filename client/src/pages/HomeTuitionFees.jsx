@@ -41,7 +41,7 @@ const fmt = (n) => Math.round(n).toLocaleString('en-IN');
 /* ──────────────────────────────────────────────
    ACCORDION
    ────────────────────────────────────────────── */
-function PolicyAccordion({ title, icon: Icon, children, defaultOpen = false }) {
+function PolicyAccordion({ title, icon: _Icon, children, defaultOpen = false }) {
   const [isOpen, setIsOpen] = useState(defaultOpen);
   return (
     <div
@@ -98,7 +98,7 @@ function PolicyAccordion({ title, icon: Icon, children, defaultOpen = false }) {
 /* ──────────────────────────────────────────────
    OPTION CARD
    ────────────────────────────────────────────── */
-function OptionCard({ letter, label, badge, badgeColor, accentColor, children }) {
+function OptionCard({ letter, label, badge, badgeColor: _badgeColor, accentColor, children }) {
   const colors = {
     gray:   { bar: 'bg-gray-200',                                badge: 'bg-gray-100 text-gray-500'              },
     blue:   { bar: 'bg-blue-200',                                badge: 'bg-blue-50 text-blue-600'               },

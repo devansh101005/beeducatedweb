@@ -165,7 +165,7 @@ function About() {
               { icon: HiOutlineShieldCheck, title: 'Disciplined Approach', desc: 'Structured study patterns and consistent practice' },
               { icon: HiOutlineHeart, title: 'Personal Attention', desc: 'Individual guidance for every student' },
               { icon: HiOutlineLightBulb, title: 'Early Foundation', desc: 'Building competitive readiness from Class 6' },
-            ].map(({ icon: Icon, title, desc }, i) => (
+            ].map(({ icon: _Icon, title, desc }, i) => (
               <div key={i} className="group relative bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl p-7 overflow-hidden hover:-translate-y-2 hover:bg-white/15 hover:border-white/20 transition-all duration-500 cursor-default">
                 {/* Shimmer line at bottom on hover */}
                 <div className="absolute bottom-0 left-0 w-0 h-[2px] bg-gradient-to-r from-[#fbbf24] to-[#fbbf24]/0 group-hover:w-full transition-all duration-700" />

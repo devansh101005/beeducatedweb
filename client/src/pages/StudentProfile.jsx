@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useAuth } from "../context/AuthContext";
 
 function StudentProfile() {
-  const { token, user, logout } = useAuth();
+  const { token, user } = useAuth();
   const [formData, setFormData] = useState({ name: "", email: "" });
   const [message, setMessage] = useState("");
 

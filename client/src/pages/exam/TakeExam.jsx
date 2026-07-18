@@ -19,7 +19,7 @@ const TakeExam = () => {
   const [error, setError] = useState('');
   const [timeLeft, setTimeLeft] = useState(0);
   const [timeUp, setTimeUp] = useState(false);
-  const [markedForReview, setMarkedForReview] = useState({});
+  const [markedForReview] = useState({});
   const saveTimeoutRef = useRef({});
 
   // Start or resume exam attempt

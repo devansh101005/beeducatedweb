@@ -52,7 +52,7 @@ const navigationByRole = {
 
 const DashboardLayout = () => {
   const { isLoaded, isSignedIn, getToken } = useAuth();
-  const { user: clerkUser } = useUser();
+  const { user: _clerkUser } = useUser();
   const [userData, setUserData] = useState(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [loading, setLoading] = useState(true);
