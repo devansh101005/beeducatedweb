@@ -1,5 +1,5 @@
 // Course Service - CRUD operations for courses and subjects
-// Phase 2: Course and subject management
+// Course and subject management
 
 import { getSupabase } from '../config/supabase.js';
 

@@ -51,16 +51,16 @@ export { examAttemptService } from './examAttemptService.js';
 // Exam service
 export { examService } from './examService.js';
 
-// Dashboard service (Phase 6)
+// Dashboard service
 export { dashboardService } from './dashboardService.js';
 
-// Report service (Phase 6)
+// Report service
 export { reportService } from './reportService.js';
 
-// Fee service (Phase 4)
+// Fee service
 export { feeService } from './feeService.js';
 
-// Payment service (Phase 4)
+// Payment service
 export { paymentService } from './paymentService.js';
 
 // Razorpay service (legacy — kept for historical refund lookups)

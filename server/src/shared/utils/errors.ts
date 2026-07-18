@@ -1,5 +1,4 @@
 // Custom error classes
-// Created in Phase 0
 
 export class AppError extends Error {
   public readonly statusCode: number;

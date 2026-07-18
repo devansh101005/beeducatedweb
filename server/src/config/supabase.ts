@@ -1,5 +1,4 @@
 // Supabase client configuration
-// Created in Phase 0
 
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { env } from './env.js';

@@ -1,5 +1,4 @@
 // BeEducated Server - TypeScript Entry Point
-// Phase 1: Core Auth & User Management
 
 import express, { Express, Request, Response, NextFunction } from 'express';
 import cors from 'cors';
@@ -180,41 +179,41 @@ app.use('/api/v2/auth', authLimiter, authRoutes);
 // Admin routes
 app.use('/api/v2/admin', adminRoutes);
 
-// Batch routes (Phase 2)
+// Batch routes
 app.use('/api/v2/batches', batchRoutes);
 
-// Course routes (Phase 2)
+// Course routes
 app.use('/api/v2/courses', courseRoutes);
 
-// Student routes (Phase 2)
+// Student routes
 app.use('/api/v2/students', studentRoutes);
 app.use('/api/v2/student', studentRoutes); // Alias for frontend compatibility
 
-// Parent routes (Phase 2)
+// Parent routes
 app.use('/api/v2/parents', parentRoutes);
 
-// Content routes (Phase 3 - upload rate limit)
+// Content routes (upload rate limit)
 app.use('/api/v2/content', uploadLimiter, contentRoutes);
 
-// Announcement routes (Phase 3)
+// Announcement routes
 app.use('/api/v2/announcements', announcementRoutes);
 
-// Exam routes (Phase 5)
+// Exam routes
 app.use('/api/v2/exams', examRoutes);
 
-// Question routes (Phase 5)
+// Question routes
 app.use('/api/v2/questions', questionRoutes);
 
-// Dashboard routes (Phase 6)
+// Dashboard routes
 app.use('/api/v2/dashboard', dashboardRoutes);
 
-// Report routes (Phase 6)
+// Report routes
 app.use('/api/v2/reports', reportRoutes);
 
-// Fee routes (Phase 4)
+// Fee routes
 app.use('/api/v2/fees', feeRoutes);
 
-// Payment routes (Phase 4 - stricter rate limit)
+// Payment routes (stricter rate limit)
 app.use('/api/v2/payments', paymentLimiter, paymentRoutes);
 
 // Contact routes (Public)

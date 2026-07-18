@@ -1,5 +1,4 @@
 // Shared backend types
-// Created in Phase 0
 
 import { Request } from 'express';
 

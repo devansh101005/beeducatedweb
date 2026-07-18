@@ -263,8 +263,6 @@ class StudentService {
       subscription_status: input.subscription_status || 'pending',
     };
 
-    console.log('Inserting student with data:', { ...insertData, user_id: '[REDACTED]' });
-
     const { data, error } = await this.supabase
       .from('students')
       .insert(insertData)
@@ -383,11 +381,8 @@ class StudentService {
 
     if (error) {
       console.error('Error listing students:', error);
-      console.error('Error details:', JSON.stringify(error, null, 2));
       throw error;
     }
-
-    console.log(`Found ${count} students, returning ${data?.length || 0} records`);
 
     return {
       students: data || [],

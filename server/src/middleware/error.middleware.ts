@@ -1,5 +1,4 @@
 // Error handling middleware
-// Created in Phase 0
 
 import { Request, Response, NextFunction } from 'express';
 import { AppError } from '../shared/utils/errors.js';

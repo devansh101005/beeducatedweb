@@ -220,22 +220,17 @@ router.get('/materials', requireAuth, attachUser, async (req: Request, res: Resp
       });
     }
 
-    console.log('[Materials] Looking up student for user ID:', req.user.id);
     const student = await studentService.getByUserId(req.user.id);
 
     if (!student) {
-      console.log('[Materials] No student found for user ID:', req.user.id);
       // Return empty result instead of error - student profile may not exist yet
       return sendSuccess(res, {
         materials: [],
         total: 0,
         enrolledClasses: [],
         message: 'Student profile not found. Please complete your profile setup.',
-        debug: { userId: req.user.id, studentFound: false },
       });
     }
-
-    console.log('[Materials] Found student:', { id: student.id, studentId: student.student_id });
 
     // Get filters from query params
     const classId = req.query.classId as string | undefined;
@@ -250,13 +245,6 @@ router.get('/materials', requireAuth, attachUser, async (req: Request, res: Resp
     const accessSummary = await enrollmentService.getStudentAccessSummary(student.id);
     const enrolledClassIds = accessSummary.activeEnrollments.map(e => e.classId);
 
-    console.log('[Materials] Enrollment summary:', {
-      studentDbId: student.id,
-      activeEnrollments: accessSummary.activeEnrollments.length,
-      enrolledClassIds,
-      classGrade: student.class_grade,
-    });
-
     // If no formal enrollments, check if student has class_grade set (fallback)
     const hasClassGrade = !!student.class_grade;
 
@@ -266,18 +254,7 @@ router.get('/materials', requireAuth, attachUser, async (req: Request, res: Resp
         total: 0,
         enrolledClasses: [],
         message: 'No active enrollments found. Please enroll in a class to access study materials.',
-        debug: {
-          studentDbId: student.id,
-          studentId: student.student_id,
-          enrollmentsFound: 0,
-          classGrade: null,
-        },
       });
-    }
-
-    // If using class_grade fallback, log it
-    if (enrolledClassIds.length === 0 && hasClassGrade) {
-      console.log('[Materials] Using class_grade fallback:', student.class_grade);
     }
 
     // If a specific class is requested, verify the student has access
@@ -475,8 +452,6 @@ router.post('/materials/:id/bookmark', requireAuth, attachUser, async (req: Requ
 
     // For now, just acknowledge the bookmark
     // TODO: Implement proper bookmarking with a database table
-    console.log(`Student ${req.user?.id} bookmarked content ${contentId}`);
-
     sendSuccess(res, { bookmarked: true, contentId });
   } catch (error) {
     console.error('Error bookmarking material:', error);

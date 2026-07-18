@@ -1,5 +1,5 @@
 // Batch Service - CRUD operations for batches
-// Phase 2: Full batch management with enrollment and course assignment
+// Full batch management with enrollment and course assignment
 
 import { getSupabase } from '../config/supabase.js';
 

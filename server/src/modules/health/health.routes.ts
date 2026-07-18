@@ -1,5 +1,4 @@
 // Health check routes
-// Created in Phase 0
 
 import { Router, Request, Response } from 'express';
 import { sendSuccess } from '../../shared/utils/response.js';

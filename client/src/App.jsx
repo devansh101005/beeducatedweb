@@ -82,7 +82,6 @@ import ExamCreator from "./pages/exam/ExamCreator";
 import TakeExam from "./pages/exam/TakeExam";
 import AvailableExams from "./pages/exam/AvailableExams";
 import ExamResults from "./pages/exam/ExamResults";
-import AuthTest from "./pages/AuthTest";
 
 // function App() {
 //   return (
@@ -178,7 +177,6 @@ import AuthTest from "./pages/AuthTest";
 //         <Route path="/faculty" element={<><Navbar /><FacultyPage /></>} />
 //         <Route path="/faq" element={<><Navbar /><FAQ /></>} />
 //         <Route path="/unauthorized" element={<><Navbar /><Unauthorized /></>} />
-//         <Route path="/auth-test" element={<><Navbar /><AuthTest /></>} />
 
 //         {/* Application Forms (Public) */}
 //         <Route path="/apply/student" element={<><Navbar /><StudentApplyForm /></>} />

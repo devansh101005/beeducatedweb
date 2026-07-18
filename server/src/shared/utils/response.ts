@@ -1,5 +1,4 @@
 // API response utilities
-// Created in Phase 0
 
 import { Response } from 'express';
 
