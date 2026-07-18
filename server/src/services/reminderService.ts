@@ -37,7 +37,7 @@ interface ClassifiedFee {
  *   -21 → overdue_week_3
  *   -28, -35, -42, ... → overdue_week_4_plus (fires weekly forever)
  */
-function classifyReminder(daysUntilDue: number): ReminderType | null {
+export function classifyReminder(daysUntilDue: number): ReminderType | null {
   if (daysUntilDue === 7) return 'due_in_7';
   if (daysUntilDue === 3) return 'due_in_3';
   if (daysUntilDue === 1) return 'due_tomorrow';
