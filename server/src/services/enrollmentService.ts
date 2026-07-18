@@ -591,10 +591,25 @@ class EnrollmentService {
       throw new Error('Payment record not found');
     }
 
-    // Idempotency check
-    if (payment.status === 'paid') {
-      return { ...payment.class_enrollments, verifiedStep: payment.payment_purpose || 'full_payment' };
+    // Idempotency check — only short-circuit when the ENROLLMENT transition
+    // also completed. If a crash landed between "payment marked paid" and
+    // "enrollment updated", re-running verification must resume the
+    // transition instead of returning the stale pending enrollment
+    // (paid-but-never-enrolled students were unrecoverable before this).
+    const purposeForCheck = payment.payment_purpose || 'full_payment';
+    const enrollmentSnapshot = payment.class_enrollments;
+    const transitionComplete =
+      purposeForCheck === 'registration'
+        ? enrollmentSnapshot?.registration_paid === true
+        : enrollmentSnapshot?.status === 'active';
+
+    if (payment.status === 'paid' && transitionComplete) {
+      return { ...enrollmentSnapshot, verifiedStep: purposeForCheck };
     }
+    // If payment.status === 'paid' but the transition is incomplete, fall
+    // through: the payment-row update below is an idempotent overwrite and
+    // the enrollment transition has never run (amount_paid not yet added),
+    // so re-executing is safe.
 
     // 3. Get payment details from Cashfree
     const cfPayments = await cashfreeService.getOrderPayments(order_id);

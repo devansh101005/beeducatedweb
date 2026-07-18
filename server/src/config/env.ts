@@ -1,5 +1,4 @@
 // Environment configuration
-// Created in Phase 0
 
 import dotenv from 'dotenv';
 
@@ -22,6 +21,9 @@ export const env = {
 
   // Frontend URL (for CORS)
   FRONTEND_URL: process.env.FRONTEND_URL || 'http://localhost:5173',
+
+  // Public URL of this backend (used for webhook notify_url callbacks)
+  BACKEND_URL: process.env.BACKEND_URL || '',
 
   // Razorpay (legacy — kept for historical payment lookups)
   RAZORPAY_KEY_ID: process.env.RAZORPAY_KEY_ID || '',

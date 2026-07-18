@@ -1,6 +1,5 @@
 // Cashfree Service
 // Handles Cashfree payment gateway integration
-// Replaces razorpayService.ts
 
 import crypto from 'crypto';
 import { getSupabase } from '../config/supabase.js';
@@ -68,6 +67,18 @@ class CashfreeService {
       : 'https://sandbox.cashfree.com/pg';
   }
 
+  /**
+   * Public URL of this backend for webhook callbacks.
+   * Prefers BACKEND_URL env; falls back to the legacy hardcoded values so
+   * behavior is unchanged until the env var is set on the host.
+   */
+  private getBackendUrl(): string {
+    if (env.BACKEND_URL) return env.BACKEND_URL.replace(/\/$/, '');
+    return env.NODE_ENV === 'production'
+      ? 'https://beeducatedweb-backend.onrender.com'
+      : `http://localhost:${env.PORT}`;
+  }
+
   private getHeaders(): Record<string, string> {
     return {
       'Content-Type': 'application/json',
@@ -118,7 +129,7 @@ class CashfreeService {
       },
       order_meta: {
         return_url: `${env.FRONTEND_URL}/dashboard/payment-success?order_id={order_id}`,
-        notify_url: `${env.NODE_ENV === 'production' ? 'https://beeducatedweb-backend.onrender.com' : `http://localhost:${env.PORT}`}/api/v2/webhooks/cashfree`,
+        notify_url: `${this.getBackendUrl()}/api/v2/webhooks/cashfree`,
       },
       order_note: input.notes ? JSON.stringify(input.notes) : undefined,
     };

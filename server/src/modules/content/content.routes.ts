@@ -536,17 +536,47 @@ router.get('/:id/signed-url', requireAuth, attachUser, async (req: Request, res:
       return sendNotFound(res, 'Content');
     }
 
-    // For paid content, check enrollment
-    if (!content.is_free && !isAdminOrTeacher && content.course_id) {
+    // For paid content, check enrollment through EVERY linkage the content
+    // has (course, class, or batch). Fail closed: content with none of the
+    // links (or a student matching none of them) gets no signed URL.
+    if (!content.is_free && !isAdminOrTeacher) {
       const student = await studentService.getByUserId(req.user!.id);
-      if (student) {
-        const courses = await courseService.getStudentCourses(student.id);
-        const isEnrolled = courses.some((c) => c.enrollment.course_id === content.course_id);
-        if (!isEnrolled) {
-          return sendBadRequest(res, 'Not enrolled in this course');
-        }
-      } else {
+      if (!student) {
         return sendBadRequest(res, 'Not authorized to access this content');
+      }
+
+      let hasAccess = false;
+
+      // Path 1: course enrollment (legacy course-based content)
+      if (content.course_id) {
+        const courses = await courseService.getStudentCourses(student.id);
+        hasAccess = courses.some((c) => c.enrollment.course_id === content.course_id);
+      }
+
+      // Path 2: class enrollment (new class/subject hierarchy content),
+      // including the legacy class_grade profile fallback
+      if (!hasAccess && content.class_id) {
+        hasAccess = await contentService.studentHasClassAccess(
+          student.id,
+          content.class_id,
+          (student as { class_grade?: string | null }).class_grade
+        );
+      }
+
+      // Path 3: batch membership (batch-scoped content)
+      if (!hasAccess && content.batch_id) {
+        const { data: batchMembership } = await getSupabase()
+          .from('batch_students')
+          .select('id')
+          .eq('student_id', student.id)
+          .eq('batch_id', content.batch_id)
+          .eq('status', 'active')
+          .limit(1);
+        hasAccess = !!(batchMembership && batchMembership.length > 0);
+      }
+
+      if (!hasAccess) {
+        return sendBadRequest(res, 'Not enrolled in this course');
       }
     }
 

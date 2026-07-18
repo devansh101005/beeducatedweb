@@ -781,19 +781,14 @@ class ContentService {
 
     if (enrollments && enrollments.length > 0) {
       enrolledClassIds = enrollments.map(e => e.class_id);
-      console.log('[Content] Found formal enrollments:', enrolledClassIds.length);
     }
 
     // Fallback: If no formal enrollments, try to find class based on class_grade
     if (enrolledClassIds.length === 0 && options.classGrade) {
-      console.log('[Content] No formal enrollments, using class_grade fallback:', options.classGrade);
-
       // Normalize the grade - extract just the number
       // Handles: "10th", "10", "Class 10", "Grade 10", "10th Grade", etc.
       const gradeMatch = options.classGrade.match(/(\d+)/);
       const gradeNumber = gradeMatch ? gradeMatch[1] : options.classGrade;
-
-      console.log('[Content] Normalized grade number:', gradeNumber);
 
       // Try to find academic class by grade number
       const { data: matchingClasses } = await this.supabase
@@ -802,8 +797,6 @@ class ContentService {
         .or(`name.ilike.%${gradeNumber}%,slug.ilike.%${gradeNumber}%`)
         .eq('is_active', true);
 
-      console.log('[Content] Matching classes query result:', matchingClasses);
-
       if (matchingClasses && matchingClasses.length > 0) {
         // Filter to exact grade match (e.g., "Class 10" not "Class 100" or "Class 1")
         const exactMatches = matchingClasses.filter(c => {
@@ -811,19 +804,12 @@ class ContentService {
           return classMatch && classMatch[1] === gradeNumber;
         });
 
-        if (exactMatches.length > 0) {
-          enrolledClassIds = exactMatches.map(c => c.id);
-          console.log('[Content] Found classes by grade fallback:', enrolledClassIds, exactMatches.map(c => c.name));
-        } else {
-          // Fallback to all matches if no exact match
-          enrolledClassIds = matchingClasses.map(c => c.id);
-          console.log('[Content] Found classes (partial match):', enrolledClassIds);
-        }
+        // Prefer exact grade matches; fall back to all partial matches
+        enrolledClassIds = (exactMatches.length > 0 ? exactMatches : matchingClasses).map(c => c.id);
       }
     }
 
     if (enrolledClassIds.length === 0) {
-      console.log('[Content] No classes found for student');
       return [];
     }
 
@@ -853,6 +839,59 @@ class ContentService {
     }
 
     return data || [];
+  }
+
+  /**
+   * Check whether a student may access content linked to a given class.
+   * Mirrors the access model of getStudentClassContent:
+   *   1. an active class_enrollment on that class, OR
+   *   2. legacy fallback — the student has NO active enrollments at all and
+   *      the class's grade number matches their profile class_grade
+   *      (supports pre-enrollment-system students added manually).
+   */
+  async studentHasClassAccess(
+    studentId: string,
+    classId: string,
+    classGrade?: string | null
+  ): Promise<boolean> {
+    // 1. Formal active enrollment on this class
+    const { data: enrollment } = await this.supabase
+      .from('class_enrollments')
+      .select('id')
+      .eq('student_id', studentId)
+      .eq('class_id', classId)
+      .eq('status', 'active')
+      .limit(1);
+
+    if (enrollment && enrollment.length > 0) return true;
+
+    // 2. Legacy class_grade fallback — only when the student has no active
+    //    enrollments anywhere (an enrolled student must not sidestep into
+    //    other classes via their profile grade)
+    if (!classGrade) return false;
+
+    const { data: anyEnrollment } = await this.supabase
+      .from('class_enrollments')
+      .select('id')
+      .eq('student_id', studentId)
+      .eq('status', 'active')
+      .limit(1);
+
+    if (anyEnrollment && anyEnrollment.length > 0) return false;
+
+    const gradeMatch = classGrade.match(/(\d+)/);
+    const gradeNumber = gradeMatch ? gradeMatch[1] : classGrade;
+
+    const { data: klass } = await this.supabase
+      .from('academic_classes')
+      .select('id, name, slug')
+      .eq('id', classId)
+      .single();
+
+    if (!klass) return false;
+
+    const classNum = klass.name?.match(/(\d+)/) || klass.slug?.match(/(\d+)/);
+    return !!(classNum && classNum[1] === gradeNumber);
   }
 }
 

@@ -55,7 +55,14 @@ function verifyWebhook(req: Request): ClerkWebhookEvent | null {
 
   try {
     const wh = new Webhook(CLERK_WEBHOOK_SECRET);
-    const payload = wh.verify(JSON.stringify(req.body), {
+    // The route is mounted with express.raw(), so req.body is a Buffer.
+    // svix must verify the EXACT bytes Clerk signed — JSON.stringify of a
+    // Buffer (or of a re-parsed object) produces different bytes and the
+    // signature check would always fail.
+    const rawPayload = Buffer.isBuffer(req.body)
+      ? req.body.toString('utf8')
+      : JSON.stringify(req.body);
+    const payload = wh.verify(rawPayload, {
       'svix-id': svixId,
       'svix-timestamp': svixTimestamp,
       'svix-signature': svixSignature,
@@ -224,7 +231,14 @@ router.post('/', async (req: Request, res: Response) => {
 
   if (process.env.NODE_ENV === 'development' && !CLERK_WEBHOOK_SECRET) {
     console.warn('⚠️ Skipping webhook verification in development');
-    event = req.body as ClerkWebhookEvent;
+    // req.body is a Buffer here (express.raw mount) — parse it
+    try {
+      event = Buffer.isBuffer(req.body)
+        ? (JSON.parse(req.body.toString('utf8')) as ClerkWebhookEvent)
+        : (req.body as ClerkWebhookEvent);
+    } catch {
+      return res.status(400).json({ error: 'Invalid JSON payload' });
+    }
   } else {
     event = verifyWebhook(req);
     if (!event) {

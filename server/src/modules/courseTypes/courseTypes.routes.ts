@@ -2,6 +2,7 @@
 // Handles course types, classes, and enrollment APIs
 
 import { Router, Request, Response } from 'express';
+import rateLimit from 'express-rate-limit';
 import { requireAuth, attachUser } from '../../middleware/auth.js';
 import { courseTypeService } from '../../services/courseTypeService.js';
 import { enrollmentService } from '../../services/enrollmentService.js';
@@ -22,6 +23,18 @@ const getParam = (param: string | string[] | undefined): string => {
 };
 
 const router = Router();
+
+// Rate limiter for payment-creating / coupon endpoints.
+// Higher than the global paymentLimiter (15/15min) because coaching-center
+// computer labs share one NAT IP; still tight enough to stop order spam
+// and coupon brute-forcing.
+const enrollmentPaymentLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 30,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many payment requests, please try again later' },
+});
 
 // ============================================
 // PUBLIC ROUTES (No auth required)
@@ -334,6 +347,7 @@ router.get('/subjects/all', async (_req: Request, res: Response) => {
  */
 router.post(
   '/enrollments/validate-coupon',
+  enrollmentPaymentLimiter,
   requireAuth,
   attachUser,
   async (req: Request, res: Response) => {
@@ -377,6 +391,7 @@ router.post(
  */
 router.post(
   '/enrollments/initiate',
+  enrollmentPaymentLimiter,
   requireAuth,
   attachUser,
   async (req: Request, res: Response) => {
@@ -447,6 +462,7 @@ router.post(
  */
 router.post(
   '/enrollments/verify',
+  enrollmentPaymentLimiter,
   requireAuth,
   attachUser,
   async (req: Request, res: Response) => {
@@ -521,6 +537,7 @@ router.post(
  */
 router.post(
   '/enrollments/:id/pay-tuition',
+  enrollmentPaymentLimiter,
   requireAuth,
   attachUser,
   async (req: Request, res: Response) => {
@@ -570,6 +587,7 @@ router.post(
  */
 router.post(
   '/enrollments/:id/second-installment',
+  enrollmentPaymentLimiter,
   requireAuth,
   attachUser,
   async (req: Request, res: Response) => {

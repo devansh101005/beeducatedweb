@@ -93,8 +93,26 @@ export interface SaveResponseInput {
   time_spent_seconds?: number;
 }
 
+// Grace period on top of exam duration before the server force-submits.
+// Absorbs client/server clock drift and last-second saves.
+const DURATION_GRACE_MS = 60 * 1000;
+
 class ExamAttemptService {
   private supabase = getSupabase();
+
+  /**
+   * True if the attempt has exceeded its personal time limit
+   * (started_at + exam duration + grace). The exam-level end_time
+   * window is checked separately.
+   */
+  private isDurationExpired(attempt: Pick<ExamAttempt, 'started_at'>, exam: Exam): boolean {
+    if (!exam.duration_minutes || exam.duration_minutes <= 0) return false;
+    const expiresAt =
+      new Date(attempt.started_at).getTime() +
+      exam.duration_minutes * 60 * 1000 +
+      DURATION_GRACE_MS;
+    return Date.now() > expiresAt;
+  }
 
   // ============================================
   // ATTEMPT MANAGEMENT
@@ -201,6 +219,11 @@ class ExamAttemptService {
       if (exam.end_time && new Date(exam.end_time) < now) {
         await this.submitAttempt(existingAttempt.id, true);
         throw new Error('Exam has ended');
+      }
+      // If this attempt's own timer has run out, auto-submit instead of resuming
+      if (this.isDurationExpired(existingAttempt, exam)) {
+        await this.submitAttempt(existingAttempt.id, true);
+        throw new Error('Your exam time is over — the attempt has been submitted');
       }
       // Return existing attempt
       const questions = await this.getAttemptQuestions(existingAttempt.id, exam);
@@ -341,6 +364,14 @@ class ExamAttemptService {
       throw new Error('Attempt is not in progress');
     }
 
+    // Server-side time enforcement: reject answers after the attempt's
+    // duration (+ grace) has elapsed — the client timer is display only.
+    const exam = await examService.getById(attempt.exam_id);
+    if (exam && this.isDurationExpired(attempt, exam)) {
+      await this.submitAttempt(attemptId, true);
+      throw new Error('Your exam time is over — the attempt has been submitted');
+    }
+
     const isAttempted = !!(
       (input.selected_option_ids && input.selected_option_ids.length > 0) ||
       input.numerical_answer !== undefined ||
@@ -461,9 +492,9 @@ class ExamAttemptService {
         continue;
       }
 
-      // Get marks
-      const positiveMarks = response.exam_question?.positive_marks || question.positive_marks || 4;
-      const negativeMarks = response.exam_question?.negative_marks || question.negative_marks || 1;
+      // Get marks — ?? (not ||) so an explicit 0 (e.g. no negative marking) is respected
+      const positiveMarks = response.exam_question?.positive_marks ?? question.positive_marks ?? 4;
+      const negativeMarks = response.exam_question?.negative_marks ?? question.negative_marks ?? 1;
 
       let isCorrect: boolean | null = null;
       let marksAwarded: number = 0;
@@ -673,24 +704,33 @@ class ExamAttemptService {
    * Called periodically by server interval
    */
   async autoSubmitExpiredAttempts(): Promise<number> {
-    // Find all in-progress attempts where the exam has ended
-    const { data: expiredAttempts, error } = await this.supabase
+    // Find all in-progress attempts where the exam window has ended
+    // OR the attempt's own duration has elapsed
+    const { data: inProgressAttempts, error } = await this.supabase
       .from('exam_attempts')
-      .select('id, exam_id')
+      .select('id, exam_id, started_at')
       .eq('status', 'in_progress');
 
-    if (error || !expiredAttempts || expiredAttempts.length === 0) {
+    if (error || !inProgressAttempts || inProgressAttempts.length === 0) {
       return 0;
     }
 
+    // Cache exams — many attempts usually belong to the same exam
+    const examCache = new Map<string, Exam | null>();
+
     let submitted = 0;
-    for (const attempt of expiredAttempts) {
+    for (const attempt of inProgressAttempts) {
       try {
-        const exam = await examService.getById(attempt.exam_id);
+        if (!examCache.has(attempt.exam_id)) {
+          examCache.set(attempt.exam_id, await examService.getById(attempt.exam_id));
+        }
+        const exam = examCache.get(attempt.exam_id);
         if (!exam) continue;
 
-        // Check if exam end_time has passed
-        if (exam.end_time && new Date(exam.end_time) < new Date()) {
+        const windowEnded = !!(exam.end_time && new Date(exam.end_time) < new Date());
+        const durationOver = this.isDurationExpired(attempt as Pick<ExamAttempt, 'started_at'>, exam);
+
+        if (windowEnded || durationOver) {
           await this.submitAttempt(attempt.id, true);
           submitted++;
         }
