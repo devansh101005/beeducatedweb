@@ -1,54 +1,33 @@
-# BeEducated — EdTech Platform for Offline Coaching Institutes
+# BeEducated
 
-**Production URL:** [beeducated.co.in](https://beeducated.co.in)
+[![CI](https://github.com/devansh101005/beeducatedweb/actions/workflows/ci.yml/badge.svg)](https://github.com/devansh101005/beeducatedweb/actions/workflows/ci.yml)
 
-BeEducated is a full-stack Learning Management System built for an offline coaching institute in Uttar Pradesh, India. It handles student enrollment, fee collection via Cashfree (migrated from Razorpay), exam management, content delivery, automated fee reminders, and multi-role dashboards — serving real students and parents in production.
+A full-stack Learning Management System for coaching institutes. Handles student enrollment, online fee payment, exams with auto-grading, study-material delivery, and dashboards for five user roles (admin, student, teacher, parent, batch manager).
 
+**Live:** [beeducated.co.in](https://beeducated.co.in) *(currently offline — demo available on request)*
 
----
+## Features
+
+- **Enrollment & payments** — class enrollment with registration + tuition steps, Cashfree checkout (UPI/cards/netbanking), webhook-driven payment confirmation, installments, discount coupons, offline payment recording
+- **Fee management** — class-based fee plans, late fees with grace periods, invoices, automated email reminders on an escalation schedule
+- **Exam engine** — question bank (MCQ, numerical, true/false, subjective), sectioned timed exams, server-side time enforcement, auto-grading with negative marking, leaderboards
+- **Content delivery** — PDFs, videos and documents organized by class and subject, served through signed URLs with enrollment-based access control
+- **Role-based dashboards** — separate views and permissions for admin, student, teacher, parent, and batch manager
+- **Announcements** — targeted by role, batch, class, or course, with read tracking
 
 ## Tech Stack
 
-| Layer | Technology | Why |
-|-------|-----------|-----|
-| Frontend | React 19 (Vite), TypeScript | Fast builds, modern React features (Suspense, transitions) |
-| Styling | Tailwind CSS | Rapid UI development with consistent design system + polished animations |
-| Auth | Clerk | Managed auth with webhook sync, JWT verification, role-based access — no custom auth headaches |
-| Backend | Node.js, Express 5, TypeScript | Typed API layer with clean service separation |
-| Database | PostgreSQL via Supabase | Row Level Security, real-time capabilities, managed infra |
-| Storage | Supabase Storage | Signed URLs for private content, integrated with the DB layer |
-| Payments | Cashfree | Indian payment gateway — UPI, cards, netbanking with HMAC webhook verification + server-to-server order confirmation (migrated from Razorpay; legacy integration retained for historical lookups) |
-| Email | Resend | Transactional emails for enrollments, contact form |
+| Layer | Technology |
+|-------|-----------|
+| Frontend | React 19, Vite, TypeScript, Tailwind CSS |
+| Backend | Node.js, Express 5, TypeScript |
+| Database | PostgreSQL (Supabase) with Row Level Security |
+| Storage | Supabase Storage |
+| Auth | Clerk |
+| Payments | Cashfree |
+| Email | Resend |
 
----
-
-## What I Built
-
-### Multi-Role Access System
-Five distinct roles — **Admin, Student, Teacher, Parent, Batch Manager** — each with their own dashboard, permissions, and data boundaries. Auth is handled via Clerk with JWT verification on every backend request. Roles are synced between Clerk metadata and the database.
-
-### Enrollment + Payment Pipeline
-End-to-end flow: student selects a course type and class → views fee plans → initiates Cashfree checkout → backend creates the order and confirms payment server-to-server (browser return AND webhook both drive the same idempotent verification) → enrollment is created → batch is assigned → content access is unlocked.
-
-### Content Management System
-Hierarchical content delivery: Course Type → Class → Subject → Materials (PDFs, videos, documents). Files stored in Supabase Storage with signed URLs for access control. Only enrolled students can access content for their class.
-
-### Admin Panel
-20+ API modules, 50+ REST endpoints. Manage students, teachers, parents, batches, courses, exams, content, announcements, enrollments, payments, and reports — all from a single dashboard.
-
-### Exam Engine
-Full exam lifecycle: question bank (MCQ, numerical, true/false, subjective) → exam creation with sections → timed attempts with tab-switch tracking → auto-submission of expired attempts (background job every 2 min) → auto-grading → leaderboard with rank calculation.
-
-
-### Fee Management
-Class-based fee plans with installment support. Admin can track pending fees, mark offline payments (cash, cheque, UPI, bank transfer), and block access for fee defaulters. Full payment analytics dashboard.
-
-
----
-
-## Architecture Overview
-
-> Detailed system-design documentation is maintained privately (available on request).
+## Architecture
 
 ```
 ┌─────────────────────────────────────────────────────┐
@@ -69,53 +48,52 @@ Class-based fee plans with installment support. Admin can track pending fees, ma
    (PostgreSQL)   (Files + CDN)      (Payments)
 ```
 
----
-
 ## Project Structure
 
 ```
-client/                → React frontend (Vite + TypeScript)
+client/                → React frontend (Vite)
 ├── src/modules/       → Feature modules (admin, student, teacher, parent, courses, payments, exams...)
 ├── src/pages/         → Public pages (Home, About, Courses, FAQ, Contact...)
 ├── src/shared/        → Reusable UI components, types, utils
 └── src/api/           → API client with auto JWT injection
 
 server/                → Express backend (TypeScript)
-├── src/modules/       → 20 API modules (routes per feature)
-├── src/services/      → 21 business logic services
-├── src/middleware/     → Auth (Clerk JWT), error handling
-├── src/webhooks/      → Clerk + Cashfree webhook handlers (+ legacy Razorpay)
-└── src/database/      → 18 SQL migrations
-
-packages/shared-types/ → Shared TypeScript types across client + server
-docs/                  → API docs, data model, architecture audit
+├── src/modules/       → API route modules (one per feature)
+├── src/services/      → Business logic services
+├── src/middleware/    → Auth (Clerk JWT), error handling
+├── src/webhooks/      → Clerk + Cashfree webhook handlers
+└── src/database/      → SQL migrations
 ```
 
----
+## Running Locally
 
-## Key Engineering Decisions
+```bash
+# Backend
+cd server
+cp .env.example .env        # fill in Supabase, Clerk, Cashfree, Resend keys
+npm install
+npm run dev                 # http://localhost:5000
 
-| Decision | Reasoning |
-|----------|-----------|
-| Supabase over raw PostgreSQL | RLS policies for data isolation, managed infra, built-in storage — one less service to manage |
-| Clerk over custom auth | Webhook-based sync keeps DB in control while offloading auth complexity. Role caching on frontend reduces API calls |
-| Service layer pattern | Routes stay thin, business logic is testable and reusable. Enrollment service alone is 44KB — it orchestrates payments, batch assignment, and access control |
-| SQL migrations over ORM | Direct control over schema, indexes, RLS policies. 18 incremental migrations track every schema change |
-| Payment webhooks over polling | Real-time payment confirmation via Cashfree webhooks. HMAC signature verification prevents tampering. Idempotent verification (shared by webhook + browser-return paths) prevents duplicate enrollments |
-| Background job for exams | Auto-submits expired attempts every 2 min. Prevents students from gaming the timer by closing the tab |
+# Frontend (separate terminal)
+cd client
+cp .env.example .env        # Clerk publishable key + API URL
+npm install
+npm run dev                 # http://localhost:5173
+```
 
----
+Database schema lives in `server/src/database/migrations/` — run the numbered SQL files in order in the Supabase SQL editor.
 
-## Scale & Numbers
+## Tests & Checks
 
-- **20+** API modules
-- **50+** REST endpoints
-- **18** database migrations
-- **5** user roles with distinct dashboards
-- **4** course types (2 active, 2 coming soon)
+```bash
+cd server
+npm run type-check
+npm run lint
+npm test
+```
 
----
+All three run on every push via GitHub Actions.
 
-## Documentation
+## License
 
-Detailed internal documentation (system architecture, payment flow deep-dive, data model, API reference) is maintained privately and available on request.
+Copyright © 2026 Devansh Pandey. All rights reserved — see [LICENSE](LICENSE). The source is viewable for evaluation purposes only.
