@@ -12,12 +12,16 @@ function Home() {
     let cancelled = false;
     (async () => {
       try {
-        const res = await fetch(`${import.meta.env.VITE_API_URL || import.meta.env.VITE_API_BASE_URL}/api/v2/announcements/latest`);
-        const data = await res.json();
-        if (!cancelled && data?.success && data.announcement?.message) {
+        // Same base-URL convention as the rest of the app: VITE_API_URL is ".../api"
+        const apiUrl = import.meta.env.VITE_API_URL || "/api";
+        const res = await fetch(`${apiUrl}/v2/announcements/latest`);
+        const json = await res.json();
+        // sendSuccess wraps the payload: { success, data: { announcement } }
+        const latest = json?.data?.announcement;
+        if (!cancelled && json?.success && latest?.message) {
           const seenId = localStorage.getItem("seenAnnouncementId");
-          if (String(seenId) !== String(data.announcement.id)) {
-            setAnnouncement(data.announcement);
+          if (String(seenId) !== String(latest.id)) {
+            setAnnouncement(latest);
             setShowAnnouncement(true);
           }
         }

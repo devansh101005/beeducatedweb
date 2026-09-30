@@ -41,7 +41,7 @@ const fmt = (n) => Math.round(n).toLocaleString('en-IN');
 /* ──────────────────────────────────────────────
    ACCORDION
    ────────────────────────────────────────────── */
-function PolicyAccordion({ title, icon: _Icon, children, defaultOpen = false }) {
+function PolicyAccordion({ title, icon: Icon, children, defaultOpen = false }) {
   const [isOpen, setIsOpen] = useState(defaultOpen);
   return (
     <div
